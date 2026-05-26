@@ -9,7 +9,8 @@ public enum ErrorCode {
     ENTITY_ALREADY_EXISTS(10005, "Entity already exists"),
     WORKER_CALL_FAILED(20001, "Worker call failed", true),
     WORKER_UNAVAILABLE(20002, "Worker unavailable", true),
-    PYTHON_WORKER_ERROR(20003, "Python worker error", true);
+    PYTHON_WORKER_ERROR(20003, "Python worker error", true),
+    AUTHORIZATION_ERROR(1003, "Access denied", false);
 
     private final int code;
     private final String message;

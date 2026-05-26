@@ -16,6 +16,10 @@
   <packaging>pom</packaging>
     <modules>
         <module>common-exceptions</module>
+      <module>common-utils</module>
     </modules>
+
+  <dependencies>
+  </dependencies>
 
 </project>
