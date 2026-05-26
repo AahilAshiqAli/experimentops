@@ -4,10 +4,10 @@ import com.experimentops.common.exceptions.ExperimentOpsException;
 import com.experimentops.common.exceptions.dto.ErrorResponseDto;
 import com.experimentops.common.exceptions.transformer.ExceptionTransformer;
 import com.experimentops.utils.ExperimentOpsLogger;
+import com.experimentops.utils.HeaderUtil;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.apache.tomcat.util.http.HeaderUtil;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -119,7 +119,7 @@ public class GlobalExceptionHandler {
     }
 
     protected void logException(@NonNull Exception exception,
-                                @NonNull ResponseEntity<? extends ErrorResponseDto> response) {
+                                @NonNull ResponseEntity<ErrorResponseDto> response) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
 
         ErrorResponseDto body = response.getBody();
