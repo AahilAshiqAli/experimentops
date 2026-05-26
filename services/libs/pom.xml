@@ -17,6 +17,7 @@
     <modules>
         <module>common-exceptions</module>
       <module>common-utils</module>
+        <module>common-kafka</module>
     </modules>
 
   <dependencies>

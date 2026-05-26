@@ -1,0 +1,19 @@
+{
+  "namespace": "com.simplifi.common.kafka.model.event",
+  "type": "record",
+  "name": "ExperimentOpsMetadataEvent",
+  "fields": [
+    { "name": "traceUuid", "type": "string", "avro.java.string": "String" },
+    { "name": "requesterUuid", "type": "string", "avro.java.string": "String" },
+    { "name": "eventType", "type": "string", "avro.java.string": "String" },
+    { "name": "eventUuid", "type": "string", "avro.java.string": "String" },
+    { "name": "eventTimestamp", "type": "long" },
+    { "name": "uuid", "type": "string", "avro.java.string": "String" },
+    { "name": "workspaceUuid", "type": "string", "avro.java.string": "String" },
+    { "name": "requestTimestamp", "type": "long", "default": 0 },
+    { "name": "internalTraceUuid", "type": ["null","string"], "default":null},
+    { "name": "className", "type": ["null","string"], "default":null},
+    { "name": "triggeredBy", "type": ["null","string"], "default":null},
+    { "name": "userRole", "type": ["null","string"], "avro.java.string": "String", "default":null}
+  ]
+}
