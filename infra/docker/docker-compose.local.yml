@@ -1,0 +1,65 @@
+name: experimentops
+
+# All in the same file to make sure they are in same docker network
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: experimentops-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # Single node setup
+      KAFKA_NODE_ID: 1
+      # before zoo-keeper acted as meta-data coordinator between controller and broker. For this project, its own Kraft is used
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      # First is for containers in docker to talk to Kafka. Second is for applications in same container as Kafka to talk. Third is internal Kafka Leader coordinating.
+      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://kafka:9093
+      # Controller is not in Advertised Listeners because no external client can ever know about it, only for internal communication
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CLUSTER_ID: experimentops-local-cluster
+
+  # Holds the groups and topics and AVRO schemas of Kafka
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.7.1
+    container_name: experimentops-schema-registry
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      # Talks to kafka through the docker network
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+
+  platform-api:
+    build:
+      context: ../../services/applications/platform-api
+      dockerfile: Dockerfile
+    image: platform-api:local
+    container_name: experimentops-platform-api
+    depends_on:
+      - kafka
+      - schema-registry
+    ports:
+      - "8080:8080"
+    environment:
+      kafka.bootstrap-servers: kafka:29092
+      kafka.schema.registry-url: http://schema-registry:8081
+
+      # This overrides SpringBoot local address with docker container address
+      experimentops.db.host: host.docker.internal
+      experimentops.db.port: 55000
+      experimentops.db.schema: experimentOps
+      experimentops.db.username: experimentops_user
+      experimentops.db.password: experimentops_password

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.3</version>
+    <relativePath/>
+  </parent>
+
+
+  <groupId>com.experimentops</groupId>
+  <artifactId>root</artifactId>
+  <version>${revision}</version>
+  <packaging>pom</packaging>
+
+  <properties>
+    <revision>0.1.0</revision>
+    <avro.version>1.12.0</avro.version>
+    <lombok.version>1.18.38</lombok.version>
+    <keycloak-admin-client.version>15.0.2</keycloak-admin-client.version>
+    <resteasy-multipart-provider.version>6.2.11.Final</resteasy-multipart-provider.version>
+    <commons-io.version>2.19.0</commons-io.version>
+
+    <java.version>21</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <modules>
+    <module>libs</module>
+    <module>applications</module>
+  </modules>
+
+</project>
