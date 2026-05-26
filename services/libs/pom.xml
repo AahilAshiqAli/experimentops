@@ -14,5 +14,8 @@
   <groupId>com.experimentops.libs</groupId>
   <artifactId>libs</artifactId>
   <packaging>pom</packaging>
+    <modules>
+        <module>common-exceptions</module>
+    </modules>
 
 </project>

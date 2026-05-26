@@ -150,6 +150,12 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Dependencies from shared libs -->
+    <dependency>
+      <groupId>com.experimentops.libs</groupId>
+      <artifactId>common-exceptions</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <dependencyManagement>
