@@ -14,5 +14,16 @@
   <groupId>com.experimentops.libs</groupId>
   <artifactId>libs</artifactId>
   <packaging>pom</packaging>
+  <properties>
+    <avro.version>1.12.0</avro.version>
+  </properties>
+  <modules>
+    <module>common-exceptions</module>
+    <module>common-utils</module>
+    <module>common-kafka</module>
+  </modules>
+
+  <dependencies>
+  </dependencies>
 
 </project>
