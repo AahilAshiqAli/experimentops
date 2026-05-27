@@ -6,13 +6,10 @@ import com.experimentops.common.exceptions.dto.ErrorResponseDto;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
-import org.springframework.web.util.NestedServletException;
 
 import java.util.List;
 
@@ -66,7 +63,7 @@ public final class ExceptionTransformer {
     // ── Generic / internal ───────────────────────────────────────
 
     public static ResponseEntity<ErrorResponseDto> internalError(Exception exception) {
-        return response(ErrorCode.GLOBAL_ERROR.getCode(), getRootCauseMessage(exception), INTERNAL_SERVER_ERROR);
+        return response(ErrorCode.GENERAL_ERROR.getCode(), getRootCauseMessage(exception), INTERNAL_SERVER_ERROR);
     }
 
 

@@ -1,7 +1,10 @@
 package com.experimentops.common.exceptions.constant;
 
+import lombok.Getter;
+
+@Getter
 public enum ErrorCode {
-    GLOBAL_ERROR(-1, "Something went wrong", true),
+    GENERAL_ERROR(-1, "Something went wrong", true),
     INVALID_INPUTS(10001, "Invalid input"),
     REQUIRED_FIELD_MISSING(10002, "Required field missing"),
     RESOURCE_NOT_FOUND(10003, "Resource not found"),
@@ -24,17 +27,5 @@ public enum ErrorCode {
         this.code = code;
         this.message = message;
         this.serverError = serverError;
-    }
-
-    public int getCode() {
-        return code;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public boolean isServerError() {
-        return serverError;
     }
 }

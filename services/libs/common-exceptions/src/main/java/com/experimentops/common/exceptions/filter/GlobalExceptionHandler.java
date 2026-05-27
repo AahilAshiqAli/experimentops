@@ -16,7 +16,6 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.UnknownContentTypeException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -31,7 +30,6 @@ public class GlobalExceptionHandler {
     private final HttpServletRequest exchange;
 
     @ExceptionHandler(AccessDeniedException.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> exception(AccessDeniedException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.transformUnauthorized(exception);
         logException(exception, response);
@@ -39,7 +37,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> exception(HttpRequestMethodNotSupportedException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.transformNotFound(exception);
         logException(exception, response);
@@ -47,7 +44,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> exception(NoResourceFoundException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.transformNotFound(exception);
         logException(exception, response);
@@ -55,7 +51,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> exception(HttpMessageNotReadableException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.badRequest(exception);
         logException(exception, response);
@@ -63,7 +58,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UnknownContentTypeException.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> exception(UnknownContentTypeException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.badRequest(exception);
         logException(exception, response);
@@ -71,7 +65,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> handleIllegalArgumentException(IllegalArgumentException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.badRequest(exception);
         logException(exception, response);
@@ -79,7 +72,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> handleException(MissingServletRequestParameterException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.badRequest(exception);
         logException(exception, response);
@@ -87,7 +79,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> handleException(MethodArgumentTypeMismatchException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.badRequest(exception);
         logException(exception, response);
@@ -95,7 +86,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> handleValidationExceptions(MethodArgumentNotValidException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.transform(exception);
         logException(exception, response);
@@ -103,7 +93,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ExperimentOpsException.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> exception(ExperimentOpsException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.transform(exception);
         logException(exception, response);
@@ -111,7 +100,6 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    @ResponseBody
     public ResponseEntity<ErrorResponseDto> exception(Exception exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.internalError(exception);
         logException(exception, response);
