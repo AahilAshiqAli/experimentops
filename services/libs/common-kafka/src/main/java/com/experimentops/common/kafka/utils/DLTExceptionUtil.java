@@ -23,7 +23,7 @@ public final class DLTExceptionUtil {
 
         dlpr.setHeadersFunction((consumerRecord, exception) -> {
             exceptionMessage.set(exception.getMessage());
-            int errorCode = ErrorCode.GLOBAL_ERROR.getCode();
+            int errorCode = ErrorCode.GENERAL_ERROR.getCode();
 
             if (exception instanceof ListenerExecutionFailedException lefe) {
                 if (lefe.getRootCause() instanceof ExperimentOpsException experimentOpsException) {

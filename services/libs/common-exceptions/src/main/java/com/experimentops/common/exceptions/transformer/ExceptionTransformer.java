@@ -40,10 +40,10 @@ public final class ExceptionTransformer {
 
         List<ObjectError> globalErrors = bindingResult.getGlobalErrors();
         if (!globalErrors.isEmpty()) {
-            return response(ErrorCode.GLOBAL_ERROR.getCode(), globalErrors.getFirst().getDefaultMessage(), BAD_REQUEST);
+            return response(ErrorCode.GENERAL_ERROR.getCode(), globalErrors.getFirst().getDefaultMessage(), BAD_REQUEST);
         }
 
-        return response(ErrorCode.GLOBAL_ERROR.getCode(), getRootCauseMessage(exception), BAD_REQUEST);
+        return response(ErrorCode.GENERAL_ERROR.getCode(), getRootCauseMessage(exception), BAD_REQUEST);
     }
 
     // ── Bad request variants ─────────────────────────────────────
