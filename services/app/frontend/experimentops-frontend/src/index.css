@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    @apply bg-background text-slate-100 antialiased;
+  }
+
+  body {
+    @apply min-h-screen bg-background;
+    background-image:
+      radial-gradient(circle at top, rgba(15, 118, 110, 0.24), transparent 38%),
+      radial-gradient(
+        circle at right top,
+        rgba(245, 158, 11, 0.18),
+        transparent 30%
+      );
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+}
