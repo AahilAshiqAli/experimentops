@@ -1,0 +1,20 @@
+[project]
+name = "analysis-worker"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "experiment-runtime",
+]
+
+[project.scripts]
+analysis-worker = "analysis_worker.main:main"
+
+[tool.uv.sources]
+experiment-runtime = { workspace = true }
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

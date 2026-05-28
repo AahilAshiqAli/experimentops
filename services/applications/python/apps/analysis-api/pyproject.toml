@@ -1,0 +1,22 @@
+[project]
+name = "analysis-api"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "experiment-runtime",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+]
+
+[project.scripts]
+analysis-api = "analysis_api.main:main"
+
+[tool.uv.sources]
+experiment-runtime = { workspace = true }
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
