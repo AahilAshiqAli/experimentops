@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableJpaRepositories(basePackages = "com.experimentops.platformapi.dal.repository")
 public class PersistenceConfiguration {
 
-    // Configure database properties from application.yml
+    // Configure database properties from application.properties
     @Bean
     @ConfigurationProperties("spring.datasource")
     public DataSourceProperties dataSourceProperties() {
