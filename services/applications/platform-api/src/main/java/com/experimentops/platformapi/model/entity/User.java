@@ -31,8 +31,11 @@ public class User extends ExperimentOpsEntity {
     @Column(name = "email")
     private String email;
 
-    @Column(name = "role")
+    @Column(name = "user_role")
     private String role;
+
+    @Column(name = "workspace_uuid")
+    private String workspaceUuid;
 
     @Column(name ="status")
     @Convert(converter = StatusEnumConverter.class)

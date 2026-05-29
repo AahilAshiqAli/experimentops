@@ -17,7 +17,8 @@ public enum RoleType {
             PermissionConstants.ADD_USER
     ), false),
     RESEARCHER("RESEARCHER", List.of(
-    ), false);
+    ), false),
+    INTERNAL("INTERNAL", List.of(), true);
 
     private final String roleName;
     private final List<String> permissions;

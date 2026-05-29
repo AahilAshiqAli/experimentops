@@ -18,6 +18,7 @@
 
   <modules>
     <module>platform-api</module>
+    <module>api-gateway-service</module>
   </modules>
 
 </project>

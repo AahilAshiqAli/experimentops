@@ -12,7 +12,4 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<Workspace> findByUuidAndStatusAndEnabled(String uuid, StatusEnum status, boolean enabled);
-
-    Optional<Workspace> findByEmailAndStatusAndEnabled(String name, String email, StatusEnum status, boolean enabled);
-
 }

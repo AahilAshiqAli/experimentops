@@ -181,6 +181,12 @@
       <version>0.1.0</version>
       <scope>compile</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.experimentops.libs</groupId>
+      <artifactId>spring-web-authorization-utils</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <dependencyManagement>

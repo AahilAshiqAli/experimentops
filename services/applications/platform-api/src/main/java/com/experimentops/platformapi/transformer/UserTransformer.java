@@ -58,6 +58,7 @@ public class UserTransformer {
                 .lastName(payload.getAdminLastName())
                 .status(StatusEnum.ACTIVE)
                 .role(payload.getUserRole())
+                .workspaceUuid(headers.getWorkspaceUuid())
                 .build();
 
         user.setUuid(userMutationEvent.getMetadata().getUuid());

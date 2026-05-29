@@ -24,6 +24,7 @@
     <module>common-kafka</module>
     <module>openapi</module>
     <module>avroevent</module>
+    <module>spring-web-authorization-utils</module>
   </modules>
 
   <dependencies>
