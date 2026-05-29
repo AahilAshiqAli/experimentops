@@ -9,6 +9,7 @@
     <groupId>com.experimentops.services</groupId>
     <artifactId>applications</artifactId>
     <version>${revision}</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>com.experimentops</groupId>
@@ -141,6 +142,13 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Apache -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${apache.commons.lang3.version}</version>
+    </dependency>
+
 
     <!-- https://mvnrepository.com/artifact/org.awaitility/awaitility -->
     <dependency>
@@ -155,6 +163,23 @@
       <groupId>com.experimentops.libs</groupId>
       <artifactId>common-exceptions</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.experimentops.libs</groupId>
+      <artifactId>openapi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.experimentops.libs</groupId>
+      <artifactId>avroevent</artifactId>
+      <version>0.1.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.experimentops.libs</groupId>
+      <artifactId>common-kafka</artifactId>
+      <version>0.1.0</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 

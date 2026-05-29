@@ -1,0 +1,22 @@
+{
+  "namespace": "com.experimentops.user.event",
+  "type": "record",
+  "name": "UserMutationEvent",
+  "fields": [
+    { "name": "metadata", "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent" },
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "UserMutationEventPayload",
+        "fields": [
+          { "name": "adminEmail",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "adminPassword",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "adminFirstName",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "adminLastName",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "userRole",   "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+        ]
+      }
+    }
+  ]
+}

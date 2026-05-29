@@ -7,6 +7,7 @@
         <groupId>com.experimentops.libs</groupId>
         <artifactId>libs</artifactId>
         <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>common-exceptions</artifactId>
@@ -46,7 +47,7 @@
         <dependency>
             <groupId>com.experimentops.libs</groupId>
             <artifactId>common-utils</artifactId>
-            <version>0.1.0</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

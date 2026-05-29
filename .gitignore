@@ -27,6 +27,7 @@ target/
 *.ear
 .mvn/timing.properties
 .m2-tmp/
+.flattened-pom.xml
 
 # Gradle, if added later
 .gradle/

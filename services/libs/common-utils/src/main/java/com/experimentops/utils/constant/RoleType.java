@@ -10,6 +10,8 @@ import java.util.Map;
 public enum RoleType {
 
     PLATFORM_ADMIN("PLATFORM_ADMIN", List.of(
+            PermissionConstants.ADD_WORKSPACE,
+            PermissionConstants.ADD_USER
     ), true),
     WORKSPACE_ADMIN("WORKSPACE_ADMIN", List.of(
             PermissionConstants.ADD_USER

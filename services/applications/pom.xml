@@ -9,6 +9,7 @@
     <groupId>com.experimentops</groupId>
     <artifactId>root</artifactId>
     <version>${revision}</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>com.experimentops.services</groupId>
