@@ -31,6 +31,7 @@ public class WorkspaceTransformer {
                 .setAdminFirstName(workspaceRequestModel.getAdminUser().getFirstName())
                 .setAdminLastName(workspaceRequestModel.getAdminUser().getLastName())
                 .setAdminPassword(workspaceRequestModel.getAdminUser().getPassword())
+                .setUserUuid(ExperimentOpsUtils.uuid())
                 .build();
 
         ExperimentOpsMetadataEvent metadata = ExperimentOpsMetadataUtil.metadataEvent(

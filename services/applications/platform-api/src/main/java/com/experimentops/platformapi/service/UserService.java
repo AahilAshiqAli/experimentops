@@ -33,14 +33,14 @@ public class UserService {
         String userUuid = userMutationEvent.getMetadata().getUuid();
         userRepository
                 .findByUuidAndStatusAndEnabled(userUuid, StatusEnum.ACTIVE, true)
-                .ifPresent(workspace -> {
+                .ifPresent(user -> {
                     throw new EntityAlreadyExistsException("uuid", userUuid);
                 });
 
         User user = userTransformer.transformUserEntity(userMutationEvent, headers);
         userRepository.save(user);
         WorkspaceMutationEvent workspaceMutationEvent = workspaceTransformer.transformWorkspaceCreationCompletionEvent(headers);
-        kafkaProducer.sendMessage(workspaceCreationCompletedTopic, userMutationEvent, userMutationEvent.getMetadata());
+        kafkaProducer.sendMessage(workspaceCreationCompletedTopic, workspaceMutationEvent, workspaceMutationEvent.getMetadata());
     }
 
 

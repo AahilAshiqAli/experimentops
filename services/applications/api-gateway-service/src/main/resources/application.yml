@@ -52,6 +52,7 @@ management:
 
 jwks:
   certs: ${JWKS_CERTS:}
+  certs-file: ${JWKS_CERTS_FILE:}
   uri: ${JWKS_URI:http://localhost:8090/realms/experimentops/protocol/openid-connect/certs}
   clock:
     skew:

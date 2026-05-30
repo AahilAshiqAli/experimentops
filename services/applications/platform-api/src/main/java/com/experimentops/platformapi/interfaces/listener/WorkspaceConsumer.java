@@ -27,7 +27,7 @@ public class WorkspaceConsumer {
         EventType eventType = EventType.valueOf(event.getMetadata().getEventType());
         if (EventType.WORKSPACE_CREATE == eventType) {
             workspaceService.createWorkspace(event, headers);
-        } else if (EventType.USER_CREATE == eventType) {
+        } else if (EventType.WORKSPACE_CREATION_COMPLETE == eventType) {
             workspaceService.changeStatusWorkspace(headers);
         }
     }
