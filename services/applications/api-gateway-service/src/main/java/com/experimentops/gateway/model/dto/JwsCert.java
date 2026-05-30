@@ -1,5 +1,7 @@
 package com.experimentops.gateway.model.dto;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,18 +13,12 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 import java.util.List;
 
+@Getter
+@Setter
 public class JwsCert {
     private static final Logger log = LoggerFactory.getLogger(JwsCert.class);
 
     private List<JwsKey> keys;
-
-    public List<JwsKey> getKeys() {
-        return keys;
-    }
-
-    public void setKeys(List<JwsKey> keys) {
-        this.keys = keys;
-    }
 
     public PublicKey getPublicKey(String kid) {
         if (keys == null || keys.isEmpty()) {

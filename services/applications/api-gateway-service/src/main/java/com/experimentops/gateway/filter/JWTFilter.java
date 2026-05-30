@@ -1,6 +1,6 @@
 package com.experimentops.gateway.filter;
 
-import com.experimentops.gateway.model.dto.JwtDto;
+import com.experimentops.gateway.model.dto.JwtClaimDto;
 import com.experimentops.gateway.util.JwtUtil;
 import com.experimentops.utils.constant.Headers;
 import lombok.RequiredArgsConstructor;
@@ -49,12 +49,12 @@ public class JWTFilter implements GlobalFilter, Ordered {
             return filterNoAuth(oldRequest, exchange, chain);
         }
 
-        JwtDto jwtDto = jwtUtil.parseAuthorization(authorization);
-        if (jwtDto == null) {
+        JwtClaimDto claimDto = jwtUtil.parseAuthorization(authorization);
+        if (claimDto == null) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
-        return filterAuth(oldRequest, jwtDto, exchange, chain);
+        return filterAuth(oldRequest, claimDto, exchange, chain);
     }
 
     private Mono<Void> filterNoAuth(ServerHttpRequest oldRequest, ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -64,16 +64,16 @@ public class JWTFilter implements GlobalFilter, Ordered {
         return chain.filter(exchange.mutate().request(request).build());
     }
 
-    private Mono<Void> filterAuth(ServerHttpRequest oldRequest, JwtDto jwtDto,
+    private Mono<Void> filterAuth(ServerHttpRequest oldRequest, JwtClaimDto claimDto,
                                   ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest.Builder requestBuilder = oldRequest.mutate();
-        addHeader(requestBuilder, X_TOKEN_C_USER_NAME, jwtDto.getClaim().getName());
-        addHeader(requestBuilder, X_TOKEN_C_WORKSPACE_UUID, jwtDto.getClaim().getWorkspaceUuid());
-        addHeader(requestBuilder, X_TOKEN_C_USER_UUID, jwtDto.getClaim().getUserUuid());
-        addHeader(requestBuilder, X_TOKEN_C_USER_ROLE, jwtDto.getClaim().getRole());
+        addHeader(requestBuilder, X_TOKEN_C_USER_NAME, claimDto.getName());
+        addHeader(requestBuilder, X_TOKEN_C_WORKSPACE_UUID, claimDto.getWorkspaceUuid());
+        addHeader(requestBuilder, X_TOKEN_C_USER_UUID, claimDto.getUserUuid());
+        addHeader(requestBuilder, X_TOKEN_C_USER_ROLE, claimDto.getRole());
 
-        if (StringUtils.isBlank(jwtDto.getClaim().getWorkspaceUuid())
-                && StringUtils.equalsIgnoreCase(jwtDto.getClaim().getRole(), "PLATFORM_ADMIN")) {
+        if (StringUtils.isBlank(claimDto.getWorkspaceUuid())
+                && StringUtils.equalsIgnoreCase(claimDto.getRole(), "PLATFORM_ADMIN")) {
             addHeader(requestBuilder, X_TOKEN_C_WORKSPACE_UUID, "platform");
         }
 

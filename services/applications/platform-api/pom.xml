@@ -58,7 +58,7 @@
     <dependency>
       <groupId>io.confluent</groupId>
       <artifactId>kafka-schema-registry-client</artifactId>
-      <version>5.3.0</version>
+      <version>${confluent.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.apache.zookeeper</groupId>
@@ -74,12 +74,12 @@
     <dependency>
       <groupId>io.confluent</groupId>
       <artifactId>kafka-avro-serializer</artifactId>
-      <version>5.2.1</version>
+      <version>${confluent.version}</version>
     </dependency>
     <dependency>
       <groupId>io.confluent</groupId>
       <artifactId>kafka-streams-avro-serde</artifactId>
-      <version>5.3.0</version>
+      <version>${confluent.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.slf4j</groupId>
@@ -154,7 +154,7 @@
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
-      <version>3.0.0</version>
+      <version>${awaitility.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -172,13 +172,13 @@
     <dependency>
       <groupId>com.experimentops.libs</groupId>
       <artifactId>avroevent</artifactId>
-      <version>0.1.0</version>
+      <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.experimentops.libs</groupId>
       <artifactId>common-kafka</artifactId>
-      <version>0.1.0</version>
+      <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
 
@@ -194,7 +194,7 @@
       <dependency>
         <groupId>org.keycloak.bom</groupId>
         <artifactId>keycloak-adapter-bom</artifactId>
-        <version>9.0.2</version>
+        <version>${keycloak-adapter-bom.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

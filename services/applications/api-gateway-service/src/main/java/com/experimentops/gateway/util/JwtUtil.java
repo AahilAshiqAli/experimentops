@@ -2,7 +2,6 @@ package com.experimentops.gateway.util;
 
 import com.experimentops.gateway.model.dto.JwsCert;
 import com.experimentops.gateway.model.dto.JwtClaimDto;
-import com.experimentops.gateway.model.dto.JwtDto;
 import com.experimentops.utils.JSONUtil;
 import com.experimentops.utils.constant.RoleType;
 import io.jsonwebtoken.Claims;
@@ -36,7 +35,7 @@ public class JwtUtil {
     private JwsCert jwsCert;
 
 
-    public JwtDto parseAuthorization(String authorization) {
+    public JwtClaimDto parseAuthorization(String authorization) {
         if (StringUtils.length(authorization) > BEARER.length() && StringUtils.startsWithIgnoreCase(authorization, BEARER)) {
             authorization = StringUtils.trimToNull(StringUtils.substring(authorization, BEARER.length()));
         }
@@ -75,8 +74,7 @@ public class JwtUtil {
         claimDto.setUserUuid(StringUtils.defaultIfBlank(payload.get("user_uuid", String.class), payload.getSubject()));
         claimDto.setRole(extractRole(payload));
 
-        JwtDto jwtDto = new JwtDto(claimDto);
-        return jwtVerifier.verify(jwtDto) ? jwtDto : null;
+        return jwtVerifier.verify(claimDto) ? claimDto : null;
     }
 
     private void loadCerts() {

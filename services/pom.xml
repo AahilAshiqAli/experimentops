@@ -21,12 +21,21 @@
   <properties>
     <revision>0.1.0</revision>
     <avro.version>1.12.0</avro.version>
+    <awaitility.version>3.0.0</awaitility.version>
+    <confluent.version>5.3.0</confluent.version>
     <jspecify.version>1.0.0</jspecify.version>
+    <jakarta.annotation-api.version>3.0.0</jakarta.annotation-api.version>
+    <jackson-databind-nullable.version>0.2.6</jackson-databind-nullable.version>
+    <jjwt.version>0.12.6</jjwt.version>
     <lombok.version>1.18.38</lombok.version>
     <keycloak-admin-client.version>15.0.2</keycloak-admin-client.version>
+    <keycloak-adapter-bom.version>9.0.2</keycloak-adapter-bom.version>
     <resteasy-multipart-provider.version>6.2.11.Final</resteasy-multipart-provider.version>
     <commons-io.version>2.19.0</commons-io.version>
     <openapi.maven.generator.version>7.17.0</openapi.maven.generator.version>
+    <spring-cloud.version>2025.0.0</spring-cloud.version>
+    <swagger-annotations-jakarta.version>2.2.21</swagger-annotations-jakarta.version>
+    <flatten.maven-plugin.version>1.6.0</flatten.maven-plugin.version>
     <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <apache.commons.lang3.version>3.18.0</apache.commons.lang3.version>
@@ -50,7 +59,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>flatten-maven-plugin</artifactId>
-        <version>1.6.0</version>
+        <version>${flatten.maven-plugin.version}</version>
         <configuration>
           <flattenMode>resolveCiFriendliesOnly</flattenMode>
           <updatePomFile>true</updatePomFile>
