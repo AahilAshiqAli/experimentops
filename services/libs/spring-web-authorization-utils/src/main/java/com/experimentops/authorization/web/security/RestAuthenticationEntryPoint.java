@@ -9,6 +9,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 
 import java.io.IOException;
 
+// The benifit of this class is that it logs the rejected URI in debug level. And passes a msg in response
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
     private static final Logger log = LoggerFactory.getLogger(RestAuthenticationEntryPoint.class);
 

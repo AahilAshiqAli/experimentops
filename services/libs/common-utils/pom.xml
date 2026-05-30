@@ -26,6 +26,12 @@
             <version>${jspecify.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.experimentops.libs</groupId>
+            <artifactId>common-exceptions</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Logging -->
         <dependency>
             <groupId>org.slf4j</groupId>

@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+// a wrapper around Spring's SecurityContextHolder to make accessing the current authenticated user cleaner and more testable.
+// We cannot mock SecurityContextHolder directly in tests so we need a wrapper around for that.
+
 @Component
 public class AuthenticationFacadeImpl implements AuthenticationFacade {
     @Override

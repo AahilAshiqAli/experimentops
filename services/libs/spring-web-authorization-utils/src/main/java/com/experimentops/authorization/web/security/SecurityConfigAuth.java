@@ -17,11 +17,13 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+// Not the main security config. If we plan to create spring-boot worker then this is just a utility which would do most of the work of future SecurityConfig file
 @Component
 public class SecurityConfigAuth {
     @Value("${experimentops.security.internal-authenticated-paths:}")
     private String internalAuthenticatedPaths;
 
+    // Registers a custom JWT/token filter that intercepts every request and validates the token before it reaches your controllers.
     @Bean
     public TokenAuthenticationFilter tokenAuthenticationFilter(CustomUserDetailsService customUserDetailsService) {
         TokenAuthenticationFilter filter = new TokenAuthenticationFilter(customUserDetailsService);
@@ -31,6 +33,7 @@ public class SecurityConfigAuth {
         return filter;
     }
 
+    // Standard BCrypt encoder — used when creating/verifying passwords.
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

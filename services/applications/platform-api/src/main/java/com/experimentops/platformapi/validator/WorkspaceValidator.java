@@ -4,9 +4,10 @@ import com.experimentops.common.exceptions.constant.ErrorCode;
 import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.workspace.model.v1.WorkspaceAdminUserRequestModel;
 import com.experimentops.workspace.model.v1.WorkspaceRequestModel;
-import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
+
+import static com.experimentops.utils.ExperimentOpsUtils.validateInputString;
 
 @Component
 public class WorkspaceValidator {
@@ -25,9 +26,4 @@ public class WorkspaceValidator {
         }
     }
 
-    public void validateInputString(@NonNull String key, String value){
-        if (StringUtils.isBlank(value)) {
-            throw new ValidationException(ErrorCode.REQUIRED_FIELD_MISSING, key);
-        }
-    }
 }

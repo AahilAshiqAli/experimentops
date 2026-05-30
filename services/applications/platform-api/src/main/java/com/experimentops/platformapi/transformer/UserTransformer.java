@@ -7,6 +7,8 @@ import com.experimentops.platformapi.model.entity.User;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.user.event.UserMutationEvent;
 import com.experimentops.user.event.UserMutationEventPayload;
+import com.experimentops.user.model.v1.UserRequestModel;
+import com.experimentops.user.model.v1.UserResponseModel;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.ExperimentOpsUtils;
 import com.experimentops.utils.constant.RoleType;
@@ -26,14 +28,39 @@ public class UserTransformer {
         WorkspaceMutationEventPayload workspacePayload = workspaceMutationEvent.getPayload();
 
         UserMutationEventPayload payload = UserMutationEventPayload.newBuilder()
-                .setAdminEmail(workspacePayload.getAdminEmail())
-                .setAdminFirstName(workspacePayload.getAdminFirstName())
-                .setAdminLastName(workspacePayload.getAdminLastName())
-                .setAdminPassword(workspacePayload.getAdminPassword())
+                .setUserEmail(workspacePayload.getAdminEmail())
+                .setUserFirstName(workspacePayload.getAdminFirstName())
+                .setUserLastName(workspacePayload.getAdminLastName())
+                .setUserPassword(workspacePayload.getAdminPassword())
                 .setUserRole(RoleType.WORKSPACE_ADMIN.getRoleName())
                 .build();
 
         headers.setWorkspaceUuid(workspaceMutationEvent.getMetadata().getUuid());
+
+        ExperimentOpsMetadataEvent metadata = ExperimentOpsMetadataUtil.metadataEvent(
+                headers,
+                workspacePayload.getUserUuid(),
+                EventType.USER_CREATE.name(),
+                this.getClass().getSimpleName()
+        );
+
+        return UserMutationEvent.newBuilder()
+                .setMetadata(metadata)
+                .setPayload(payload)
+                .build();
+    }
+
+    public UserMutationEvent transformUserCreationEvent(@NonNull UserRequestModel userRequestModel, @NonNull ExperimentOpsHeaders headers) {
+
+        log.info(headers, "transforming the payload to user mutation event");
+
+        UserMutationEventPayload payload = UserMutationEventPayload.newBuilder()
+                .setUserEmail(userRequestModel.getEmail())
+                .setUserFirstName(userRequestModel.getFirstName())
+                .setUserLastName(userRequestModel.getLastName())
+                .setUserPassword(userRequestModel.getPassword())
+                .setUserRole(userRequestModel.getUserRole())
+                .build();
 
         ExperimentOpsMetadataEvent metadata = ExperimentOpsMetadataUtil.metadataEvent(
                 headers,
@@ -48,14 +75,30 @@ public class UserTransformer {
                 .build();
     }
 
+    public UserResponseModel transformUserResponseModel(@NonNull UserMutationEvent userMutationEvent, @NonNull ExperimentOpsHeaders headers) {
+
+        log.info(headers, "transforming the payload to User Response Model");
+
+        UserMutationEventPayload payload = userMutationEvent.getPayload();
+
+        UserResponseModel userResponseModel = new UserResponseModel();
+        userResponseModel.setUuid(userMutationEvent.getMetadata().getUuid());
+        userResponseModel.setEmail(payload.getUserEmail());
+        userResponseModel.setFirstName(payload.getUserFirstName());
+        userResponseModel.setLastName(payload.getUserLastName());
+        userResponseModel.setUserRole(payload.getUserRole());
+
+        return userResponseModel;
+    }
+
     public User transformUserEntity(@NonNull UserMutationEvent userMutationEvent, @NonNull ExperimentOpsHeaders headers){
         log.info(headers, "transforming the payload to user entity");
 
         UserMutationEventPayload payload = userMutationEvent.getPayload();
         User user = User.builder()
-                .email(payload.getAdminEmail())
-                .firstName(payload.getAdminFirstName())
-                .lastName(payload.getAdminLastName())
+                .email(payload.getUserEmail())
+                .firstName(payload.getUserFirstName())
+                .lastName(payload.getUserLastName())
                 .status(StatusEnum.ACTIVE)
                 .role(payload.getUserRole())
                 .workspaceUuid(headers.getWorkspaceUuid())

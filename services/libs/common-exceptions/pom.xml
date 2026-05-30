@@ -44,10 +44,5 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>com.experimentops.libs</groupId>
-            <artifactId>common-utils</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
 </project>
