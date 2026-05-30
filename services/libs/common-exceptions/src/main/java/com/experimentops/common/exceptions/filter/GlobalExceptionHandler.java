@@ -3,6 +3,9 @@ package com.experimentops.common.exceptions.filter;
 import com.experimentops.common.exceptions.ExperimentOpsException;
 import com.experimentops.common.exceptions.dto.ErrorResponseDto;
 import com.experimentops.common.exceptions.transformer.ExceptionTransformer;
+import com.experimentops.utils.ExperimentOpsLogger;
+import com.experimentops.utils.HeaderUtil;
+import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
@@ -17,19 +20,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.UnknownContentTypeException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @RequiredArgsConstructor
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-    private static final String REQUEST_UUID = "requestUuid";
-    private static final String USER_UUID = "X-Token-C-User-Uuid";
-    private static final String WORKSPACE_UUID = "X-Token-C-Workspace-Uuid";
-    private static final String TRACE_UUID = "X-Trace-Uuid";
-    private static final String NA = "N/A";
+    private static final ExperimentOpsLogger log = ExperimentOpsLogger.getLogger(GlobalExceptionHandler.class);
 
     private final HttpServletRequest exchange;
 
@@ -112,36 +108,13 @@ public class GlobalExceptionHandler {
 
     protected void logException(@NonNull Exception exception,
                                 @NonNull ResponseEntity<ErrorResponseDto> response) {
+        ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
+
         ErrorResponseDto body = response.getBody();
         String statusCode = response.getStatusCode().toString();
         String cause = " | " + statusCode + (body == null ? "" : " | " + body);
-        String message = formatHeaders()
-                + " | "
-                + exception.getClass().getName()
-                + " | "
-                + cause;
+        String message = exception.getClass().getName() + " | " + cause;
 
-        log.error(message, exception);
-    }
-
-    private String formatHeaders() {
-        String requestUuid = getHeaderOrDefault(REQUEST_UUID);
-        String userUuid = getHeaderOrDefault(USER_UUID);
-        String workspaceUuid = getHeaderOrDefault(WORKSPACE_UUID);
-        String traceUuid = exchange.getHeader(TRACE_UUID);
-
-        StringBuilder headers = new StringBuilder();
-        headers.append("| requestUuid : ").append(requestUuid);
-        headers.append(" | userUuid : ").append(userUuid);
-        headers.append(" | workspaceUuid : ").append(workspaceUuid);
-        if (traceUuid != null && !traceUuid.isBlank()) {
-            headers.append(" | internalTraceUuid : ").append(traceUuid);
-        }
-        return headers.toString();
-    }
-
-    private String getHeaderOrDefault(String headerName) {
-        String value = exchange.getHeader(headerName);
-        return value == null || value.isBlank() ? NA : value;
+        log.error(headers, message, exception);
     }
 }

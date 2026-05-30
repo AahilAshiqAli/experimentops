@@ -7,10 +7,8 @@ import com.experimentops.workspace.model.v1.WorkspaceRequestModel;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
-import static com.experimentops.utils.ExperimentOpsUtils.validateInputString;
-
 @Component
-public class WorkspaceValidator {
+public class WorkspaceValidator extends GenericValidator {
 
     public void validateWorkspaceRequestModel(@NonNull WorkspaceRequestModel requestModel){
         validateInputString("workspaceName", requestModel.getWorkspaceName());
@@ -25,5 +23,4 @@ public class WorkspaceValidator {
             validateInputString("adminEmail", adminUserRequestModel.getEmail());
         }
     }
-
 }

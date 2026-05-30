@@ -1,8 +1,5 @@
 package com.experimentops.utils;
 
-import com.experimentops.common.exceptions.constant.ErrorCode;
-import com.experimentops.common.exceptions.runtime.ValidationException;
-import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -64,10 +61,5 @@ public class ExperimentOpsUtils {
         return map == null || map.isEmpty();
     }
 
-    public static void validateInputString(@NonNull String key, String value) {
-        if (StringUtils.isBlank(value)) {
-            throw new ValidationException(ErrorCode.REQUIRED_FIELD_MISSING, key);
-        }
-    }
 
 }

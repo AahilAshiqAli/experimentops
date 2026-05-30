@@ -5,10 +5,8 @@ import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.user.model.v1.AuthLoginRequest;
 import org.springframework.stereotype.Component;
 
-import static com.experimentops.utils.ExperimentOpsUtils.validateInputString;
-
 @Component
-public class AuthValidator {
+public class AuthValidator extends GenericValidator {
 
     public void validateAuthLoginRequestModel(AuthLoginRequest authLoginRequest) {
         if (authLoginRequest == null) {
@@ -19,5 +17,4 @@ public class AuthValidator {
         validateInputString("password", authLoginRequest.getPassword());
         validateInputString("client_id", authLoginRequest.getClientId());
     }
-
 }

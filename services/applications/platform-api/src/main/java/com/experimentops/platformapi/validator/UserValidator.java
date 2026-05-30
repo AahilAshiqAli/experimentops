@@ -4,10 +4,8 @@ import com.experimentops.user.model.v1.UserRequestModel;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
-import static com.experimentops.utils.ExperimentOpsUtils.validateInputString;
-
 @Component
-public class UserValidator {
+public class UserValidator extends GenericValidator {
 
     public void validateUserRequestModel(@NonNull UserRequestModel requestModel) {
         validateInputString("email", requestModel.getEmail());
@@ -16,5 +14,4 @@ public class UserValidator {
         validateInputString("lastName", requestModel.getLastName());
         validateInputString("userRole", requestModel.getUserRole());
     }
-
 }
