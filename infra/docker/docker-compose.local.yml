@@ -51,8 +51,9 @@ services:
     depends_on:
       - kafka
       - schema-registry
-    ports:
-      - "8080:8080"
+      - keycloak
+    expose:
+      - "8080"
     environment:
       kafka.bootstrap-servers: kafka:29092
       kafka.schema.registry-url: http://schema-registry:8081
@@ -63,6 +64,7 @@ services:
       experimentops.db.schema: experimentOps
       experimentops.db.username: experimentops_user
       experimentops.db.password: experimentops_password
+      experimentops.keycloak.master.server-url: http://keycloak:8080
 
 
 
@@ -89,6 +91,24 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     volumes:
       - keycloak_data:/opt/keycloak/data
+
+  api-gateway-service:
+    build:
+      context: ../../services/applications/api-gateway-service
+      dockerfile: Dockerfile
+    image: api-gateway-service:local
+    container_name: experimentops-api-gateway-service
+    depends_on:
+      - platform-api
+      - keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      services.platform-api.url: http://platform-api:8080
+      JWKS_URI: http://keycloak:8080/realms/experimentops/protocol/openid-connect/certs
+      JWT_CLIENT_ID: experimentops-platform
+
 
 volumes:
   keycloak_data:

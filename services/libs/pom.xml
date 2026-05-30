@@ -9,6 +9,7 @@
     <groupId>com.experimentops</groupId>
     <artifactId>root</artifactId>
     <version>${revision}</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <groupId>com.experimentops.libs</groupId>
@@ -21,6 +22,9 @@
     <module>common-exceptions</module>
     <module>common-utils</module>
     <module>common-kafka</module>
+    <module>openapi</module>
+    <module>avroevent</module>
+    <module>spring-web-authorization-utils</module>
   </modules>
 
   <dependencies>

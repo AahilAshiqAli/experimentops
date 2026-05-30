@@ -1,5 +1,5 @@
 {
-  "namespace": "com.simplifi.common.kafka.model.event",
+  "namespace": "com.experimentops.common.kafka.model.event",
   "type": "record",
   "name": "ExperimentOpsMetadataEvent",
   "fields": [

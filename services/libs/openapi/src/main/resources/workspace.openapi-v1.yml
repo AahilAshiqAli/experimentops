@@ -1,0 +1,93 @@
+openapi: 3.0.1
+
+info:
+  title: ExperimentOps
+  description: ExperimentOps API.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+    variables:
+      basePath:
+        default: api/v1
+
+tags:
+  - name: Workspace
+    description: Everything about workspaces
+
+paths:
+  /workspaces:
+    post:
+      summary: Create Workspace
+      description: This API will create a new workspace and its first client admin user.
+      tags:
+        - Workspace
+      operationId: createWorkspace
+      requestBody:
+        description: Workspace creation request
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceRequestModel'
+      responses:
+        202:
+          description: Workspace create event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponseModel'
+
+components:
+  schemas:
+    WorkspaceRequestModel:
+      type: object
+      properties:
+        workspaceName:
+          type: string
+          example: "Acme Research Lab"
+        workspaceEmail:
+          type: string
+          example: "admin@acmelab.com"
+        adminUser:
+          $ref: '#/components/schemas/WorkspaceAdminUserRequestModel'
+
+    WorkspaceAdminUserRequestModel:
+      type: object
+      properties:
+        email:
+          type: string
+          example: "admin@acmelab.com"
+        password:
+          type: string
+          example: "Admin@12345"
+        firstName:
+          type: string
+          example: "Sarah"
+        lastName:
+          type: string
+          example: "Khan"
+
+    WorkspaceResponseModel:
+      type: object
+      properties:
+        workspaceUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        workspaceName:
+          type: string
+          example: "Acme Research Lab"
+        workspaceEmail:
+          type: string
+          example: "admin@acmelab.com"
+        workspaceStatus:
+          type: string
+          example: "PENDING"
+        userUuid:
+          type: string
+          example: "2e15c4d5-6d3e-4c92-bfc9-0e44a17d82c1"
+        userRole:
+          type: string
+          example: "CLIENT_ADMIN"
+

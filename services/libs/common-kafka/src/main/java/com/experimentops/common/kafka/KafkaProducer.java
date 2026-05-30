@@ -1,10 +1,10 @@
 package com.experimentops.common.kafka;
 
 import com.experimentops.common.kafka.constant.KafkaConstants;
+import com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent;
 import com.experimentops.common.kafka.utils.ExperimentOpsMetadataUtil;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
-import com.simplifi.common.kafka.model.event.ExperimentOpsMetadataEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Autowired;

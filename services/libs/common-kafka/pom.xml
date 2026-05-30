@@ -7,6 +7,7 @@
         <groupId>com.experimentops.libs</groupId>
         <artifactId>libs</artifactId>
         <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>common-kafka</artifactId>

@@ -2,7 +2,7 @@ package com.experimentops.common.kafka.utils;
 
 import com.experimentops.utils.HeaderUtil;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
-import com.simplifi.common.kafka.model.event.ExperimentOpsMetadataEvent;
+import com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.UUID;

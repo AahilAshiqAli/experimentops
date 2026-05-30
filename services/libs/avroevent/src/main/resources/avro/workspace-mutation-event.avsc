@@ -1,0 +1,27 @@
+{
+  "namespace": "com.experimentops.workspace.event",
+  "type": "record",
+  "name": "WorkspaceMutationEvent",
+  "fields": [
+    { "name": "metadata", "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent" },
+    {
+      "name": "payload",
+      "type": [ "null",
+        {
+        "type": "record",
+        "name": "WorkspaceMutationEventPayload",
+        "fields": [
+          { "name": "workspaceName",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "workspaceEmail",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "userUuid",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "adminEmail",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "adminPassword",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "adminFirstName",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "adminLastName",   "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+        ]
+      }
+        ],
+      "default": null
+    }
+  ]
+}

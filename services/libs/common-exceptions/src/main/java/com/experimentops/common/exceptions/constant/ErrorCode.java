@@ -13,7 +13,9 @@ public enum ErrorCode {
     WORKER_CALL_FAILED(20001, "Worker call failed", true),
     WORKER_UNAVAILABLE(20002, "Worker unavailable", true),
     PYTHON_WORKER_ERROR(20003, "Python worker error", true),
-    AUTHORIZATION_ERROR(1003, "Access denied", false);
+    AUTHORIZATION_ERROR(1003, "Access denied", false),
+    EMAIL_OR_USERNAME_ALREADY_EXISTS(1004, "Email or username already exists", false),
+    ROLE_CREATION_FAILED(1005, "Role creation failed", true);
 
     private final int code;
     private final String message;
