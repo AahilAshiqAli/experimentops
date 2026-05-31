@@ -1,0 +1,163 @@
+openapi: 3.0.1
+
+info:
+  title: ExperimentOps
+  description: ExperimentOps API.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+    variables:
+      basePath:
+        default: api/v1
+
+tags:
+  - name: User
+    description: Everything about user
+  - name: Auth
+    description: Everything about auth
+
+paths:
+  /auth/login/{workspaceName}:
+    post:
+      summary: API login
+      description: API login endpoint
+      operationId: loginRealm
+      parameters:
+        - name: workspaceName
+          in: path
+          description: Workspace Name
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLoginRequest'
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthLoginResponse'
+
+  /auth/reset-password/verify:
+    post:
+      summary: API login
+      description: API login endpoint
+      operationId: resetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthResetPasswordRequest'
+      responses:
+        200:
+          description: successful operation
+
+  /user:
+    post:
+      summary: Create a User
+      operationId: addUser
+      description: The ‘Create a User’ endpoint creates a new user (card holder). In the SimpliFi platform, it is mandatory for the card holders to be a part of a card program instead of being a standalone entity. It is mandatory to have a card holder created before issuing a card. Following are the properties of this endpoint.
+      requestBody:
+        description: User
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequestModel'
+        required: true
+      responses:
+        200:
+          description: User Added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponseModel'
+
+components:
+  schemas:
+    AuthLoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        client_id:
+          type: string
+
+    AuthLoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        expires_in:
+          type: integer
+          format: int64
+        refresh_token:
+          type: string
+        refresh_expires_in:
+          type: integer
+          format: int64
+        token_type:
+          type: string
+        session_state:
+          type: string
+        scope:
+          type: string
+
+    UserRequestModel:
+      type: object
+      properties:
+        email:
+          type: string
+          example: "admin@acmelab.com"
+        password:
+          type: string
+          example: "Admin@12345"
+        firstName:
+          type: string
+          example: "Sarah"
+        lastName:
+          type: string
+          example: "Khan"
+        userRole:
+          type: string
+          example: "WORKSPACE_ADMIN"
+
+    UserResponseModel:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        email:
+          type: string
+          example: "admin@acmelab.com"
+        firstName:
+          type: string
+          example: "Sarah"
+        lastName:
+          type: string
+          example: "Khan"
+        userRole:
+          type: string
+          example: "WORKSPACE_ADMIN"
+
+    AuthResetPasswordRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "admin@acmelab.com"
+        newPassword:
+          type: string
+          example: "Admin@12345"
+
+
+
+

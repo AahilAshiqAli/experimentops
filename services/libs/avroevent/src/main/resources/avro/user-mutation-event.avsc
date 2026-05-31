@@ -10,10 +10,10 @@
         "type": "record",
         "name": "UserMutationEventPayload",
         "fields": [
-          { "name": "adminEmail",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-          { "name": "adminPassword",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-          { "name": "adminFirstName",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-          { "name": "adminLastName",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "userEmail",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "userPassword",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "userFirstName",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "userLastName",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
           { "name": "userRole",   "type": ["null", "string"], "default": null, "avro.java.string": "String" }
         ]
       }

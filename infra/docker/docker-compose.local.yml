@@ -64,7 +64,11 @@ services:
       experimentops.db.schema: experimentOps
       experimentops.db.username: experimentops_user
       experimentops.db.password: experimentops_password
-      experimentops.keycloak.master.server-url: http://keycloak:8080
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_MASTER_REALM: master
+      KEYCLOAK_MASTER_USERNAME: admin
+      KEYCLOAK_MASTER_PASSWORD: admin
+      KEYCLOAK_MASTER_CLIENT_ID: admin-cli
 
 
 
@@ -106,9 +110,13 @@ services:
     environment:
       SERVER_PORT: 8080
       services.platform-api.url: http://platform-api:8080
+      JWKS_CERTS_FILE: /app/config/experimentops-jwks.json
       JWKS_URI: http://keycloak:8080/realms/experimentops/protocol/openid-connect/certs
       JWT_CLIENT_ID: experimentops-platform
+    volumes:
+      - ./jwks/experimentops-jwks.json:/app/config/experimentops-jwks.json:ro
 
-
+# this persistent volume is to save keycloak all roles and users and realms so even if keycloak image is deleted and re-built then we dont loose our data.
+# Since we have not mentioned the path where data is saved. This is internally managed by keycloak
 volumes:
   keycloak_data:

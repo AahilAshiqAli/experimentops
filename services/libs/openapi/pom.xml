@@ -54,7 +54,7 @@
                 <version>${openapi.maven.generator.version}</version>
                 <executions>
                     <execution>
-                        <id>v1</id>
+                        <id>workspace-v1</id>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -65,6 +65,30 @@
                             <generatorName>spring</generatorName>
                             <apiPackage>com.experimentops.workspace.api.v1</apiPackage>
                             <modelPackage>com.experimentops.workspace.model.v1</modelPackage>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <configOptions>
+                                <oas3>true</oas3>
+                                <useSpringfox>false</useSpringfox>
+                                <reactive>false</reactive>
+                                <sourceFolder>src/main/java/</sourceFolder>
+                                <interfaceOnly>true</interfaceOnly>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <useSpringBoot3>true</useSpringBoot3>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>user-v1</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/user.openapi-v1.yml
+                            </inputSpec>
+                            <generatorName>spring</generatorName>
+                            <apiPackage>com.experimentops.user.api.v1</apiPackage>
+                            <modelPackage>com.experimentops.user.model.v1</modelPackage>
                             <generateSupportingFiles>false</generateSupportingFiles>
                             <configOptions>
                                 <oas3>true</oas3>

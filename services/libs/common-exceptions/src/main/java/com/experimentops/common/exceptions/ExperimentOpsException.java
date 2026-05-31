@@ -1,7 +1,9 @@
 package com.experimentops.common.exceptions;
 
 import com.experimentops.common.exceptions.constant.ErrorCode;
+import lombok.Getter;
 
+@Getter
 public abstract class ExperimentOpsException extends RuntimeException {
     private final ErrorCode errorCode;
 
@@ -18,9 +20,5 @@ public abstract class ExperimentOpsException extends RuntimeException {
     protected ExperimentOpsException(ErrorCode errorCode, String message, Throwable cause) {
         super(message, cause);
         this.errorCode = errorCode;
-    }
-
-    public ErrorCode getErrorCode() {
-        return errorCode;
     }
 }

@@ -42,7 +42,7 @@ public class WorkspaceService {
 
     @NonNull
     public WorkspaceResponseModel publishWorkspaceCreationEvent(@NonNull WorkspaceRequestModel workspaceRequestModel, @NonNull ExperimentOpsHeaders headers) {
-        log.info(headers, "creating new workspace with name" + workspaceRequestModel.getWorkspaceName());
+        log.info(headers, "creating new workspace with name " + workspaceRequestModel.getWorkspaceName());
         workspaceValidator.validateWorkspaceRequestModel(workspaceRequestModel);
         workspaceRepository
                 .findByNameOrEmailAndStatusAndEnabled(

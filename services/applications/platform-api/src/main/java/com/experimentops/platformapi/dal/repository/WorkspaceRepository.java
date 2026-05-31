@@ -14,4 +14,6 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
 
     Optional<Workspace> findByNameOrEmailAndStatusAndEnabled(String name, String email, StatusEnum status, boolean enabled);
 
+    Optional<Workspace> findByNameAndStatusAndEnabled(String name, StatusEnum status, boolean enabled);
+
 }

@@ -2,26 +2,37 @@ package com.experimentops.platformapi.dal.gateway;
 
 import com.experimentops.common.exceptions.constant.ErrorCode;
 import com.experimentops.common.exceptions.runtime.ValidationException;
-import com.experimentops.platformapi.common.exceptions.KeycloakException;
+import com.experimentops.common.exceptions.KeycloakException;
 import com.experimentops.platformapi.transformer.KeyCloakTransformer;
+import com.experimentops.user.model.v1.AuthLoginRequest;
 import com.experimentops.utils.ExperimentOpsLogger;
+import com.experimentops.utils.JSONUtil;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import com.experimentops.workspace.event.WorkspaceMutationEvent;
 import com.experimentops.workspace.event.WorkspaceMutationEventPayload;
 import lombok.RequiredArgsConstructor;
+import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Component
@@ -34,6 +45,46 @@ public class KeyCloakGateway {
 
     private final Keycloak keycloak;
     private final KeyCloakTransformer keycloakTransformer;
+    private final RestTemplate restTemplate;
+
+    @Value("${experimentops.keycloak.auth.token-url}")
+    private String tokenUrl;
+  // Should not use KeyCloak SDK here as only for user authentication which is a small job, should not instantiate a new heavy object KeyCloakBuilder
+      public AccessTokenResponse authenticate(String realmName, AuthLoginRequest authLoginRequest, ExperimentOpsHeaders experimentOpsHeaders) {
+          log.info(experimentOpsHeaders, "Authenticating keycloak realm: " + realmName);
+
+          HttpHeaders headers = new HttpHeaders();
+          headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+          MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+          body.add("username", authLoginRequest.getUsername());
+          body.add("password", authLoginRequest.getPassword());
+          body.add("client_id", authLoginRequest.getClientId());
+          body.add("grant_type", OAuth2Constants.PASSWORD);
+
+          HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+          try {
+              return restTemplate.postForObject(resolveTokenUrl(realmName), request, AccessTokenResponse.class);
+          } catch (HttpClientErrorException exception) {
+              log.info(experimentOpsHeaders, "ResponseBody: " + exception.getResponseBodyAsString());
+              log.info(experimentOpsHeaders, "Message: " + exception.getMessage());
+              log.info(experimentOpsHeaders, "StatusText: " + exception.getStatusText());
+
+              ErrorCode errorCode = ErrorCode.KEYCLOAK_TOKEN_ERROR;
+              if (exception.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                  errorCode = ErrorCode.KEYCLOAK_TOKEN_INVALID_CREDENTIALS;
+              }
+              if (!StringUtils.isBlank(exception.getResponseBodyAsString())) {
+                  Map<String, String> errorResponse = JSONUtil.toObjectFromTypedJson(
+                          exception.getResponseBodyAsString(), Map.class);
+                  if (ErrorCode.KEYCLOAK_ACCOUNT_NOT_FULLY_SETUP.getMessage()
+                          .equalsIgnoreCase(errorResponse.get("error_description"))) {
+                      errorCode = ErrorCode.KEYCLOAK_TOKEN_FIRST_TIME_LOGIN;
+                  }
+              }
+              throw new KeycloakException(errorCode, exception);
+          }
+      }
 
     public void createWorkspaceRealm(WorkspaceMutationEvent workspaceMutationEvent, ExperimentOpsHeaders experimentopsHeaders) {
         WorkspaceMutationEventPayload workspaceEvent = workspaceMutationEvent.getPayload();
@@ -91,6 +142,20 @@ public class KeyCloakGateway {
         log.info(experimentopsHeaders, "Created workspace admin user: " + workspaceEvent.getAdminEmail());
     }
 
+    public void updateUserPassword(String realm, String userName, String newPassword, ExperimentOpsHeaders experimentOpsHeaders) {
+        UserRepresentation userRepresentation = getUserRepresentation(userName, realm, experimentOpsHeaders);
+        CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
+        credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
+        credentialRepresentation.setValue(newPassword);
+        credentialRepresentation.setTemporary(false);
+        try {
+            keycloak.realm(realm).users().get(userRepresentation.getId()).resetPassword(credentialRepresentation);
+        } catch (Exception ex) {
+            log.error(experimentOpsHeaders, "Unable to update password: " + ex.getMessage(), ex);
+            throw new KeycloakException(ErrorCode.KEYCLOAK_PASSWORD_VALIDATION);
+        }
+    }
+
     public void createRealmRole(String realmName, String roleName) {
         RoleRepresentation roleRepresentation = new RoleRepresentation();
         roleRepresentation.setName(roleName);
@@ -134,5 +199,23 @@ public class KeyCloakGateway {
         credentials.add(credentialRepresentation);
 
         return credentials;
+    }
+
+    public UserRepresentation getUserRepresentation(String userName, String realm, ExperimentOpsHeaders experimentOpsHeaders) {
+        log.info(experimentOpsHeaders, "Calling keycloak to fetch users");
+        List<UserRepresentation> users = keycloak.realm(realm).users().list(0, Integer.MAX_VALUE);
+        log.info(experimentOpsHeaders, "Users size: " + users.size());
+        log.info(experimentOpsHeaders, "Filtering user from: " + realm + " as per username: " + userName);
+        Optional<UserRepresentation> currentUser = users.stream()
+                .filter(userRepresentation -> userRepresentation.getUsername().equalsIgnoreCase(userName))
+                .findAny();
+        if (currentUser.isEmpty()) {
+            throw new KeycloakException(ErrorCode.KEYCLOAK_USER_NOT_FOUND);
+        }
+        return currentUser.get();
+    }
+
+    private String resolveTokenUrl(String realmName) {
+        return tokenUrl.replace("{realmName}", realmName);
     }
 }

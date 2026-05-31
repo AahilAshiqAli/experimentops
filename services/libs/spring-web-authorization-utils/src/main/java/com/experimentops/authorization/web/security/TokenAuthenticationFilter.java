@@ -98,6 +98,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         )));
     }
 
+    // When matches pathNotToFilter, it does not run filterInternal function. So, no JWT parsing, no internal role assignment, no SecurityContext authentication from this filter.
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         return uriInPath(request.getRequestURI(), pathsNotToFilter);
@@ -116,14 +117,11 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         pathsNotToFilter.add(path);
     }
 
-    public void excludePathFromFilter(Set<String> paths) {
-        pathsNotToFilter.addAll(paths);
-    }
-
     public void internalAuthenticatedUrl(String path) {
         internalAuthenticatedUrls.add(path);
     }
 
+    // So, for this, FilterInternal would run but if the URL matches internalAuthenticatedUrls, the filter does not require a bearer token. It directly uses RoleType.INTERNAL, loads that user/role, sets Spring Security authentication, then continues the chain.
     public void internalAuthenticatedUrls(Set<String> paths) {
         internalAuthenticatedUrls.addAll(paths);
     }
