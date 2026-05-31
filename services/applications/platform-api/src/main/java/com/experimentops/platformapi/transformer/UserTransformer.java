@@ -4,6 +4,8 @@ import com.experimentops.avroevent.type.EventType;
 import com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent;
 import com.experimentops.common.kafka.utils.ExperimentOpsMetadataUtil;
 import com.experimentops.platformapi.model.entity.User;
+import com.experimentops.platformapi.model.entity.UserResetPassword;
+import com.experimentops.platformapi.model.entity.Workspace;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.user.event.UserMutationEvent;
 import com.experimentops.user.event.UserMutationEventPayload;
@@ -106,5 +108,15 @@ public class UserTransformer {
 
         user.setUuid(userMutationEvent.getMetadata().getUuid());
         return user;
+    }
+
+    @NonNull
+    public UserResetPassword transformUserResetPassword(@NonNull User user, @NonNull String workspaceName){
+        return UserResetPassword.builder()
+                .userUuid(user.getUuid())
+                .email(user.getEmail())
+                .workspaceUuid(user.getWorkspaceUuid())
+                .workspaceName(workspaceName)
+                .build();
     }
 }

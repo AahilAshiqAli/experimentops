@@ -64,7 +64,11 @@ services:
       experimentops.db.schema: experimentOps
       experimentops.db.username: experimentops_user
       experimentops.db.password: experimentops_password
-      experimentops.keycloak.master.server-url: http://keycloak:8080
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+      KEYCLOAK_MASTER_REALM: master
+      KEYCLOAK_MASTER_USERNAME: admin
+      KEYCLOAK_MASTER_PASSWORD: admin
+      KEYCLOAK_MASTER_CLIENT_ID: admin-cli
 
 
 

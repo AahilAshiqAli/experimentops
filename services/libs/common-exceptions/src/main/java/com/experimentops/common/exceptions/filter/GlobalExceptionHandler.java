@@ -1,7 +1,9 @@
 package com.experimentops.common.exceptions.filter;
 
 import com.experimentops.common.exceptions.ExperimentOpsException;
+import com.experimentops.common.exceptions.KeycloakException;
 import com.experimentops.common.exceptions.dto.ErrorResponseDto;
+import com.experimentops.common.exceptions.dto.KeycloakErrorResponseDto;
 import com.experimentops.common.exceptions.transformer.ExceptionTransformer;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.HeaderUtil;
@@ -9,6 +11,7 @@ import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -92,6 +95,17 @@ public class GlobalExceptionHandler {
         return response;
     }
 
+    @ExceptionHandler(KeycloakException.class)
+    public ResponseEntity<KeycloakErrorResponseDto> exception(KeycloakException exception) {
+        KeycloakErrorResponseDto errorResponse = new KeycloakErrorResponseDto(
+                exception.getErrorToken(),
+                exception.getErrorCode().getCode(),
+                exception.getMessage());
+        ResponseEntity<KeycloakErrorResponseDto> response = new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        logException(exception, response);
+        return response;
+    }
+
     @ExceptionHandler(ExperimentOpsException.class)
     public ResponseEntity<ErrorResponseDto> exception(ExperimentOpsException exception) {
         ResponseEntity<ErrorResponseDto> response = ExceptionTransformer.transform(exception);
@@ -107,10 +121,10 @@ public class GlobalExceptionHandler {
     }
 
     protected void logException(@NonNull Exception exception,
-                                @NonNull ResponseEntity<ErrorResponseDto> response) {
+                                @NonNull ResponseEntity<?> response) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
 
-        ErrorResponseDto body = response.getBody();
+        Object body = response.getBody();
         String statusCode = response.getStatusCode().toString();
         String cause = " | " + statusCode + (body == null ? "" : " | " + body);
         String message = exception.getClass().getName() + " | " + cause;

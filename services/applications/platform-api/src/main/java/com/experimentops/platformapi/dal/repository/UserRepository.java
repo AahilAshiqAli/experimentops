@@ -10,5 +10,8 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByUuidAndStatusAndEnabled(String uuid, StatusEnum status, boolean enabled);
+    Optional<User> findByUuidAndWorkspaceUuidAndStatusAndEnabled(String uuid, String workspaceUuid, StatusEnum status, boolean enabled);
+
+    Optional<User> findByEmailAndWorkspaceUuidAndStatusAndEnabled(String email, String workspaceUuid, StatusEnum status, boolean enabled);
+
 }

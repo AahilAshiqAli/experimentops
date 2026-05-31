@@ -4,6 +4,11 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -59,6 +64,12 @@ public class ExperimentOpsUtils {
 
     public static <K, V> boolean isEmpty(@Nullable Map<K, V> map) {
         return map == null || map.isEmpty();
+    }
+
+    public static long getSecondsDifference(Timestamp creationDate) {
+        Instant creationDateInstant = creationDate.toInstant();
+        Instant currentDateInstant =  Timestamp.valueOf(LocalDateTime.now(ZoneOffset.UTC)).toInstant();
+        return ChronoUnit.SECONDS.between(creationDateInstant, currentDateInstant);
     }
 
 

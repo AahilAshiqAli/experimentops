@@ -44,6 +44,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthLoginResponse'
 
+  /auth/reset-password/verify:
+    post:
+      summary: API login
+      description: API login endpoint
+      operationId: resetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthResetPasswordRequest'
+      responses:
+        200:
+          description: successful operation
+
   /user:
     post:
       summary: Create a User
@@ -74,8 +88,6 @@ components:
         password:
           type: string
         client_id:
-          type: string
-        grant_type:
           type: string
 
     AuthLoginResponse:
@@ -135,6 +147,17 @@ components:
         userRole:
           type: string
           example: "WORKSPACE_ADMIN"
+
+    AuthResetPasswordRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "admin@acmelab.com"
+        newPassword:
+          type: string
+          example: "Admin@12345"
+
 
 
 

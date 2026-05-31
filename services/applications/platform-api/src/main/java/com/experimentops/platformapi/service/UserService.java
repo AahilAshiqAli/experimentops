@@ -39,6 +39,16 @@ public class UserService {
     public UserResponseModel publishUser(@NonNull ExperimentOpsHeaders experimentOpsHeaders, @NonNull UserRequestModel userRequestModel, boolean b) {
         log.info(experimentOpsHeaders, "creating new user with email" + userRequestModel.getEmail());
         userValidator.validateUserRequestModel(userRequestModel);
+        userRepository
+                .findByEmailAndWorkspaceUuidAndStatusAndEnabled(
+                        userRequestModel.getEmail(),
+                        experimentOpsHeaders.getWorkspaceUuid(),
+                        StatusEnum.ACTIVE,
+                        true)
+                .ifPresent(workspace -> {
+                    throw new EntityAlreadyExistsException("email", userRequestModel.getEmail());
+                });
+
         UserMutationEvent userMutationEvent = userTransformer.transformUserCreationEvent(userRequestModel, experimentOpsHeaders);
         kafkaProducer.sendMessage(userTopic, userMutationEvent, userMutationEvent.getMetadata());
         return userTransformer.transformUserResponseModel(userMutationEvent, experimentOpsHeaders);
@@ -48,9 +58,9 @@ public class UserService {
         // Adding Idempotency check
         String userUuid = userMutationEvent.getMetadata().getUuid();
         userRepository
-                .findByUuidAndStatusAndEnabled(userUuid, StatusEnum.ACTIVE, true)
+                .findByUuidAndWorkspaceUuidAndStatusAndEnabled(userUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
                 .ifPresent(user -> {
-                    throw new EntityAlreadyExistsException("uuid", userUuid);
+                    log.error(headers,"user create event is already consumed");
                 });
 
         User user = userTransformer.transformUserEntity(userMutationEvent, headers);
