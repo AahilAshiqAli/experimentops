@@ -54,7 +54,14 @@ services:
       - keycloak
     expose:
       - "8080"
+    env_file:
+      - .env.local
     environment:
+      # aws
+      EXPERIMENTOPS_STORAGE_S3_BUCKET: ${EXPERIMENTOPS_S3_BUCKET}
+      EXPERIMENTOPS_STORAGE_S3_REGION: ${AWS_REGION}
+
+      #kafka
       kafka.bootstrap-servers: kafka:29092
       kafka.schema.registry-url: http://schema-registry:8081
 
@@ -64,6 +71,8 @@ services:
       experimentops.db.schema: experimentOps
       experimentops.db.username: experimentops_user
       experimentops.db.password: experimentops_password
+
+      # keycloak
       KEYCLOAK_SERVER_URL: http://keycloak:8080
       KEYCLOAK_MASTER_REALM: master
       KEYCLOAK_MASTER_USERNAME: admin
