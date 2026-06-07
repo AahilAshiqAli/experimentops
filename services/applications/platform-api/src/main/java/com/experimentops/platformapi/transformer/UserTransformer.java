@@ -3,9 +3,10 @@ package com.experimentops.platformapi.transformer;
 import com.experimentops.avroevent.type.EventType;
 import com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent;
 import com.experimentops.common.kafka.utils.ExperimentOpsMetadataUtil;
+import com.experimentops.notification.event.NotificationEvent;
+import com.experimentops.notification.event.NotificationEventPayload;
 import com.experimentops.platformapi.model.entity.User;
 import com.experimentops.platformapi.model.entity.UserResetPassword;
-import com.experimentops.platformapi.model.entity.Workspace;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.user.event.UserMutationEvent;
 import com.experimentops.user.event.UserMutationEventPayload;
@@ -117,6 +118,28 @@ public class UserTransformer {
                 .email(user.getEmail())
                 .workspaceUuid(user.getWorkspaceUuid())
                 .workspaceName(workspaceName)
+                .build();
+    }
+
+    @NonNull
+    public NotificationEvent transformNotificationEvent(@NonNull String recipientEmail, @NonNull String subject, @NonNull String body, @NonNull EventType eventType, @NonNull ExperimentOpsHeaders headers){
+
+        NotificationEventPayload payload = NotificationEventPayload.newBuilder()
+                .setRecipientEmail(recipientEmail)
+                .setSubject(subject)
+                .setBody(body)
+                .build();
+
+        ExperimentOpsMetadataEvent metadata = ExperimentOpsMetadataUtil.metadataEvent(
+                headers,
+                ExperimentOpsUtils.uuid(),
+                eventType.name(),
+                this.getClass().getSimpleName()
+        );
+
+        return NotificationEvent.newBuilder()
+                .setMetadata(metadata)
+                .setPayload(payload)
                 .build();
     }
 }

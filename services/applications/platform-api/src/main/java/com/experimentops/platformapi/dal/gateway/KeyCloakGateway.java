@@ -4,6 +4,9 @@ import com.experimentops.common.exceptions.constant.ErrorCode;
 import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.common.exceptions.KeycloakException;
 import com.experimentops.platformapi.transformer.KeyCloakTransformer;
+import com.experimentops.platformapi.transformer.UserTransformer;
+import com.experimentops.user.event.UserMutationEvent;
+import com.experimentops.user.event.UserMutationEventPayload;
 import com.experimentops.user.model.v1.AuthLoginRequest;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.JSONUtil;
@@ -11,7 +14,6 @@ import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import com.experimentops.workspace.event.WorkspaceMutationEvent;
 import com.experimentops.workspace.event.WorkspaceMutationEventPayload;
 import lombok.RequiredArgsConstructor;
-import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.CreatedResponseUtil;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
@@ -25,7 +27,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -46,6 +47,7 @@ public class KeyCloakGateway {
     private final Keycloak keycloak;
     private final KeyCloakTransformer keycloakTransformer;
     private final RestTemplate restTemplate;
+    private final UserTransformer userTransformer;
 
     @Value("${experimentops.keycloak.auth.token-url}")
     private String tokenUrl;
@@ -56,15 +58,13 @@ public class KeyCloakGateway {
           HttpHeaders headers = new HttpHeaders();
           headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-          MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-          body.add("username", authLoginRequest.getUsername());
-          body.add("password", authLoginRequest.getPassword());
-          body.add("client_id", authLoginRequest.getClientId());
-          body.add("grant_type", OAuth2Constants.PASSWORD);
+          MultiValueMap<String, String> body = keycloakTransformer.transformLoginRequestModel(authLoginRequest.getUsername(), authLoginRequest.getPassword());
 
           HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
+          String url = resolveTokenUrl(realmName);
+          log.info(experimentOpsHeaders, "making api call on " + url);
           try {
-              return restTemplate.postForObject(resolveTokenUrl(realmName), request, AccessTokenResponse.class);
+              return restTemplate.postForObject(url, request, AccessTokenResponse.class);
           } catch (HttpClientErrorException exception) {
               log.info(experimentOpsHeaders, "ResponseBody: " + exception.getResponseBodyAsString());
               log.info(experimentOpsHeaders, "Message: " + exception.getMessage());
@@ -98,32 +98,62 @@ public class KeyCloakGateway {
 
         log.info(experimentopsHeaders, "Created workspace realm: " + realmName);
 
-        keycloak.realm(realmName)
+        // Adding private openssl key to generate realm rsa key
+        try (Response componentResponse = keycloak.realm(realmName)
                 .components()
-                .add(keycloakTransformer.mapComponentExportRepresentation())
-                .close();
+                .add(keycloakTransformer.mapComponentExportRepresentation())) {
+            if (componentResponse.getStatus() != HttpStatus.CREATED.value()) {
+                throw new KeycloakException(ErrorCode.ROLE_CREATION_FAILED,
+                        new RuntimeException("Failed to inject RSA key into realm: " + realmName
+                                + " status=" + componentResponse.getStatus()
+                                + " body=" + componentResponse.readEntity(String.class)));
+            }
+        }
 
+        // Adding roles in realm
         createRealmRole(realmName, WORKSPACE_ADMIN_ROLE);
         createRealmRole(realmName, RESEARCHER_ROLE);
 
-        createWorkspaceAdminUser(workspaceEvent, experimentopsHeaders, workspaceMutationEvent.getMetadata().getUuid());
+        // Add user attributes in realm settings user profile
+        addUserAttributes(realmName);
+
+        UserMutationEvent userMutationEvent = userTransformer.transformUserCreationEvent(workspaceMutationEvent, experimentopsHeaders);
+        experimentopsHeaders.setWorkspaceUuid(workspaceMutationEvent.getMetadata().getUuid());
+        createWorkspaceUser(userMutationEvent, experimentopsHeaders, WORKSPACE_ADMIN_ROLE, workspaceEvent.getWorkspaceName());
     }
 
-    public void createWorkspaceAdminUser(WorkspaceMutationEventPayload workspaceEvent, ExperimentOpsHeaders experimentopsHeaders, String workspaceUuid) {
-        String realmName = workspaceEvent.getWorkspaceName();
+    private void addUserAttributes(String realmName) {
+        try (Response response = keycloak.realm(realmName)
+                .users()
+                .userProfile()
+                .update(JSONUtil.toNonTypedJsonFromObject(keycloakTransformer.createUserProfilePayload()))) {
+            if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+                throw new KeycloakException(ErrorCode.ROLE_CREATION_FAILED,
+                        new RuntimeException("Failed to update user profile for realm: " + realmName
+                                + " status=" + response.getStatus()
+                                + " body=" + response.readEntity(String.class)));
+            }
+        }
+    }
 
-        log.info(experimentopsHeaders, "Creating workspace admin user: " + workspaceEvent.getAdminFirstName());
+    public void createWorkspaceUser(UserMutationEvent userEvent, ExperimentOpsHeaders experimentopsHeaders, String role, String realmName) {
+        UserMutationEventPayload userMutationEventPayload = userEvent.getPayload();
+        String userUuid = userEvent.getMetadata().getUuid();
+
+        log.info(experimentopsHeaders, "Creating workspace user: " + userMutationEventPayload.getUserFirstName() + " with role " + role);
 
         UserRepresentation userRepresentation = new UserRepresentation();
+        Map<String, List<String>> userAttributes = keycloakTransformer.createUserAttributes(experimentopsHeaders.getWorkspaceUuid(), userUuid);
+        userRepresentation.setId(userUuid);
         userRepresentation.setEnabled(true);
-        userRepresentation.setUsername(workspaceEvent.getAdminEmail());
-        userRepresentation.setFirstName(workspaceEvent.getAdminFirstName());
-        userRepresentation.setLastName(workspaceEvent.getAdminLastName());
-        userRepresentation.setEmail(workspaceEvent.getAdminEmail());
-        userRepresentation.setCredentials(createPasswordCredential(workspaceEvent));
-        userRepresentation.setRealmRoles(Collections.singletonList(WORKSPACE_ADMIN_ROLE));
-        userRepresentation.setAttributes(keycloakTransformer.createUserAttributes(workspaceUuid, workspaceEvent.getUserUuid())
-        );
+        userRepresentation.setUsername(userMutationEventPayload.getUserEmail());
+        userRepresentation.setFirstName(userMutationEventPayload.getUserFirstName());
+        userRepresentation.setLastName(userMutationEventPayload.getUserLastName());
+        userRepresentation.setEmail(userMutationEventPayload.getUserEmail());
+        userRepresentation.setCredentials(createPasswordCredential(userMutationEventPayload.getUserPassword()));
+        userRepresentation.setAttributes(userAttributes);
+
+        log.info(experimentopsHeaders, "Creating workspace user attributes: " + userAttributes);
 
         Response response = keycloak.realm(realmName)
                 .users()
@@ -132,14 +162,14 @@ public class KeyCloakGateway {
         if (response.getStatus() != HttpStatus.CREATED.value()) {
             throw new ValidationException(
                     ErrorCode.EMAIL_OR_USERNAME_ALREADY_EXISTS,
-                    String.format("User already exists with email: %s", workspaceEvent.getAdminEmail())
+                    String.format("User already exists with email: %s", userMutationEventPayload.getUserEmail())
             );
         }
 
         String userId = CreatedResponseUtil.getCreatedId(response);
-        assignRealmRoleToUser(realmName, userId, WORKSPACE_ADMIN_ROLE);
+        assignRealmRoleToUser(realmName, userId, role);
 
-        log.info(experimentopsHeaders, "Created workspace admin user: " + workspaceEvent.getAdminEmail());
+        log.info(experimentopsHeaders, "Created workspace user: " + userMutationEventPayload.getUserEmail() + " with role " + role );
     }
 
     public void updateUserPassword(String realm, String userName, String newPassword, ExperimentOpsHeaders experimentOpsHeaders) {
@@ -189,11 +219,11 @@ public class KeyCloakGateway {
                 .add(Collections.singletonList(roleRepresentation));
     }
 
-    private List<CredentialRepresentation> createPasswordCredential(WorkspaceMutationEventPayload workspaceEvent) {
+    private List<CredentialRepresentation> createPasswordCredential(String password) {
         CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
         credentialRepresentation.setTemporary(true);
         credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
-        credentialRepresentation.setValue(workspaceEvent.getAdminPassword());
+        credentialRepresentation.setValue(password);
 
         List<CredentialRepresentation> credentials = new ArrayList<>();
         credentials.add(credentialRepresentation);

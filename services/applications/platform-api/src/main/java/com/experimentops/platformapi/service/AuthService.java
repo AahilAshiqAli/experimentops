@@ -1,18 +1,21 @@
 package com.experimentops.platformapi.service;
 
+import com.experimentops.avroevent.type.EventType;
 import com.experimentops.common.exceptions.constant.ErrorCode;
 import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.common.exceptions.KeycloakException;
+import com.experimentops.common.kafka.KafkaProducer;
+import com.experimentops.notification.event.NotificationEvent;
 import com.experimentops.platformapi.dal.gateway.KeyCloakGateway;
 import com.experimentops.platformapi.dal.repository.UserResetPasswordRepository;
 import com.experimentops.platformapi.dal.repository.UserRepository;
-import com.experimentops.platformapi.dal.repository.WorkspaceRepository;
 import com.experimentops.platformapi.model.entity.User;
 import com.experimentops.platformapi.model.entity.UserResetPassword;
 import com.experimentops.platformapi.model.entity.Workspace;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.UserTransformer;
 import com.experimentops.platformapi.validator.AuthValidator;
+import com.experimentops.user.model.v1.AuthForgotPasswordRequest;
 import com.experimentops.user.model.v1.AuthLoginRequest;
 import com.experimentops.user.model.v1.AuthLoginResponse;
 import com.experimentops.user.model.v1.AuthResetPasswordRequest;
@@ -34,11 +37,18 @@ public class AuthService {
     private final AuthValidator authValidator;
     private final UserResetPasswordRepository userResetPasswordRepository;
     private final UserTransformer userTransformer;
-    private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceQueryService workspaceQueryService;
     private final UserRepository userRepository;
+    private final KafkaProducer kafkaProducer;
 
     @Value("${user.forgot.password.expiry}")
     long userForgotPasswordExpiry;
+
+    @Value("${experimentops.portal.url}")
+    private String portalUrl;
+
+    @Value("${notification.topic.name}")
+    private String notificationTopic;
 
     @NonNull
     public AuthLoginResponse authenticate(@NonNull String realmName,
@@ -46,7 +56,7 @@ public class AuthService {
                                           @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "authenticating realm : " + realmName);
         authValidator.validateAuthLoginRequestModel(authLoginRequest);
-        Workspace workspace = getWorkspace(realmName);
+        Workspace workspace = workspaceQueryService.getActiveWorkspaceByName(realmName);
         User user = getUser(authLoginRequest.getUsername(), workspace.getUuid());
 
         try {
@@ -70,7 +80,28 @@ public class AuthService {
         }
     }
 
+    public void forgetPassword(AuthForgotPasswordRequest forgotPasswordRequest, ExperimentOpsHeaders headers) {
+        authValidator.validateAuthForgotPasswordRequestModel(forgotPasswordRequest);
+
+        Workspace workspace = workspaceQueryService.getActiveWorkspaceByName(forgotPasswordRequest.getWorkspaceName());
+        User user = getUser(forgotPasswordRequest.getEmail(), workspace.getUuid());
+
+        UserResetPassword userResetPassword = userTransformer.transformUserResetPassword(user, workspace.getName());
+        String entityUuid = userResetPasswordRepository.save(userResetPassword).getUuid();
+        String passwordResetLink = buildPasswordResetLink(entityUuid);
+        NotificationEvent notificationEvent = userTransformer.transformNotificationEvent(
+                user.getEmail(),
+                "Reset your ExperimentOps password",
+                buildPasswordResetBody(passwordResetLink),
+                EventType.PASSWORD_RESET,
+                headers
+        );
+        kafkaProducer.sendMessage(notificationTopic, notificationEvent, notificationEvent.getMetadata());
+    }
+
     public void verifyAndResetPassword(AuthResetPasswordRequest resetPasswordRequest, ExperimentOpsHeaders headers) {
+        authValidator.validateAuthResetPasswordRequestModel(resetPasswordRequest);
+
         UserResetPassword userResetPassword = userResetPasswordRepository.findByUuidAndEnabled(resetPasswordRequest.getToken(), true)
                 .orElseThrow(() ->
                         new ValidationException(ErrorCode.TOKEN_NOT_FOUND, ErrorCode.TOKEN_NOT_FOUND.getMessage()));
@@ -83,15 +114,6 @@ public class AuthService {
                 resetPasswordRequest.getNewPassword(), headers);
     }
 
-    private Workspace getWorkspace(String workspaceName){
-        return workspaceRepository
-                .findByNameAndStatusAndEnabled(workspaceName, StatusEnum.ACTIVE, true)
-                .orElseThrow(() -> new ValidationException(
-                        ErrorCode.WORKSPACE_NOT_FOUND,
-                        ErrorCode.WORKSPACE_NOT_FOUND.getMessage()
-                ));
-    }
-
     private User getUser(String email, String workspaceUuid){
         return userRepository
                 .findByEmailAndWorkspaceUuidAndStatusAndEnabled(email, workspaceUuid, StatusEnum.ACTIVE, true)
@@ -99,5 +121,21 @@ public class AuthService {
                         ErrorCode.USER_NOT_FOUND,
                         ErrorCode.USER_NOT_FOUND.getMessage()
                 ));
+    }
+
+    private String buildPasswordResetLink(String entityUuid) {
+        String baseUrl = portalUrl.endsWith("/") ? portalUrl : portalUrl + "/";
+        return baseUrl + "reset-password?token=" + entityUuid;
+    }
+
+    private String buildPasswordResetBody(String passwordResetLink) {
+        return """
+                A password reset was requested for your ExperimentOps account.
+
+                Use the link below to reset your password:
+                %s
+
+                If you did not request this, you can ignore this email.
+                """.formatted(passwordResetLink);
     }
 }

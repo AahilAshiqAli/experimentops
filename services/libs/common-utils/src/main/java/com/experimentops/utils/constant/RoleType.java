@@ -14,9 +14,11 @@ public enum RoleType {
             PermissionConstants.ADD_USER
     ), true),
     WORKSPACE_ADMIN("WORKSPACE_ADMIN", List.of(
-            PermissionConstants.ADD_USER
+            PermissionConstants.ADD_USER,
+            PermissionConstants.ADD_DATASET
     ), false),
     RESEARCHER("RESEARCHER", List.of(
+            PermissionConstants.ADD_DATASET
     ), false),
     INTERNAL("INTERNAL", List.of(), true);
 
@@ -49,5 +51,20 @@ public enum RoleType {
         this.permissions = permissions;
         this.isInternal = isInternal;
     }
+
+    public static boolean isValid(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+
+        try {
+            RoleType.valueOf(value);
+            return true;
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
+
 
 }

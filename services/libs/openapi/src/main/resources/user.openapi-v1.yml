@@ -58,6 +58,20 @@ paths:
         200:
           description: successful operation
 
+  /auth/forgot-password/generate:
+    post:
+      summary: Generate forgot-password token
+      description: Creates a reset-password token and sends the reset link by email.
+      operationId: forgotPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthForgotPasswordRequest'
+      responses:
+        200:
+          description: successful operation
+
   /user:
     post:
       summary: Create a User
@@ -86,8 +100,6 @@ components:
         username:
           type: string
         password:
-          type: string
-        client_id:
           type: string
 
     AuthLoginResponse:
@@ -158,6 +170,15 @@ components:
           type: string
           example: "Admin@12345"
 
+    AuthForgotPasswordRequest:
+      type: object
+      properties:
+        workspaceName:
+          type: string
+          example: "acmelab"
+        email:
+          type: string
+          example: "admin@acmelab.com"
 
 
 
