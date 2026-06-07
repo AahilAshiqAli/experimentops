@@ -22,6 +22,9 @@ import java.util.Map;
 public class JwtUtil {
     private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
     private static final String BEARER = "Bearer ";
+    private static final String WORKSPACE_UUID = "workspace_uuid";
+    private static final String USER_UUID = "user_uuid";
+    private static final String ROLES = "roles";
 
     private final JwtCertLoader jwtCertLoader;
     private final JwtVerifier jwtVerifier;
@@ -70,8 +73,8 @@ public class JwtUtil {
         claimDto.setName(StringUtils.defaultIfBlank(payload.get("preferred_username", String.class), payload.getSubject()));
         claimDto.setExp(payload.getExpiration());
         claimDto.setNbf(payload.getNotBefore());
-        claimDto.setWorkspaceUuid(payload.get("workspace_uuid", String.class));
-        claimDto.setUserUuid(StringUtils.defaultIfBlank(payload.get("user_uuid", String.class), payload.getSubject()));
+        claimDto.setWorkspaceUuid(extractStringClaim(payload, WORKSPACE_UUID));
+        claimDto.setUserUuid(StringUtils.defaultIfBlank(extractStringClaim(payload, USER_UUID), payload.getSubject()));
         claimDto.setRole(extractRole(payload));
 
         return jwtVerifier.verify(claimDto) ? claimDto : null;
@@ -81,9 +84,12 @@ public class JwtUtil {
         if (jwsCert != null) {
             return;
         }
+        log.info("loading certs into jwsCert");
         String json = jwtCertLoader.loadCerts();
         if (StringUtils.isNotBlank(json)) {
             jwsCert = JSONUtil.toObjectFromTypedJson(json, JwsCert.class);
+        } else {
+            log.warn("No JWKS certs could be loaded — will retry on next request");
         }
     }
 
@@ -93,7 +99,7 @@ public class JwtUtil {
             return explicitRole;
         }
 
-        Object roles = claims.get("roles");
+        Object roles = claims.get(ROLES);
         String matchedRole = findKnownRole(roles);
         if (matchedRole != null) {
             return matchedRole;
@@ -101,7 +107,7 @@ public class JwtUtil {
 
         Object realmAccess = claims.get("realm_access");
         if (realmAccess instanceof Map<?, ?> realmAccessMap) {
-            matchedRole = findKnownRole(realmAccessMap.get("roles"));
+            matchedRole = findKnownRole(realmAccessMap.get(ROLES));
             if (matchedRole != null) {
                 return matchedRole;
             }
@@ -126,9 +132,38 @@ public class JwtUtil {
         return null;
     }
 
+    private String extractStringClaim(Claims claims, String claimName) {
+        String directClaim = firstStringValue(claims.get(claimName));
+        if (StringUtils.isNotBlank(directClaim)) {
+            return directClaim;
+        }
+
+        Object attributes = claims.get("attributes");
+        if (attributes instanceof Map<?, ?> attributesMap) {
+            return firstStringValue(attributesMap.get(claimName));
+        }
+        return null;
+    }
+
+    private String firstStringValue(Object value) {
+        if (value instanceof String stringValue) {
+            return StringUtils.trimToNull(stringValue);
+        }
+        if (value instanceof List<?> listValue) {
+            for (Object item : listValue) {
+                String stringValue = firstStringValue(item);
+                if (StringUtils.isNotBlank(stringValue)) {
+                    return stringValue;
+                }
+            }
+        }
+        return null;
+    }
+
+
     private String findKnownRoleFromClient(Object clientAccess) {
         if (clientAccess instanceof Map<?, ?> clientAccessMap) {
-            return findKnownRole(clientAccessMap.get("roles"));
+            return findKnownRole(clientAccessMap.get(ROLES));
         }
         return null;
     }

@@ -1,0 +1,67 @@
+openapi: 3.0.1
+
+info:
+  title: ExperimentOps
+  description: ExperimentOps API.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+    variables:
+      basePath:
+        default: api/v1
+
+tags:
+  - name: Dataset
+    description: Everything about dataset
+
+
+paths:
+  /dataset:
+    post:
+      summary: Add DataSet
+      description: This API will add dataset.
+      tags:
+        - Dataset
+      operationId: uploadDataset
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/DatasetRequestModel'
+                - type: object
+                  properties:
+                    file:
+                      type: string
+                      format: binary
+                      description: The actual file part
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetResponseModel'
+
+components:
+  schemas:
+    DatasetResponseModel:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+
+    DatasetRequestModel:
+      type: object
+      properties:
+        projectUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+
+
+
+

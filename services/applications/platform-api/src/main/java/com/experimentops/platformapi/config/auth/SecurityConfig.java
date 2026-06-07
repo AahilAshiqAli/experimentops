@@ -30,6 +30,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         this.tokenAuthenticationFilter = tokenAuthenticationFilter;
         this.tokenAuthenticationFilter.internalAuthenticatedUrl("/auth/login");
         this.tokenAuthenticationFilter.internalAuthenticatedUrl("/auth/reset-password/verify");
+        this.tokenAuthenticationFilter.internalAuthenticatedUrl("/auth/forgot-password/generate");
     }
 
     @Override

@@ -8,17 +8,16 @@ import org.jspecify.annotations.Nullable;
 
 @Getter
 @RequiredArgsConstructor
-public enum StatusEnum implements ExperimentOpsEnum {
+public enum NotificationStatusEnum implements ExperimentOpsEnum {
     PENDING(0),
-    ACTIVE(1),
-    INACTIVE(2);
+    SUCCESSFUL(1),
+    FAILED(2);
 
     private final int code;
 
-
     @Nullable
-    public static StatusEnum of(String name) {
-        for (StatusEnum status : StatusEnum.values()) {
+    public static NotificationStatusEnum of(String name) {
+        for (NotificationStatusEnum status : NotificationStatusEnum.values()) {
             if (Strings.CI.equals(status.name(), name)) {
                 return status;
             }

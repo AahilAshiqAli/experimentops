@@ -52,6 +52,7 @@ services:
       - kafka
       - schema-registry
       - keycloak
+      - mailpit
     expose:
       - "8080"
     env_file:
@@ -78,8 +79,23 @@ services:
       KEYCLOAK_MASTER_USERNAME: admin
       KEYCLOAK_MASTER_PASSWORD: admin
       KEYCLOAK_MASTER_CLIENT_ID: admin-cli
+      WORKSPACE_CONFIG_SERVER_RSA_KEY: ${WORKSPACE_CONFIG_SERVER_RSA_KEY}
+
+      # mail
+      EXPERIMENTOPS_MAIL_HOST: mailpit
+      EXPERIMENTOPS_MAIL_PORT: 1025
+      EXPERIMENTOPS_MAIL_FROM: no-reply@experimentops.local
+      EXPERIMENTOPS_MAIL_AUTH: false
+      EXPERIMENTOPS_MAIL_SSL: false
+      EXPERIMENTOPS_MAIL_START_TLS: false
 
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: experimentops-mailpit
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
   flyway:
     image: flyway/flyway:latest
@@ -120,8 +136,7 @@ services:
       SERVER_PORT: 8080
       services.platform-api.url: http://platform-api:8080
       JWKS_CERTS_FILE: /app/config/experimentops-jwks.json
-      JWKS_URI: http://keycloak:8080/realms/experimentops/protocol/openid-connect/certs
-      JWT_CLIENT_ID: experimentops-platform
+      JWT_CLIENT_ID: experimentops-web
     volumes:
       - ./jwks/experimentops-jwks.json:/app/config/experimentops-jwks.json:ro
 
