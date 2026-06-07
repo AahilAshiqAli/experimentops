@@ -2,6 +2,7 @@ package com.experimentops.platformapi.interfaces.ctrl;
 
 import com.experimentops.platformapi.service.AuthService;
 import com.experimentops.user.api.v1.AuthApi;
+import com.experimentops.user.model.v1.AuthForgotPasswordRequest;
 import com.experimentops.user.model.v1.AuthLoginRequest;
 import com.experimentops.user.model.v1.AuthLoginResponse;
 import com.experimentops.user.model.v1.AuthResetPasswordRequest;
@@ -30,6 +31,15 @@ public class AuthController implements AuthApi {
         ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
         log.info(experimentOpsHeaders, "Authenticating realm : " + workspaceName);
         return ResponseEntity.ok(authService.authenticate(workspaceName, authLoginRequest, experimentOpsHeaders));
+    }
+
+    @PreAuthorize("permitAll()")
+    @Override
+    public ResponseEntity<Void> forgotPassword(AuthForgotPasswordRequest authForgotPasswordRequest) {
+        ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
+        log.info(experimentOpsHeaders, "generating forgot password token");
+        authService.forgetPassword(authForgotPasswordRequest, experimentOpsHeaders);
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("permitAll()")

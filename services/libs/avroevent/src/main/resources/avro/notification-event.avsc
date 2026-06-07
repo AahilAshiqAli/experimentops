@@ -1,0 +1,20 @@
+{
+  "namespace": "com.experimentops.notification.event",
+  "type": "record",
+  "name": "NotificationEvent",
+  "fields": [
+    { "name": "metadata", "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent" },
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "NotificationEventPayload",
+        "fields": [
+          { "name": "recipientEmail", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "subject", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+          { "name": "body", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+        ]
+      }
+    }
+  ]
+}

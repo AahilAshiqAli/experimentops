@@ -29,7 +29,7 @@ public class UserController implements UserApi {
     public ResponseEntity<UserResponseModel> addUser(UserRequestModel userRequestModel) {
         ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
         log.info(experimentOpsHeaders, "Adding user : " + userRequestModel);
-        UserResponseModel userModel = userService.publishUser(experimentOpsHeaders, userRequestModel, false);
+        UserResponseModel userModel = userService.publishUser(userRequestModel, experimentOpsHeaders);
         return ResponseEntity.ok(userModel);
     }
 }
