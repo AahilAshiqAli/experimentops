@@ -167,20 +167,9 @@ public class KeyCloakGateway {
         }
 
         String userId = CreatedResponseUtil.getCreatedId(response);
-        updateWorkspaceAdminUserAttributes(realmName, userId, userAttributes, experimentopsHeaders);
         assignRealmRoleToUser(realmName, userId, role);
 
         log.info(experimentopsHeaders, "Created workspace user: " + userMutationEventPayload.getUserEmail() + " with role " + role );
-    }
-
-    private void updateWorkspaceAdminUserAttributes(String realmName, String userId, Map<String, List<String>> userAttributes, ExperimentOpsHeaders experimentopsHeaders) {
-        UserResource userResource = keycloak.realm(realmName)
-                .users()
-                .get(userId);
-        UserRepresentation createdUser = userResource.toRepresentation();
-        createdUser.setAttributes(userAttributes);
-        userResource.update(createdUser);
-        log.info(experimentopsHeaders, "Updated workspace admin user attributes after creation: userId=" + userId + " attributes=" + userAttributes);
     }
 
     public void updateUserPassword(String realm, String userName, String newPassword, ExperimentOpsHeaders experimentOpsHeaders) {

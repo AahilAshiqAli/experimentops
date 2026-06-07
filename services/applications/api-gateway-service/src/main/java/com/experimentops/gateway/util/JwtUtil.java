@@ -73,8 +73,8 @@ public class JwtUtil {
         claimDto.setName(StringUtils.defaultIfBlank(payload.get("preferred_username", String.class), payload.getSubject()));
         claimDto.setExp(payload.getExpiration());
         claimDto.setNbf(payload.getNotBefore());
-        claimDto.setWorkspaceUuid(extractStringClaim(payload, WORKSPACE_UUID));
-        claimDto.setUserUuid(StringUtils.defaultIfBlank(extractStringClaim(payload, USER_UUID), payload.getSubject()));
+        claimDto.setWorkspaceUuid(StringUtils.defaultIfBlank(payload.get(WORKSPACE_UUID, String.class), payload.getSubject()));
+        claimDto.setUserUuid(StringUtils.defaultIfBlank(payload.get(USER_UUID, String.class), payload.getSubject()));
         claimDto.setRole(extractRole(payload));
 
         return jwtVerifier.verify(claimDto) ? claimDto : null;
@@ -131,35 +131,6 @@ public class JwtUtil {
 
         return null;
     }
-
-    private String extractStringClaim(Claims claims, String claimName) {
-        String directClaim = firstStringValue(claims.get(claimName));
-        if (StringUtils.isNotBlank(directClaim)) {
-            return directClaim;
-        }
-
-        Object attributes = claims.get("attributes");
-        if (attributes instanceof Map<?, ?> attributesMap) {
-            return firstStringValue(attributesMap.get(claimName));
-        }
-        return null;
-    }
-
-    private String firstStringValue(Object value) {
-        if (value instanceof String stringValue) {
-            return StringUtils.trimToNull(stringValue);
-        }
-        if (value instanceof List<?> listValue) {
-            for (Object item : listValue) {
-                String stringValue = firstStringValue(item);
-                if (StringUtils.isNotBlank(stringValue)) {
-                    return stringValue;
-                }
-            }
-        }
-        return null;
-    }
-
 
     private String findKnownRoleFromClient(Object clientAccess) {
         if (clientAccess instanceof Map<?, ?> clientAccessMap) {
