@@ -90,6 +90,26 @@ services:
       EXPERIMENTOPS_MAIL_START_TLS: false
 
 
+  analysis-worker:
+    build:
+      context: ../../services/applications/python
+      dockerfile: apps/analysis-worker/Dockerfile
+    image: analysis-worker:local
+    container_name: experimentops-analysis-worker
+    depends_on:
+      - kafka
+      - schema-registry
+    environment:
+      EXPERIMENTOPS_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      EXPERIMENTOPS_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      EXPERIMENTOPS_KAFKA_TOPICS: experiment-run-requested
+      EXPERIMENTOPS_KAFKA_CONSUMER_GROUP_ID: experimentops-analysis-worker
+      EXPERIMENTOPS_KAFKA_CLIENT_ID: experimentops-analysis-worker-1
+      EXPERIMENTOPS_KAFKA_AUTO_OFFSET_RESET: earliest
+      EXPERIMENTOPS_KAFKA_ENABLE_AUTO_COMMIT: "false"
+      EXPERIMENTOPS_KAFKA_MAX_POLL_INTERVAL_MS: "900000"
+
+
   mailpit:
     image: axllent/mailpit:latest
     container_name: experimentops-mailpit
