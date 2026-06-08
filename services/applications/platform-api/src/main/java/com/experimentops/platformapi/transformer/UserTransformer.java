@@ -31,6 +31,7 @@ public class UserTransformer {
         WorkspaceMutationEventPayload workspacePayload = workspaceMutationEvent.getPayload();
 
         UserMutationEventPayload payload = UserMutationEventPayload.newBuilder()
+                .setWorkspaceCreation(true)
                 .setUserEmail(workspacePayload.getAdminEmail())
                 .setUserFirstName(workspacePayload.getAdminFirstName())
                 .setUserLastName(workspacePayload.getAdminLastName())
@@ -58,6 +59,7 @@ public class UserTransformer {
         log.info(headers, "transforming the payload to user mutation event");
 
         UserMutationEventPayload payload = UserMutationEventPayload.newBuilder()
+                .setWorkspaceCreation(false)
                 .setUserEmail(userRequestModel.getEmail())
                 .setUserFirstName(userRequestModel.getFirstName())
                 .setUserLastName(userRequestModel.getLastName())

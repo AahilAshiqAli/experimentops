@@ -10,6 +10,7 @@
         "type": "record",
         "name": "UserMutationEventPayload",
         "fields": [
+          { "name":  "workspaceCreation", "type": "boolean"},
           { "name": "userEmail",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
           { "name": "userPassword",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
           { "name": "userFirstName",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },

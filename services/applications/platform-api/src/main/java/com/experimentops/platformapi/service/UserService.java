@@ -20,8 +20,6 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import static com.experimentops.utils.constant.RoleType.RESEARCHER;
-
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -72,7 +70,10 @@ public class UserService {
 
         User user = userTransformer.transformUserEntity(userMutationEvent, headers);
         userRepository.save(user);
-        WorkspaceMutationEvent workspaceMutationEvent = workspaceTransformer.transformWorkspaceCreationCompletionEvent(headers);
-        kafkaProducer.sendMessage(workspaceCreationCompletedTopic, workspaceMutationEvent, workspaceMutationEvent.getMetadata());
+
+        if (userMutationEvent.getPayload().getWorkspaceCreation()){
+            WorkspaceMutationEvent workspaceMutationEvent = workspaceTransformer.transformWorkspaceCreationCompletionEvent(headers);
+            kafkaProducer.sendMessage(workspaceCreationCompletedTopic, workspaceMutationEvent, workspaceMutationEvent.getMetadata());
+        }
     }
 }
