@@ -125,6 +125,30 @@
                             </configOptions>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>project-v1</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/project.openapi-v1.yml
+                            </inputSpec>
+                            <generatorName>spring</generatorName>
+                            <apiPackage>com.experimentops.project.api.v1</apiPackage>
+                            <modelPackage>com.experimentops.project.model.v1</modelPackage>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <configOptions>
+                                <oas3>true</oas3>
+                                <useSpringfox>false</useSpringfox>
+                                <reactive>false</reactive>
+                                <sourceFolder>src/main/java/</sourceFolder>
+                                <interfaceOnly>true</interfaceOnly>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <useSpringBoot3>true</useSpringBoot3>
+                            </configOptions>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
