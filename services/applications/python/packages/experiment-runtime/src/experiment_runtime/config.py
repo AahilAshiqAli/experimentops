@@ -87,7 +87,7 @@ class KafkaSettings:
             ),
             topics=_get_csv_env(
                 "EXPERIMENTOPS_KAFKA_TOPICS",
-                "experiment-run-requested",
+                "experiment-run-requested-topic",
             ),
             group_id=_get_required_env(
                 "EXPERIMENTOPS_KAFKA_CONSUMER_GROUP_ID",

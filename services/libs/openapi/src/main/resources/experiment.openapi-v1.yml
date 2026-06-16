@@ -1,0 +1,223 @@
+openapi: 3.0.1
+
+info:
+  title: ExperimentOps
+  description: ExperimentOps API.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+    variables:
+      basePath:
+        default: api/v1
+
+tags:
+  - name: Experiment
+    description: Everything about experiment
+
+paths:
+  /project/{projectUuid}/experiment:
+    post:
+      summary: Add Experiment
+      description: This API will add experiment.
+      tags:
+        - Experiment
+      operationId: addExperiment
+      parameters:
+        - name: projectUuid
+          in: path
+          description: Project uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentRequestModel'
+      responses:
+        202:
+          description: Experiment create event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentResponseModel'
+    get:
+      summary: Get Experiment List
+      description: This API will get experiment list.
+      tags:
+        - Experiment
+      operationId: getExperimentList
+      parameters:
+        - name: projectUuid
+          in: path
+          description: Project uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExperimentListItemModel'
+
+  /project/{projectUuid}/experiment/{uuid}:
+    get:
+      summary: Get Experiment
+      description: This API will get experiment.
+      tags:
+        - Experiment
+      operationId: getExperiment
+      parameters:
+        - name: projectUuid
+          in: path
+          description: Project uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentResponseModel'
+    put:
+      summary: Update Experiment
+      description: This API will update experiment.
+      tags:
+        - Experiment
+      operationId: updateExperiment
+      parameters:
+        - name: projectUuid
+          in: path
+          description: Project uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentRequestModel'
+      responses:
+        202:
+          description: Experiment update event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentResponseModel'
+    patch:
+      summary: Change Status of Experiment
+      description: This API will change status of experiment.
+      tags:
+        - Experiment
+      operationId: updateStatusExperiment
+      parameters:
+        - name: projectUuid
+          in: path
+          description: Project uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentStatusChangeRequestModel'
+      responses:
+        202:
+          description: Experiment status change event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentResponseModel'
+
+components:
+  schemas:
+    ExperimentResponseModel:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        name:
+          type: string
+          example: "Experiment-1"
+        description:
+          type: string
+          example: "Experiment about Model Training"
+        experimentType:
+          type: string
+          example: "A_B_TEST"
+        projectUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+    ExperimentRequestModel:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Experiment-1"
+        description:
+          type: string
+          example: "Experiment about Model Training"
+        experimentType:
+          type: string
+          example: "A_B_TEST"
+    ExperimentListItemModel:
+      type: object
+      properties:
+        experimentUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        name:
+          type: string
+          example: "Pun Detection Classification"
+        description:
+          type: string
+          example: "bla bla bla"
+        experimentType:
+          type: string
+          example: "TEXT_CLASSIFICATION"
+        configCount:
+          type: integer
+          example: 3
+        runCount:
+          type: integer
+          example: 8
+        createdAt:
+          type: string
+          example: "2026-06-11T11:40:00"
+    ExperimentStatusChangeRequestModel:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ACTIVE"

@@ -15,10 +15,25 @@ public enum RoleType {
     ), true),
     WORKSPACE_ADMIN("WORKSPACE_ADMIN", List.of(
             PermissionConstants.ADD_USER,
-            PermissionConstants.ADD_DATASET
+            PermissionConstants.ADD_DATASET,
+            PermissionConstants.EDIT_DATASET,
+            PermissionConstants.GET_DATASET,
+            PermissionConstants.ADD_PROJECT,
+            PermissionConstants.EDIT_PROJECT,
+            PermissionConstants.GET_PROJECT,
+            PermissionConstants.ADD_EXPERIMENT,
+            PermissionConstants.EDIT_EXPERIMENT,
+            PermissionConstants.GET_EXPERIMENT,
+            PermissionConstants.RUN_EXPERIMENT
     ), false),
     RESEARCHER("RESEARCHER", List.of(
-            PermissionConstants.ADD_DATASET
+            PermissionConstants.ADD_DATASET,
+            PermissionConstants.GET_DATASET,
+            PermissionConstants.GET_PROJECT,
+            PermissionConstants.ADD_EXPERIMENT,
+            PermissionConstants.EDIT_EXPERIMENT,
+            PermissionConstants.GET_EXPERIMENT,
+            PermissionConstants.RUN_EXPERIMENT
     ), false),
     INTERNAL("INTERNAL", List.of(), true);
 

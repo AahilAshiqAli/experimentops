@@ -102,7 +102,7 @@ services:
     environment:
       EXPERIMENTOPS_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       EXPERIMENTOPS_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      EXPERIMENTOPS_KAFKA_TOPICS: experiment-run-requested
+      EXPERIMENTOPS_KAFKA_TOPICS: experiment-run-requested-topic
       EXPERIMENTOPS_KAFKA_CONSUMER_GROUP_ID: experimentops-analysis-worker
       EXPERIMENTOPS_KAFKA_CLIENT_ID: experimentops-analysis-worker-1
       EXPERIMENTOPS_KAFKA_AUTO_OFFSET_RESET: earliest

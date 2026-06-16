@@ -40,6 +40,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <apache.commons.lang3.version>3.18.0</apache.commons.lang3.version>
     <software.amazon.awssdk.version>2.31.78</software.amazon.awssdk.version>
+    <hypersistence-utils.hibernate.version>hypersistence-utils-hibernate-63</hypersistence-utils.hibernate.version>
+    <hypersistence-utils.version>3.7.3</hypersistence-utils.version>
   </properties>
 
   <modules>

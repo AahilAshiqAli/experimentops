@@ -16,52 +16,251 @@ tags:
   - name: Dataset
     description: Everything about dataset
 
-
 paths:
-  /dataset:
+  /project/{projectUuid}/dataset:
     post:
-      summary: Add DataSet
+      summary: Add Dataset
       description: This API will add dataset.
       tags:
         - Dataset
-      operationId: uploadDataset
+      operationId: addDataset
+      parameters:
+        - name: projectUuid
+          in: path
+          description: Project uuid
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              allOf:
-                - $ref: '#/components/schemas/DatasetRequestModel'
-                - type: object
-                  properties:
-                    file:
-                      type: string
-                      format: binary
-                      description: The actual file part
+              $ref: '#/components/schemas/DatasetRequestModel'
+      responses:
+        202:
+          description: Dataset create event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetResponseModel'
+    get:
+      summary: Get Dataset List
+      description: This API will get all datasets for a project.
+      tags:
+        - Dataset
+      operationId: getDatasetList
+      parameters:
+        - name: projectUuid
+          in: path
+          description: Project uuid
+          required: true
+          schema:
+            type: string
       responses:
         200:
           description: successful operation
           content:
             application/json:
               schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DatasetResponseModel'
+
+  /project/{projectUuid}/dataset/{uuid}:
+    get:
+      summary: Get Dataset
+      description: This API will get dataset with all versions.
+      tags:
+        - Dataset
+      operationId: getDataset
+      parameters:
+        - name: projectUuid
+          in: path
+          description: Project uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Dataset uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetDetailResponseModel'
+    put:
+      summary: Update Dataset
+      description: This API will update dataset.
+      tags:
+        - Dataset
+      operationId: updateDataset
+      parameters:
+        - name: projectUuid
+          in: path
+          description: Project uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Dataset uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatasetRequestModel'
+      responses:
+        202:
+          description: Dataset update event published successfully
+          content:
+            application/json:
+              schema:
                 $ref: '#/components/schemas/DatasetResponseModel'
+    patch:
+      summary: Change Status of Dataset
+      description: This API will change status of dataset.
+      tags:
+        - Dataset
+      operationId: updateStatusDataset
+      parameters:
+        - name: projectUuid
+          in: path
+          description: Project uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Dataset uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatasetStatusChangeRequestModel'
+      responses:
+        202:
+          description: Dataset status change event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetResponseModel'
+
+  /dataset/{datasetUuid}/version:
+    post:
+      summary: Upload Dataset Version
+      description: This API will upload a new file version under a dataset.
+      tags:
+        - Dataset
+      operationId: uploadDatasetVersion
+      parameters:
+        - name: datasetUuid
+          in: path
+          description: Dataset uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The file to upload
+      responses:
+        200:
+          description: Dataset version uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetVersionResponseModel'
 
 components:
   schemas:
     DatasetResponseModel:
       type: object
       properties:
-        uuid:
+        datasetUuid:
           type: string
           example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
-
-    DatasetRequestModel:
-      type: object
-      properties:
+        name:
+          type: string
+          example: "training-data"
         projectUuid:
           type: string
           example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
-
-
-
-
+        status:
+          type: string
+          example: "ACTIVE"
+        versionCount:
+          type: integer
+          example: 2
+        updatedAt:
+          type: string
+          example: "2026-06-11T10:30:00"
+    DatasetRequestModel:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "training-data"
+    DatasetStatusChangeRequestModel:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ACTIVE"
+    DatasetDetailResponseModel:
+      type: object
+      properties:
+        datasetUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        projectUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        name:
+          type: string
+          example: "Pun Detection Main Dataset"
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatasetVersionItemModel'
+    DatasetVersionItemModel:
+      type: object
+      properties:
+        datasetVersionUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        originalFileName:
+          type: string
+          example: "pun_dataset_v1.csv"
+        rowCount:
+          type: integer
+          example: 1000
+        updatedAt:
+          type: string
+          example: "2026-06-11T10:40:00"
+    DatasetVersionResponseModel:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
