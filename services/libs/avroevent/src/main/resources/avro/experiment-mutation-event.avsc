@@ -1,0 +1,25 @@
+{
+  "namespace": "com.experimentops.experiment.event",
+  "type": "record",
+  "name": "ExperimentMutationEvent",
+  "fields": [
+    { "name": "metadata", "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent" },
+    {
+      "name": "payload",
+      "type": [ "null",
+        {
+          "type": "record",
+          "name": "ExperimentMutationEventPayload",
+          "fields": [
+            { "name": "experimentName", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "description",    "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "experimentType", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "projectUuid",    "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "status",         "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+          ]
+        }
+      ],
+      "default": null
+    }
+  ]
+}

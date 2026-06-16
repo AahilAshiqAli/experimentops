@@ -6,32 +6,83 @@ from experiment_runtime import KafkaSettings
 from experiment_runtime.kafka import ExperimentOpsKafkaConsumer, KafkaMessage
 from experiment_runtime.logging.context import ExperimentOpsLogger
 from experiment_runtime.models.events import ExperimentRunRequestedEvent
+from experiment_runtime.registry import ExperimentRegistry
 
 
 logger = ExperimentOpsLogger.get_logger("analysis-worker")
 
 
-def handle_experiment_run_requested(message: KafkaMessage) -> None:
-    event = ExperimentRunRequestedEvent.from_kafka_message(message)
+def build_experiment_run_requested_handler(registry: ExperimentRegistry):
+    def handle_experiment_run_requested(message: KafkaMessage) -> None:
+        event = ExperimentRunRequestedEvent.from_kafka_message(message)
 
-    logger.info(
-        "Received experiment run request. request_uuid=%s workspace_uuid=%s project_uuid=%s experiment_run_uuid=%s experiment_type=%s topic=%s partition=%s offset=%s",
-        event.request_uuid,
-        event.workspace_uuid,
-        event.project_uuid,
-        event.experiment_run_uuid,
-        event.experiment_type,
-        message.topic,
-        message.partition,
-        message.offset,
-    )
+        logger.info(
+            "Received experiment run request. request_uuid=%s workspace_uuid=%s project_uuid=%s experiment_run_uuid=%s experiment_type=%s topic=%s partition=%s offset=%s",
+            event.request_uuid,
+            event.workspace_uuid,
+            event.project_uuid,
+            event.experiment_run_uuid,
+            event.experiment_type,
+            message.topic,
+            message.partition,
+            message.offset,
+        )
 
-    #
-    # For now, keep it boring and prove Java -> Kafka -> Python works.
-    logger.info(
-        "Dummy experiment processing finished. experiment_run_uuid=%s",
-        event.experiment_run_uuid,
-    )
+        if not event.experiment_type:
+            logger.warning(
+                "Skipping experiment run request because experiment_type is missing. request_uuid=%s workspace_uuid=%s project_uuid=%s experiment_run_uuid=%s topic=%s partition=%s offset=%s",
+                event.request_uuid,
+                event.workspace_uuid,
+                event.project_uuid,
+                event.experiment_run_uuid,
+                message.topic,
+                message.partition,
+                message.offset,
+            )
+            return
+
+        if event.experiment_type.strip().upper() not in registry.supported_types():
+            logger.warning(
+                "Skipping experiment run request because experiment_type is unsupported. experiment_type=%s supported_experiment_types=%s request_uuid=%s workspace_uuid=%s project_uuid=%s experiment_run_uuid=%s topic=%s partition=%s offset=%s",
+                event.experiment_type,
+                registry.supported_types(),
+                event.request_uuid,
+                event.workspace_uuid,
+                event.project_uuid,
+                event.experiment_run_uuid,
+                message.topic,
+                message.partition,
+                message.offset,
+            )
+            return
+
+        result = registry.execute(
+            experiment_type=event.experiment_type,
+            context=_build_execution_context(event),
+        )
+
+        logger.info(
+            "Experiment processing finished. experiment_run_uuid=%s experiment_type=%s result=%s",
+            event.experiment_run_uuid,
+            event.experiment_type,
+            result,
+        )
+
+    return handle_experiment_run_requested
+
+
+def _build_execution_context(event: ExperimentRunRequestedEvent) -> dict:
+    return {
+        "eventUuid": event.event_uuid,
+        "requestUuid": event.request_uuid,
+        "workspaceUuid": event.workspace_uuid,
+        "projectUuid": event.project_uuid,
+        "experimentUuid": event.experiment_uuid,
+        "experimentRunUuid": event.experiment_run_uuid,
+        "experimentType": event.experiment_type,
+        "datasetUri": event.dataset_uri,
+        "configJson": event.config_json
+    }
 
 
 def main() -> None:
@@ -41,10 +92,17 @@ def main() -> None:
     )
 
     settings = KafkaSettings.from_env()
-    consumer = ExperimentOpsKafkaConsumer(settings)
+    consumer_logger = ExperimentOpsLogger.get_logger("experimentOps-logger")
+    consumer = ExperimentOpsKafkaConsumer(settings, consumer_logger)
+    registry = ExperimentRegistry.discover_executors("analysis_worker.executors")
+
+    logger.info(
+        "Loaded experiment executors. supported_experiment_types=%s",
+        registry.supported_types(),
+    )
 
     consumer.run_forever(
-        handler=handle_experiment_run_requested,
+        handler=build_experiment_run_requested_handler(registry),
         commit_on_handler_error=False,
         commit_on_deserialization_error=False,
     )

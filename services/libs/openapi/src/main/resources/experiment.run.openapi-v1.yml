@@ -1,0 +1,70 @@
+openapi: 3.0.1
+
+info:
+  title: ExperimentOps
+  description: ExperimentOps API.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+    variables:
+      basePath:
+        default: api/v1
+
+tags:
+  - name: Experiment run
+    description: Everything about experiment runs
+
+paths:
+  /experiment/{experimentUuid}/experiment-run/:
+    post:
+      summary: Create Experiment Run
+      description: This API will run experiment.
+      tags:
+        - Experiment run
+      operationId: addExperimentRun
+      parameters:
+        - name: experimentUuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentRunRequestModel'
+      responses:
+        202:
+          description: Experiment create event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRunResponseModel'
+
+components:
+  schemas:
+    ExperimentRunResponseModel:
+      type: object
+      properties:
+        experimentRunUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        runDatasetUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        status:
+          type: string
+          example: "PENDING"
+    ExperimentRunRequestModel:
+      type: object
+      properties:
+        datasetVersionUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        config_json:
+          type: object
+          additionalProperties: true

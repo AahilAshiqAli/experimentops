@@ -1,0 +1,23 @@
+{
+  "namespace": "com.experimentops.dataset.version.event",
+  "type": "record",
+  "name": "DatasetVersionMutationEvent",
+  "fields": [
+    { "name": "metadata", "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent" },
+    {
+      "name": "payload",
+      "type": [ "null",
+        {
+          "type": "record",
+          "name": "DatasetVersionMutationEventPayload",
+          "fields": [
+            { "name": "datasetUuid", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "fileName",    "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "storageUri",  "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+          ]
+        }
+      ],
+      "default": null
+    }
+  ]
+}

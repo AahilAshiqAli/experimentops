@@ -24,15 +24,16 @@ class ExperimentOpsKafkaConsumer:
     def __init__(
         self,
         settings: KafkaSettings,
-        logger: ExperimentOpsLogger | logging.Logger | None = None,
+        logger: ExperimentOpsLogger
     ):
         """Create the Kafka consumer, deserializer, and logger from runtime settings."""
         self._settings = settings
-        self._logger = logger or ExperimentOpsLogger.get_logger(self.__class__)
+        self._logger = ExperimentOpsLogger.get_logger(self.__class__)
         self._consumer = Consumer(settings.consumer_config())
         self._deserializer = ExperimentOpsAvroDeserializer(settings)
         self._running = False
 
+    # object level function so multiple consumer object instances can use this function and each can subscribe to a topic
     def run_forever(
         self,
         handler: KafkaMessageHandler,

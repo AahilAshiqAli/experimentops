@@ -7,4 +7,7 @@ public record UploadedObject(
         String contentType,
         long sizeBytes
 ) {
+    public String storageUri() {
+        return "s3://%s/%s".formatted(bucketName, objectKey);
+    }
 }

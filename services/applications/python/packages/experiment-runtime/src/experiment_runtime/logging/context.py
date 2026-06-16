@@ -12,17 +12,6 @@ if TYPE_CHECKING:
 
 NA = "N/A"
 
-
-def _first_present(payload: Mapping[str, Any], *keys: str) -> Any:
-    for key in keys:
-        value = payload.get(key)
-
-        if value is not None and str(value).strip():
-            return value
-
-    return None
-
-
 @dataclass(frozen=True)
 class ExperimentOpsHeaders:
     """Request metadata that should be printed with application log messages."""
@@ -31,40 +20,21 @@ class ExperimentOpsHeaders:
     workspace_uuid: str = NA
     user_uuid: str = NA
     user_role: str = NA
-    request_timestamp: str = NA
-    internal_trace_uuid: str | None = None
+    project_uuid: str = NA
+    experiment_uuid: str = NA
+    experiment_run_uuid: str = NA
 
     @classmethod
     def from_mapping(cls, payload: Mapping[str, Any] | None) -> Self:
-        """Build log headers from camelCase, snake_case, or Kafka metadata mappings."""
+        """Build log headers from Kafka event metadata."""
         if not payload:
             return cls()
 
         return cls(
-            request_uuid=str(
-                _first_present(payload, "request_uuid", "requestUuid", "traceUuid")
-                or NA
-            ),
-            workspace_uuid=str(
-                _first_present(payload, "workspace_uuid", "workspaceUuid")
-                or NA
-            ),
-            user_uuid=str(
-                _first_present(payload, "user_uuid", "userUuid", "requesterUuid")
-                or NA
-            ),
-            user_role=str(_first_present(payload, "user_role", "userRole") or NA),
-            request_timestamp=str(
-                _first_present(payload, "request_timestamp", "requestTimestamp")
-                or NA
-            ),
-            internal_trace_uuid=_optional_string(
-                _first_present(
-                    payload,
-                    "internal_trace_uuid",
-                    "internalTraceUuid",
-                )
-            ),
+            request_uuid=str(payload.get("requestUuid") or NA),
+            workspace_uuid=str(payload.get("workspaceUuid") or NA),
+            user_uuid=str(payload.get("requesterUuid") or NA),
+            user_role=str(payload.get("userRole") or NA),
         )
 
     @classmethod
@@ -75,23 +45,16 @@ class ExperimentOpsHeaders:
         if not isinstance(value, Mapping):
             return cls()
 
-        metadata = value.get("metadata")
+        event = value.get("payload") or value
+        if not isinstance(event, Mapping):
+            return cls()
+
+        metadata = event.get("metadata")
 
         if isinstance(metadata, Mapping):
             return cls.from_mapping(metadata)
 
-        return cls.from_mapping(value)
-
-
-def _optional_string(value: Any) -> str | None:
-    if value is None:
-        return None
-
-    text = str(value).strip()
-    if not text or text == NA:
-        return None
-
-    return text
+        return cls.from_mapping(event)
 
 
 _current_headers: ContextVar[ExperimentOpsHeaders | None] = ContextVar(
@@ -205,8 +168,5 @@ class ExperimentOpsLogger:
             f"| userUuid : {headers.user_uuid or NA}",
             f"| workspaceUuid : {headers.workspace_uuid or NA}",
         ]
-
-        if headers.internal_trace_uuid:
-            parts.append(f"| internalTraceUuid : {headers.internal_trace_uuid}")
 
         return f"{' '.join(parts)} | {message}"

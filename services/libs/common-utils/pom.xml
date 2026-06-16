@@ -90,6 +90,11 @@
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.hypersistence</groupId>
+            <artifactId>${hypersistence-utils.hibernate.version}</artifactId>
+            <version>${hypersistence-utils.version}</version>
+        </dependency>
 
     </dependencies>
 
