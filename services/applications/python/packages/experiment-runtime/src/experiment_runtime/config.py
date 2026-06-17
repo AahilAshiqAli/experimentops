@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 
 def _get_optional_env(name: str, default: str | None = None) -> str | None:
@@ -20,6 +22,35 @@ def _get_required_env(name: str, default: str | None = None) -> str:
         raise RuntimeError(f"Missing required environment variable: {name}")
 
     return value
+
+
+def _get_required_env_with_default_factory(
+    name: str,
+    default_factory: Callable[[], str],
+) -> str:
+    value = os.getenv(name)
+
+    if value is not None and value.strip() != "":
+        return value
+
+    default = default_factory()
+
+    if default.strip() == "":
+        raise RuntimeError(f"Missing required environment variable: {name}")
+
+    return default
+
+
+def _get_csv_env_with_default_factory(
+    name: str,
+    default_factory: Callable[[], str],
+) -> tuple[str, ...]:
+    value = os.getenv(name)
+
+    if value is None or value.strip() == "":
+        value = default_factory()
+
+    return tuple(item.strip() for item in value.split(",") if item.strip())
 
 
 def _get_int_env(name: str, default: int) -> int:
@@ -54,6 +85,19 @@ def _get_csv_env(name: str, default: str) -> tuple[str, ...]:
 
     return tuple(item.strip() for item in value.split(",") if item.strip())
 
+
+# Avro Schema Parent path joined in other schema to get full url
+def _runtime_avro_schema_dir() -> Path:
+    return Path(__file__).resolve().parent / "schema" / "avro"
+
+
+def _default_producer_value_schema_path() -> str:
+    return str(_runtime_avro_schema_dir() / "experiment-run-completed-event.avsc")
+
+
+def _default_avro_import_paths() -> str:
+    return str(_runtime_avro_schema_dir() / "event-metadata.avsc")
+
 # Clean class having kafka settings which cannot be changed after created ( implied from frozen = true)
 @dataclass(frozen=True)
 class KafkaSettings:
@@ -67,6 +111,9 @@ class KafkaSettings:
     max_poll_interval_ms: int # Max time kafka allows the worker to complete the msg before thinking it is stuck
     session_timeout_ms: int # is how long Kafka waits before deciding the consumer is dead if it stops sending heartbeats
     poll_timeout_seconds: float # controls how long the worker waits each time it asks Kafka for a new message
+    producer_topic: str
+    producer_value_schema_path: str
+    avro_import_paths: tuple[str, ...]
     schema_registry_basic_auth_user_info: str | None = None
     kafka_security_protocol: str | None = None
     kafka_sasl_mechanism: str | None = None
@@ -117,6 +164,19 @@ class KafkaSettings:
                 "EXPERIMENTOPS_KAFKA_POLL_TIMEOUT_SECONDS",
                 1.0,
             ),
+            # List all producer topics here
+            producer_topic=_get_required_env(
+                "EXPERIMENTOPS_KAFKA_PRODUCER_TOPIC",
+                "experiment-run-completed-topic",
+            ),
+            producer_value_schema_path=_get_required_env_with_default_factory(
+                "EXPERIMENTOPS_KAFKA_PRODUCER_VALUE_SCHEMA_PATH",
+                _default_producer_value_schema_path,
+            ),
+            avro_import_paths=_get_csv_env_with_default_factory(
+                "EXPERIMENTOPS_AVRO_IMPORT_PATHS",
+                _default_avro_import_paths,
+            ),
             schema_registry_basic_auth_user_info=_get_optional_env(
                 "EXPERIMENTOPS_SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO"
             ),
@@ -144,6 +204,27 @@ class KafkaSettings:
             "enable.auto.commit": self.enable_auto_commit,
             "max.poll.interval.ms": self.max_poll_interval_ms,
             "session.timeout.ms": self.session_timeout_ms,
+            "allow.auto.create.topics": True,
+        }
+
+        if self.kafka_security_protocol:
+            config["security.protocol"] = self.kafka_security_protocol
+
+        if self.kafka_sasl_mechanism:
+            config["sasl.mechanism"] = self.kafka_sasl_mechanism
+
+        if self.kafka_sasl_username:
+            config["sasl.username"] = self.kafka_sasl_username
+
+        if self.kafka_sasl_password:
+            config["sasl.password"] = self.kafka_sasl_password
+
+        return config
+
+    def producer_config(self) -> dict[str, object]:
+        config: dict[str, object] = {
+            "bootstrap.servers": self.bootstrap_servers,
+            "client.id": f"{self.client_id}-producer",
             "allow.auto.create.topics": True,
         }
 

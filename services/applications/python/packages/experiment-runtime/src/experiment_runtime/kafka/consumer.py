@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 
 from confluent_kafka import Consumer, KafkaError, KafkaException, Message
@@ -11,7 +10,7 @@ from experiment_runtime.logging.context import (
     ExperimentOpsLogger,
     kafka_message_logging_context,
 )
-from experiment_runtime.schema.avro import (
+from experiment_runtime.schema import (
     AvroDeserializationError,
     ExperimentOpsAvroDeserializer,
 )

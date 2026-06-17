@@ -3,16 +3,29 @@ from __future__ import annotations
 import logging
 
 from experiment_runtime import KafkaSettings
-from experiment_runtime.kafka import ExperimentOpsKafkaConsumer, KafkaMessage
+from experiment_runtime.kafka import (
+    ExperimentOpsKafkaConsumer,
+    ExperimentOpsKafkaProducer,
+    KafkaMessage,
+)
 from experiment_runtime.logging.context import ExperimentOpsLogger
-from experiment_runtime.models.events import ExperimentRunRequestedEvent
+from experiment_runtime.models.experiment_run_completed_event import (
+    ExperimentRunCompletedEvent,
+)
+from experiment_runtime.models.experiment_run_requested_event import (
+    ExperimentRunRequestedEvent,
+)
 from experiment_runtime.registry import ExperimentRegistry
 
 
 logger = ExperimentOpsLogger.get_logger("analysis-worker")
 
 
-def build_experiment_run_requested_handler(registry: ExperimentRegistry):
+def build_experiment_run_requested_handler(
+    registry: ExperimentRegistry,
+    producer: ExperimentOpsKafkaProducer,
+    producer_topic: str,
+):
     def handle_experiment_run_requested(message: KafkaMessage) -> None:
         event = ExperimentRunRequestedEvent.from_kafka_message(message)
 
@@ -61,10 +74,23 @@ def build_experiment_run_requested_handler(registry: ExperimentRegistry):
             context=_build_execution_context(event),
         )
 
+        # Get experimentRunCompletedEvent and make producer call
+        completed_event = ExperimentRunCompletedEvent.from_requested_event(
+            event=event,
+            result=result,
+        )
+
+        producer.produce_sync(
+            topic=producer_topic,
+            key=event.experiment_run_uuid,
+            value=completed_event.to_payload(),
+        )
+
         logger.info(
-            "Experiment processing finished. experiment_run_uuid=%s experiment_type=%s result=%s",
+            "Experiment processing finished and completion event published. experiment_run_uuid=%s experiment_type=%s producer_topic=%s result=%s",
             event.experiment_run_uuid,
             event.experiment_type,
+            producer_topic,
             result,
         )
 
@@ -93,7 +119,14 @@ def main() -> None:
 
     settings = KafkaSettings.from_env()
     consumer_logger = ExperimentOpsLogger.get_logger("experimentOps-logger")
+    producer_logger = ExperimentOpsLogger.get_logger("experimentOps-producer")
     consumer = ExperimentOpsKafkaConsumer(settings, consumer_logger)
+    producer = ExperimentOpsKafkaProducer(
+        settings=settings,
+        logger=producer_logger,
+        value_schema_path=settings.producer_value_schema_path,
+        import_paths=settings.avro_import_paths,
+    )
     registry = ExperimentRegistry.discover_executors("analysis_worker.executors")
 
     logger.info(
@@ -101,11 +134,18 @@ def main() -> None:
         registry.supported_types(),
     )
 
-    consumer.run_forever(
-        handler=build_experiment_run_requested_handler(registry),
-        commit_on_handler_error=False,
-        commit_on_deserialization_error=False,
-    )
+    try:
+        consumer.run_forever(
+            handler=build_experiment_run_requested_handler(
+                registry=registry,
+                producer=producer,
+                producer_topic=settings.producer_topic,
+            ),
+            commit_on_handler_error=False,
+            commit_on_deserialization_error=False,
+        )
+    finally:
+        producer.close()
 
 
 if __name__ == "__main__":

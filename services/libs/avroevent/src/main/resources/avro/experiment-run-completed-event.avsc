@@ -1,0 +1,25 @@
+{
+  "namespace": "com.experimentops.experiment.run.event",
+  "type": "record",
+  "name": "ExperimentRunCompletedEvent",
+  "fields": [
+    { "name": "metadata", "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent" },
+    {
+      "name": "payload",
+      "type": [ "null",
+        {
+          "type": "record",
+          "name": "ExperimentRunCompletedEventPayload",
+          "fields": [
+            { "name": "projectUuid",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "experimentUuid",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "experimentType",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "status",           "type": "string", "avro.java.string": "String" },
+            { "name": "resultJson",       "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+          ]
+        }
+      ],
+      "default": null
+    }
+  ]
+}
