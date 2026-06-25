@@ -35,6 +35,9 @@ public class ExperimentRun extends ExperimentOpsEntity {
     @Convert(converter = ExperimentStatusEnumConverter.class)
     private ExperimentStatusEnum experimentStatus;
 
+    @Column(name = "progress")
+    private int progress;
+
     @Column(name = "run_number")
     private int runNumber;
 

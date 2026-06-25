@@ -1,0 +1,41 @@
+{
+  "namespace": "com.experimentops.experiment.run.event",
+  "type": "record",
+  "name": "ExperimentRunFailureEvent",
+  "fields": [
+    { "name": "metadata", "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent" },
+    {
+      "name": "payload",
+      "type": [
+        "null",
+        {
+          "type": "record",
+          "name": "ExperimentRunFailureEventPayload",
+          "fields": [
+            { "name": "projectUuid", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "experimentUuid", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "experimentType", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "status", "type": "string", "avro.java.string": "String" },
+            {
+              "name": "errors",
+              "type": {
+                "type": "array",
+                "items": {
+                  "type": "record",
+                  "name": "ExperimentRunFailureErrorEntry",
+                  "fields": [
+                    { "name": "errorType", "type": "string", "avro.java.string": "String" },
+                    { "name": "errorMessage", "type": "string", "avro.java.string": "String" },
+                    { "name": "stackTrace", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+                  ]
+                }
+              },
+              "default": []
+            }
+          ]
+        }
+      ],
+      "default": null
+    }
+  ]
+}

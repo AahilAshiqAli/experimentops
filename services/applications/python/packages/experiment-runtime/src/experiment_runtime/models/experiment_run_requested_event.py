@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Mapping
 
-from pydantic import json
-
+from experiment_runtime.base_model import ExperimentOpsModel
 from experiment_runtime.kafka.message import KafkaMessage
 
 
-@dataclass(frozen=True)
-class ExperimentRunRequestedEvent:
+class ExperimentRunRequestedEvent(ExperimentOpsModel):
     event_uuid: str | None
     request_uuid: str | None
     requester_uuid: str | None
@@ -19,7 +16,7 @@ class ExperimentRunRequestedEvent:
     experiment_run_uuid: str | None
     experiment_type: str | None
     dataset_uri: str | None
-    config_json: json | None
+    config_json: Any | None
     request_timestamp: int | None
     user_role: str | None
 

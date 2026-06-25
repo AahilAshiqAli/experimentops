@@ -11,11 +11,12 @@
           "type": "record",
           "name": "ExperimentRunEventPayload",
           "fields": [
-            { "name": "projectUuid",    "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-            { "name": "workspaceUuid",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-            { "name": "experimentType", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-            { "name": "configJson",     "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-            { "name": "datasetUri",     "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+            { "name": "projectUuid",     "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "workspaceUuid",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "experimentType",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "configJson",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "datasetUri",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "experimentUuid",  "type": ["null", "string"], "default": null, "avro.java.string": "String" }
           ]
         }
       ],

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import json
+import traceback
 from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
-from pydantic import Field, SerializeAsAny
+from pydantic import Field
 
 from experiment_runtime.base_model import ExperimentOpsModel
 from experiment_runtime.models.experiment_run_requested_event import (
@@ -13,23 +13,30 @@ from experiment_runtime.models.experiment_run_requested_event import (
 )
 
 
-class Artifact(ExperimentOpsModel):
-    format: str
-    type: str
-    uri: str
-    size: int
+class ExperimentRunFailureErrorEntry(ExperimentOpsModel):
+    error_type: str
+    error_message: str
+    stack_trace: str | None = None
+
+    @classmethod
+    def from_exception(cls, exception: BaseException) -> "ExperimentRunFailureErrorEntry":
+        return cls(
+            error_type=exception.__class__.__name__,
+            error_message=str(exception) or exception.__class__.__name__,
+            stack_trace="".join(
+                traceback.format_exception(
+                    type(exception),
+                    exception,
+                    exception.__traceback__,
+                )
+            ),
+        )
+
+    def to_payload(self) -> dict[str, Any]:
+        return self.model_dump(by_alias=True)
 
 
-class Metric(ExperimentOpsModel):
-    pass
-
-
-class Result(ExperimentOpsModel):
-    artifact: list[Artifact]
-    metrics: SerializeAsAny[Metric] | None
-
-
-class ExperimentRunCompletedEvent(ExperimentOpsModel):
+class ExperimentRunFailureEvent(ExperimentOpsModel):
     request_uuid: str | None
     requester_uuid: str | None
     workspace_uuid: str | None
@@ -37,10 +44,9 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
     experiment_uuid: str | None
     experiment_run_uuid: str | None
     experiment_type: str | None
-    status: str
+    errors: tuple[ExperimentRunFailureErrorEntry, ...]
     request_timestamp: int | None = None
     user_role: str | None = None
-    result: Result | None
     event_uuid: str = Field(default_factory=lambda: str(uuid4()))
     event_timestamp: int = Field(default_factory=lambda: _current_epoch_millis())
 
@@ -48,10 +54,8 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
     def from_requested_event(
         cls,
         event: ExperimentRunRequestedEvent,
-        result: Result | None,
-    ) -> "ExperimentRunCompletedEvent":
-        status = "SUCCEEDED"
-
+        exception: BaseException,
+    ) -> "ExperimentRunFailureEvent":
         return cls(
             request_uuid=event.request_uuid,
             requester_uuid=event.requester_uuid,
@@ -60,8 +64,7 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
             experiment_uuid=event.experiment_uuid,
             experiment_run_uuid=event.experiment_run_uuid,
             experiment_type=event.experiment_type,
-            status=status,
-            result=result,
+            errors=(ExperimentRunFailureErrorEntry.from_exception(exception),),
             request_timestamp=event.request_timestamp,
             user_role=event.user_role,
         )
@@ -71,7 +74,7 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
             "metadata": {
                 "traceUuid": _required_string(self.request_uuid),
                 "requesterUuid": _required_string(self.requester_uuid),
-                "eventType": "EXPERIMENT_RUN_COMPLETED",
+                "eventType": "EXPERIMENT_RUN_FAILURE",
                 "eventUuid": self.event_uuid,
                 "eventTimestamp": self.event_timestamp,
                 "uuid": _required_string(self.experiment_run_uuid),
@@ -86,15 +89,8 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
                 "projectUuid": self.project_uuid,
                 "experimentUuid": self.experiment_uuid,
                 "experimentType": self.experiment_type,
-                "status": self.status,
-                "resultJson": (
-                    json.dumps(
-                        self.result.model_dump(by_alias=True, mode="json"),
-                        separators=(",", ":"),
-                    )
-                    if self.result is not None
-                    else None
-                ),
+                "status": "FAILED",
+                "errors": [error.to_payload() for error in self.errors],
             },
         }
 

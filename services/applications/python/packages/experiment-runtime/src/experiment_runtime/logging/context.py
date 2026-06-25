@@ -4,16 +4,16 @@ import logging
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar, Token
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Self
+
+from experiment_runtime.base_model import ExperimentOpsModel
 
 if TYPE_CHECKING:
     from experiment_runtime.kafka.message import KafkaMessage
 
 NA = "N/A"
 
-@dataclass(frozen=True)
-class ExperimentOpsHeaders:
+class ExperimentOpsHeaders(ExperimentOpsModel):
     """Request metadata that should be printed with application log messages."""
 
     request_uuid: str = NA
@@ -35,6 +35,9 @@ class ExperimentOpsHeaders:
             workspace_uuid=str(payload.get("workspaceUuid") or NA),
             user_uuid=str(payload.get("requesterUuid") or NA),
             user_role=str(payload.get("userRole") or NA),
+            project_uuid=str(payload.get("projectUuid") or NA),
+            experiment_uuid=str(payload.get("experimentUuid") or NA),
+            experiment_run_uuid=str(payload.get("experimentRunUuid") or payload.get("uuid") or NA),
         )
 
     @classmethod
@@ -50,9 +53,15 @@ class ExperimentOpsHeaders:
             return cls()
 
         metadata = event.get("metadata")
+        payload = event.get("payload")
 
         if isinstance(metadata, Mapping):
-            return cls.from_mapping(metadata)
+            headers = dict(metadata)
+
+            if isinstance(payload, Mapping):
+                headers.update(payload)
+
+            return cls.from_mapping(headers)
 
         return cls.from_mapping(event)
 
@@ -167,6 +176,9 @@ class ExperimentOpsLogger:
             f"| requestUuid : {headers.request_uuid or NA}",
             f"| userUuid : {headers.user_uuid or NA}",
             f"| workspaceUuid : {headers.workspace_uuid or NA}",
+            f"| projectUuid : {headers.project_uuid or NA}",
+            f"| experimentUuid : {headers.experiment_uuid or NA}",
+            f"| experimentRunUuid : {headers.experiment_run_uuid or NA}",
         ]
 
         return f"{' '.join(parts)} | {message}"

@@ -29,7 +29,9 @@ public class ExperimentRunTransformer {
             @NonNull Experiment experiment,
             @NonNull String datasetUri,
             @NonNull ExperimentRunRequestModel requestModel,
-            @NonNull ExperimentOpsHeaders headers) {
+            @NonNull String experimentRunUuid,
+            @NonNull ExperimentOpsHeaders headers
+            ) {
 
         log.info(headers, "transforming the payload to Experiment Run Event");
 
@@ -39,11 +41,12 @@ public class ExperimentRunTransformer {
                 .setConfigJson(JSONUtil.toNonTypedJsonFromObject(requestModel.getConfigJson()))
                 .setDatasetUri(datasetUri)
                 .setExperimentType(experiment.getExperimentType())
+                .setExperimentUuid(experiment.getUuid())
                 .build();
 
         ExperimentOpsMetadataEvent metadata = ExperimentOpsMetadataUtil.metadataEvent(
                 headers,
-                ExperimentOpsUtils.uuid(),
+                experimentRunUuid,
                 EventType.EXPERIMENT_RUN_REQUESTED.name(),
                 this.getClass().getSimpleName()
         );

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable
-from dataclasses import dataclass
 from pathlib import Path
+
+from experiment_runtime.base_model import ExperimentOpsModel
 
 
 def _get_optional_env(name: str, default: str | None = None) -> str | None:
@@ -95,12 +96,14 @@ def _default_producer_value_schema_path() -> str:
     return str(_runtime_avro_schema_dir() / "experiment-run-completed-event.avsc")
 
 
+def _default_failure_producer_value_schema_path() -> str:
+    return str(_runtime_avro_schema_dir() / "experiment-run-failure-event.avsc")
+
+
 def _default_avro_import_paths() -> str:
     return str(_runtime_avro_schema_dir() / "event-metadata.avsc")
 
-# Clean class having kafka settings which cannot be changed after created ( implied from frozen = true)
-@dataclass(frozen=True)
-class KafkaSettings:
+class KafkaSettings(ExperimentOpsModel):
     bootstrap_servers: str
     schema_registry_url: str
     topics: tuple[str, ...]
@@ -113,6 +116,8 @@ class KafkaSettings:
     poll_timeout_seconds: float # controls how long the worker waits each time it asks Kafka for a new message
     producer_topic: str
     producer_value_schema_path: str
+    failure_producer_topic: str
+    failure_producer_value_schema_path: str
     avro_import_paths: tuple[str, ...]
     schema_registry_basic_auth_user_info: str | None = None
     kafka_security_protocol: str | None = None
@@ -172,6 +177,14 @@ class KafkaSettings:
             producer_value_schema_path=_get_required_env_with_default_factory(
                 "EXPERIMENTOPS_KAFKA_PRODUCER_VALUE_SCHEMA_PATH",
                 _default_producer_value_schema_path,
+            ),
+            failure_producer_topic=_get_required_env(
+                "EXPERIMENTOPS_KAFKA_FAILURE_PRODUCER_TOPIC",
+                "experiment-run-failure-topic",
+            ),
+            failure_producer_value_schema_path=_get_required_env_with_default_factory(
+                "EXPERIMENTOPS_KAFKA_FAILURE_PRODUCER_VALUE_SCHEMA_PATH",
+                _default_failure_producer_value_schema_path,
             ),
             avro_import_paths=_get_csv_env_with_default_factory(
                 "EXPERIMENTOPS_AVRO_IMPORT_PATHS",
