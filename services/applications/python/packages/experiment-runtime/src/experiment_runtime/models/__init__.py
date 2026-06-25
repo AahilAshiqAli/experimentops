@@ -12,6 +12,9 @@ from experiment_runtime.models.experiment_run_failure_event import (
     ExperimentRunFailureErrorEntry,
     ExperimentRunFailureEvent,
 )
+from experiment_runtime.models.experiment_run_progress_event import (
+    ExperimentRunProgressEvent,
+)
 from experiment_runtime.models.experiment_run_requested_event import (
     ExperimentRunRequestedEvent,
 )
@@ -23,6 +26,7 @@ __all__ = [
     "ExperimentRunCompletedEvent",
     "ExperimentRunFailureErrorEntry",
     "ExperimentRunFailureEvent",
+    "ExperimentRunProgressEvent",
     "ExperimentRunRequestedEvent",
     "Metric",
     "Result",

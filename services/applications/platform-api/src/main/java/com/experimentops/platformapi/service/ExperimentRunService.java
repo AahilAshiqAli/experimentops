@@ -2,21 +2,16 @@ package com.experimentops.platformapi.service;
 
 import com.experimentops.common.exceptions.runtime.EntityNotFoundException;
 import com.experimentops.common.kafka.KafkaProducer;
-import com.experimentops.experiment.run.event.ExperimentRunCompletedEvent;
-import com.experimentops.experiment.run.event.ExperimentRunEvent;
-import com.experimentops.experiment.run.event.ExperimentRunFailureEvent;
-import com.experimentops.experiment.run.event.ExperimentRunProgressEvent;
+import com.experimentops.experiment.run.event.*;
 import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunResponseModel;
 import com.experimentops.platformapi.dal.repository.DatasetVersionRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentRunRepository;
 import com.experimentops.platformapi.dal.repository.RunDatasetRepository;
-import com.experimentops.platformapi.model.entity.DatasetVersion;
-import com.experimentops.platformapi.model.entity.Experiment;
-import com.experimentops.platformapi.model.entity.ExperimentRun;
-import com.experimentops.platformapi.model.entity.RunDataset;
+import com.experimentops.platformapi.model.entity.*;
 import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
+import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.ExperimentRunTransformer;
 import com.experimentops.platformapi.validator.ExperimentRunValidator;
 import com.experimentops.utils.ExperimentOpsLogger;
@@ -38,6 +33,7 @@ public class ExperimentRunService {
     private final ExperimentRunRepository experimentRunRepository;
     private final DatasetVersionRepository datasetVersionRepository;
     private final RunDatasetRepository runDatasetRepository;
+    private final RunArtifactService runArtifactService;
 
     @Value("${experiment.run.requested.topic}")
     private String experimentRunRequestTopic;
@@ -76,6 +72,8 @@ public class ExperimentRunService {
 
     public void processExperimentRunCompleted(@NonNull ExperimentRunCompletedEvent event, @NonNull ExperimentOpsHeaders headers) {
         updateExperimentRunStatus(event.getMetadata().getUuid(), headers, ExperimentStatusEnum.SUCCEEDED);
+        runArtifactService.uploadArtifacts(event, headers);
+
     }
 
     public void processExperimentRunFailure(@NonNull ExperimentRunFailureEvent event, @NonNull ExperimentOpsHeaders headers) {
@@ -97,6 +95,17 @@ public class ExperimentRunService {
     }
 
     public void processExperimentRunProgress(@NonNull ExperimentRunProgressEvent event, @NonNull ExperimentOpsHeaders headers) {
-
+        String experimentRunUuid = event.getPayload().getExperimentRunUuid();
+        int progress = Integer.parseInt(event.getPayload().getProgress());
+        experimentRunRepository.findByUuidAndWorkspaceUuidAndEnabled(experimentRunUuid, headers.getWorkspaceUuid(), true)
+                .ifPresentOrElse(
+                        experimentRun -> {
+                            experimentRun.setProgress(progress);
+                            experimentRunRepository.save(experimentRun);
+                        },
+                        () -> {
+                            throw new EntityNotFoundException("Experiment Run uuid", experimentRunUuid);
+                        }
+                );
     }
 }

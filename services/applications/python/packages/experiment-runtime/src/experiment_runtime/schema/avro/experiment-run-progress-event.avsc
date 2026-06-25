@@ -11,6 +11,8 @@
           "type": "record",
           "name": "ExperimentRunProgressEventPayload",
           "fields": [
+            { "name": "experimentUuid",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "experimentRunUuid",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "progress",  "type": ["null", "string"], "default": null, "avro.java.string": "String" }
           ]
         }

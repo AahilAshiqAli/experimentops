@@ -32,8 +32,11 @@ public class RunArtifact extends ExperimentOpsEntity {
     @Column(name = "storage_uri")
     private String storageUri;
 
-    @Column(name = "mime_type")
-    private String mimeType;
+    @Column(name = "format")
+    private String format;
+
+    @Column(name = "size_bytes")
+    private long size;
 
     @Override
     @Generated

@@ -13,7 +13,9 @@
           "fields": [
             { "name": "datasetUuid", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "fileName",    "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-            { "name": "storageUri",  "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+            { "name": "storageUri",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "format",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "size",        "type": ["null", "long"], "default": null }
           ]
         }
       ],

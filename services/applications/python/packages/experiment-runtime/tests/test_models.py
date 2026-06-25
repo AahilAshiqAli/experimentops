@@ -5,6 +5,7 @@ from experiment_runtime.models import (
     ExperimentExecutionContext,
     ExperimentRunCompletedEvent,
     ExperimentRunFailureErrorEntry,
+    ExperimentRunProgressEvent,
     ExperimentRunRequestedEvent,
     Metric,
     Result,
@@ -75,11 +76,17 @@ def test_completed_event_payload_keeps_event_envelope_shape() -> None:
     assert payload["metadata"]["traceUuid"] == "request-1"
     assert payload["metadata"]["uuid"] == "run-1"
     assert payload["payload"]["experimentType"] == "CSV_PROFILE_ANALYSIS"
-    assert payload["payload"]["resultJson"] == (
-        '{"artifact":[{"format":"csv","type":"CLEANED_DATASET",'
-        '"uri":"s3://bucket/output.csv","size":10}],'
-        '"metrics":{"rowsProcessed":100}}'
-    )
+    assert payload["payload"]["result"] == {
+        "artifact": [
+            {
+                "format": "csv",
+                "type": "CLEANED_DATASET",
+                "uri": "s3://bucket/output.csv",
+                "size": 10,
+            }
+        ],
+        "metricsJson": '{"rowsProcessed":100}',
+    }
 
 
 def test_execution_context_builds_from_requested_event() -> None:
@@ -113,6 +120,35 @@ def test_execution_context_builds_from_requested_event() -> None:
         "experimentType": "CSV_PROFILE_ANALYSIS",
         "datasetUri": "s3://bucket/input.csv",
         "configJson": {"sampleSize": 100},
+    }
+
+
+def test_progress_event_payload_keeps_event_envelope_shape() -> None:
+    context = ExperimentExecutionContext(
+        event_uuid="event-1",
+        request_uuid="request-1",
+        workspace_uuid="workspace-1",
+        project_uuid="project-1",
+        experiment_uuid="experiment-1",
+        experiment_run_uuid="run-1",
+        experiment_type="CSV_PROFILE_ANALYSIS",
+        dataset_uri="s3://bucket/input.csv",
+        config_json=None,
+    )
+
+    payload = ExperimentRunProgressEvent.from_execution_context(
+        context=context,
+        progress=75,
+    ).to_payload()
+
+    assert payload["metadata"]["traceUuid"] == "request-1"
+    assert payload["metadata"]["eventType"] == "EXPERIMENT_RUN_PROGRESS"
+    assert payload["metadata"]["uuid"] == "run-1"
+    assert payload["metadata"]["workspaceUuid"] == "workspace-1"
+    assert payload["payload"] == {
+        "experimentUuid": "experiment-1",
+        "experimentRunUuid": "run-1",
+        "progress": "75",
     }
 
 

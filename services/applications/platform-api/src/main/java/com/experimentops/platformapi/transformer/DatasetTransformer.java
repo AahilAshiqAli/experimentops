@@ -133,7 +133,8 @@ public class DatasetTransformer {
                     DatasetVersionItemModel item = new DatasetVersionItemModel();
                     item.setDatasetVersionUuid(v.getUuid());
                     item.setOriginalFileName(v.getName());
-                    item.setRowCount(v.getRowCount());
+                    item.setFormat(DatasetVersionItemModel.FormatEnum.fromValue(normalizeDatasetFormat(v.getFormat())));
+                    item.setSize(v.getSize());
                     item.setUpdatedAt(v.getLastUpdated().toLocalDateTime().toString());
                     return item;
                 })
@@ -174,6 +175,8 @@ public class DatasetTransformer {
         DatasetVersion datasetVersion = DatasetVersion.builder()
                 .name(payload.getFileName())
                 .storageUri(payload.getStorageUri())
+                .format(normalizeDatasetFormat(payload.getFormat()))
+                .size(payload.getSize())
                 .datasetUuid(payload.getDatasetUuid())
                 .workspaceUuid(event.getMetadata().getWorkspaceUuid())
                 .status(StatusEnum.ACTIVE)
@@ -184,12 +187,21 @@ public class DatasetTransformer {
     }
 
     @NonNull
-    public DatasetVersionMutationEvent transformDatasetVersionCreationEvent(@NonNull String uuid, @NonNull String datasetUuid, @NonNull String fileName, @NonNull String storageUri, @NonNull ExperimentOpsHeaders headers){
+    public DatasetVersionMutationEvent transformDatasetVersionCreationEvent(
+            @NonNull String uuid,
+            @NonNull String datasetUuid,
+            @NonNull String fileName,
+            @NonNull String storageUri,
+            String format,
+            long size,
+            @NonNull ExperimentOpsHeaders headers){
 
         DatasetVersionMutationEventPayload payload = DatasetVersionMutationEventPayload.newBuilder()
                 .setDatasetUuid(datasetUuid)
                 .setStorageUri(storageUri)
                 .setFileName(fileName)
+                .setFormat(format)
+                .setSize(size)
                 .build();
 
         ExperimentOpsMetadataEvent metadata = ExperimentOpsMetadataUtil.metadataEvent(
@@ -204,6 +216,24 @@ public class DatasetTransformer {
                 .setPayload(payload)
                 .build();
 
+    }
+
+    private String normalizeDatasetFormat(String format) {
+        if (format == null || format.isBlank()) {
+            return "UNKNOWN";
+        }
+
+        String normalizedFormat = format.trim().toUpperCase();
+        return switch (normalizedFormat) {
+            case "TEXT/CSV", "APPLICATION/CSV" -> "CSV";
+            case "APPLICATION/VND.MS-EXCEL",
+                 "APPLICATION/VND.OPENXMLFORMATS-OFFICEDOCUMENT.SPREADSHEETML.SHEET" -> "EXCEL";
+            case "TEXT/PLAIN" -> "TEXT";
+            case "CSV", "EXCEL", "TEXT" -> normalizedFormat;
+            default -> {
+                yield "UNKNOWN";
+            }
+        };
     }
 
 }

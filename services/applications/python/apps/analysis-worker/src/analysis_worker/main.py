@@ -14,6 +14,9 @@ from analysis_worker.config import ObjectStorageConfig
 from analysis_worker.handlers.experiment_run_requested_handler import (
     build_experiment_run_requested_handler,
 )
+from analysis_worker.handlers.experiment_run_progress_publisher import (
+    ExperimentRunProgressPublisher,
+)
 
 
 logger = ExperimentOpsLogger.get_logger("analysis-worker")
@@ -42,9 +45,22 @@ def main() -> None:
         value_schema_path=settings.failure_producer_value_schema_path,
         import_paths=settings.avro_import_paths,
     )
+    progress_producer = ExperimentOpsKafkaProducer(
+        settings=settings,
+        logger=producer_logger,
+        value_schema_path=settings.progress_producer_value_schema_path,
+        import_paths=settings.avro_import_paths,
+    )
+    progress_publisher = ExperimentRunProgressPublisher(
+        producer=progress_producer,
+        producer_topic=settings.progress_producer_topic,
+    )
     registry = ExperimentRegistry.discover_executors(
         "analysis_worker.executors",
-        executor_dependencies={"object_storage": object_storage},
+        executor_dependencies={
+            "object_storage": object_storage,
+            "progress_publisher": progress_publisher,
+        },
     )
 
     logger.info(
@@ -67,6 +83,7 @@ def main() -> None:
     finally:
         producer.close()
         failure_producer.close()
+        progress_producer.close()
 
 
 if __name__ == "__main__":

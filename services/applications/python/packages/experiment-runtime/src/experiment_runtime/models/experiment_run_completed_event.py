@@ -14,6 +14,8 @@ from experiment_runtime.models.experiment_run_requested_event import (
 
 
 class Artifact(ExperimentOpsModel):
+    """Metadata for an artifact produced by an experiment run."""
+
     format: str
     type: str
     uri: str
@@ -21,15 +23,21 @@ class Artifact(ExperimentOpsModel):
 
 
 class Metric(ExperimentOpsModel):
+    """Base model for typed metrics emitted by experiment-specific results."""
+
     pass
 
 
 class Result(ExperimentOpsModel):
+    """Experiment result payload containing artifacts and optional metrics."""
+
     artifact: list[Artifact]
     metrics: SerializeAsAny[Metric] | None
 
 
 class ExperimentRunCompletedEvent(ExperimentOpsModel):
+    """Event emitted when an experiment run completes with a final status."""
+
     request_uuid: str | None
     requester_uuid: str | None
     workspace_uuid: str | None
@@ -50,6 +58,8 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
         event: ExperimentRunRequestedEvent,
         result: Result | None,
     ) -> "ExperimentRunCompletedEvent":
+        """Create a completed event from the original run request and result."""
+
         status = "SUCCEEDED"
 
         return cls(
@@ -67,6 +77,8 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
         )
 
     def to_payload(self) -> dict[str, Any]:
+        """Serialize the completed event into the broker payload shape."""
+
         return {
             "metadata": {
                 "traceUuid": _required_string(self.request_uuid),
@@ -87,21 +99,40 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
                 "experimentUuid": self.experiment_uuid,
                 "experimentType": self.experiment_type,
                 "status": self.status,
-                "resultJson": (
-                    json.dumps(
-                        self.result.model_dump(by_alias=True, mode="json"),
-                        separators=(",", ":"),
-                    )
-                    if self.result is not None
-                    else None
-                ),
+                "result": _result_payload(self.result),
             },
         }
 
 
 def _current_epoch_millis() -> int:
+    """Return the current UTC time as epoch milliseconds."""
+
     return int(datetime.now(UTC).timestamp() * 1000)
 
 
+def _result_payload(result: Result | None) -> dict[str, Any] | None:
+    """Serialize typed artifacts and experiment-specific metrics JSON."""
+
+    if result is None:
+        return None
+
+    return {
+        "artifact": [
+            artifact.model_dump(by_alias=True, mode="json")
+            for artifact in result.artifact
+        ],
+        "metricsJson": (
+            json.dumps(
+                result.metrics.model_dump(by_alias=True, mode="json"),
+                separators=(",", ":"),
+            )
+            if result.metrics is not None
+            else None
+        ),
+    }
+
+
 def _required_string(value: str | None) -> str:
+    """Convert optional metadata values to the required empty-string fallback."""
+
     return value or ""

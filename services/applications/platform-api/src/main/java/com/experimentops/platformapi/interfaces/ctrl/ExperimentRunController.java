@@ -1,6 +1,5 @@
 package com.experimentops.platformapi.interfaces.ctrl;
 
-import com.experimentops.experiment.api.v1.ExperimentApi;
 import com.experimentops.experiment.run.api.v1.ExperimentRunApi;
 import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunResponseModel;

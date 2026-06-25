@@ -252,9 +252,18 @@ components:
         originalFileName:
           type: string
           example: "pun_dataset_v1.csv"
-        rowCount:
+        format:
+          type: string
+          enum:
+            - CSV
+            - EXCEL
+            - TEXT
+            - UNKNOWN
+          example: "CSV"
+        size:
           type: integer
-          example: 1000
+          format: int64
+          example: 102400
         updatedAt:
           type: string
           example: "2026-06-11T10:40:00"
