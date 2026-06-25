@@ -100,6 +100,10 @@ def _default_failure_producer_value_schema_path() -> str:
     return str(_runtime_avro_schema_dir() / "experiment-run-failure-event.avsc")
 
 
+def _default_progress_producer_value_schema_path() -> str:
+    return str(_runtime_avro_schema_dir() / "experiment-run-progress-event.avsc")
+
+
 def _default_avro_import_paths() -> str:
     return str(_runtime_avro_schema_dir() / "event-metadata.avsc")
 
@@ -118,6 +122,8 @@ class KafkaSettings(ExperimentOpsModel):
     producer_value_schema_path: str
     failure_producer_topic: str
     failure_producer_value_schema_path: str
+    progress_producer_topic: str
+    progress_producer_value_schema_path: str
     avro_import_paths: tuple[str, ...]
     schema_registry_basic_auth_user_info: str | None = None
     kafka_security_protocol: str | None = None
@@ -185,6 +191,14 @@ class KafkaSettings(ExperimentOpsModel):
             failure_producer_value_schema_path=_get_required_env_with_default_factory(
                 "EXPERIMENTOPS_KAFKA_FAILURE_PRODUCER_VALUE_SCHEMA_PATH",
                 _default_failure_producer_value_schema_path,
+            ),
+            progress_producer_topic=_get_required_env(
+                "EXPERIMENTOPS_KAFKA_PROGRESS_PRODUCER_TOPIC",
+                "experiment-run-progress-topic",
+            ),
+            progress_producer_value_schema_path=_get_required_env_with_default_factory(
+                "EXPERIMENTOPS_KAFKA_PROGRESS_PRODUCER_VALUE_SCHEMA_PATH",
+                _default_progress_producer_value_schema_path,
             ),
             avro_import_paths=_get_csv_env_with_default_factory(
                 "EXPERIMENTOPS_AVRO_IMPORT_PATHS",

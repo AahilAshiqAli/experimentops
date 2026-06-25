@@ -2,6 +2,7 @@ package com.experimentops.platformapi.service;
 
 import com.experimentops.common.exceptions.runtime.EntityAlreadyExistsException;
 import com.experimentops.common.exceptions.runtime.EntityNotFoundException;
+import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.common.kafka.KafkaProducer;
 import com.experimentops.dataset.event.DatasetMutationEvent;
 import com.experimentops.dataset.model.v1.DatasetDetailResponseModel;
@@ -16,6 +17,7 @@ import com.experimentops.platformapi.dal.gateway.dto.UploadedObject;
 import com.experimentops.platformapi.dal.repository.DatasetRepository;
 import com.experimentops.platformapi.dal.repository.DatasetVersionRepository;
 import com.experimentops.platformapi.model.entity.Dataset;
+import com.experimentops.platformapi.model.type.DatasetFileFormatEnum;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.DatasetTransformer;
 import com.experimentops.platformapi.validator.DatasetValidator;
@@ -30,6 +32,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+import static com.experimentops.common.exceptions.constant.ErrorCode.INVALID_INPUTS;
+
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +46,7 @@ public class DatasetService {
     private final DatasetTransformer datasetTransformer;
     private final KafkaProducer kafkaProducer;
     private final ObjectStorageGateway objectStorageGateway;
+    private final DatasetFileFormatDetector datasetFileFormatDetector;
 
     private static final String DATASET_UUID = "dataset_uuid";
 
@@ -138,6 +143,7 @@ public class DatasetService {
     @NonNull
     public DatasetVersionResponseModel publishUploadDatasetVersion(@NonNull String datasetUuid, @NonNull MultipartFile file, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "uploading dataset version for dataset uuid: " + datasetUuid);
+        DatasetFileFormatEnum datasetFileFormat = validateDatasetVersionFile(file);
         Dataset dataset = datasetRepository
                 .findByUuidAndWorkspaceUuidAndStatusAndEnabled(datasetUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
                 .orElseThrow(() -> new EntityNotFoundException(DATASET_UUID, datasetUuid));
@@ -146,7 +152,15 @@ public class DatasetService {
         log.info(headers, uploadedObject.toString());
         long countVersions = datasetVersionRepository.countByDatasetUuidAndWorkspaceUuidAndEnabled(datasetUuid, headers.getWorkspaceUuid(), true);
         String fileName = "v" + (countVersions + 1) + "_" + uploadedObject.originalFilename();
-        DatasetVersionMutationEvent datasetVersionMutationEvent = datasetTransformer.transformDatasetVersionCreationEvent(versionUuid, datasetUuid, fileName, uploadedObject.storageUri(), headers);
+        DatasetVersionMutationEvent datasetVersionMutationEvent = datasetTransformer.transformDatasetVersionCreationEvent(
+                versionUuid,
+                datasetUuid,
+                fileName,
+                uploadedObject.storageUri(),
+                datasetFileFormat.name(),
+                uploadedObject.sizeBytes(),
+                headers
+        );
         kafkaProducer.sendMessage(datasetVersionTopic, datasetVersionMutationEvent, datasetVersionMutationEvent.getMetadata() );
         DatasetVersionResponseModel responseModel = new DatasetVersionResponseModel();
         responseModel.setUuid(versionUuid);
@@ -180,6 +194,20 @@ public class DatasetService {
                     return datasetTransformer.transformDatasetResponseModelFromEntity(dataset, versionCount, headers);
                 })
                 .toList();
+    }
+
+    @NonNull
+    private DatasetFileFormatEnum validateDatasetVersionFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ValidationException(INVALID_INPUTS, "Dataset file is required");
+        }
+
+        DatasetFileFormatEnum datasetFileFormat = datasetFileFormatDetector.detect(file.getOriginalFilename(), file.getContentType());
+        if (DatasetFileFormatEnum.UNKNOWN == datasetFileFormat) {
+            throw new ValidationException(INVALID_INPUTS, "Unsupported dataset file format. Supported formats are CSV, EXCEL, TEXT");
+        }
+
+        return datasetFileFormat;
     }
 
 }

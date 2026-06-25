@@ -7,6 +7,7 @@ from analysis_worker.executors.csv_profile_analysis.cleaner import clean_context
 from analysis_worker.executors.csv_profile_analysis.model import (
     CsvProfileAnalysisContext,
 )
+from experiment_runtime.models.experiment_run_completed_event import Artifact
 
 
 class FakeObjectStorage:
@@ -31,6 +32,7 @@ class FakeObjectStorage:
 
 def test_clean_context_downloads_input_and_uploads_artifacts(tmp_path: Path) -> None:
     object_storage = FakeObjectStorage()
+    progress_updates: list[int] = []
 
     result = clean_context(
         context=CsvProfileAnalysisContext(
@@ -44,26 +46,32 @@ def test_clean_context_downloads_input_and_uploads_artifacts(tmp_path: Path) -> 
             ),
             output_dir=str(tmp_path),
         ),
+        publish_progress=progress_updates.append,
         object_storage=object_storage,
     )
 
-    assert result.cleaned_dataset_uri == (
+    assert progress_updates == [25, 75, 100]
+
+    cleaned_dataset_artifact = _artifact(result.artifact, "CLEANED_DATASET")
+    cleaning_report_artifact = _artifact(result.artifact, "CLEANING_REPORT")
+
+    assert cleaned_dataset_artifact.uri == (
         "s3://test-bucket/workspaces/workspace-1/projects/project-1/"
         "experiments/experiment-1/runs/run-1/artifacts/csv-profile-analysis/"
         "input_cleaned.csv"
     )
-    assert result.cleaning_report_uri == (
+    assert cleaning_report_artifact.uri == (
         "s3://test-bucket/workspaces/workspace-1/projects/project-1/"
         "experiments/experiment-1/runs/run-1/artifacts/csv-profile-analysis/"
         "input_cleaning_report.json"
     )
-    assert result.rows_processed == 1
+    assert result.metrics.output_rows == 1
     assert result.model_dump(by_alias=True) == {
         "artifact": [
             {
                 "format": "csv",
                 "type": "CLEANED_DATASET",
-                "uri": result.cleaned_dataset_uri,
+                "uri": cleaned_dataset_artifact.uri,
                 "size": len(object_storage.uploads[
                     "workspaces/workspace-1/projects/project-1/"
                     "experiments/experiment-1/runs/run-1/artifacts/"
@@ -73,7 +81,7 @@ def test_clean_context_downloads_input_and_uploads_artifacts(tmp_path: Path) -> 
             {
                 "format": "json",
                 "type": "CLEANING_REPORT",
-                "uri": result.cleaning_report_uri,
+                "uri": cleaning_report_artifact.uri,
                 "size": len(object_storage.uploads[
                     "workspaces/workspace-1/projects/project-1/"
                     "experiments/experiment-1/runs/run-1/artifacts/"
@@ -91,5 +99,32 @@ def test_clean_context_downloads_input_and_uploads_artifacts(tmp_path: Path) -> 
     )
     report = json.loads(object_storage.uploads[report_key])
 
-    assert report["context"]["artifact"][1]["uri"] == result.cleaning_report_uri
-    assert report["context"]["metrics"]["outputRows"] == result.rows_processed
+    assert report["context"]["artifact"][1]["uri"] == cleaning_report_artifact.uri
+    assert report["context"]["metrics"]["outputRows"] == result.metrics.output_rows
+
+
+def test_clean_context_reads_windows_1252_csv(tmp_path: Path) -> None:
+    input_file_path = tmp_path / "input.csv"
+    progress_updates: list[int] = []
+
+    input_file_path.write_bytes(b"Name,Note\nAlice,pre\x96post\n")
+
+    result = clean_context(
+        context=CsvProfileAnalysisContext(
+            experiment_run_uuid="run-1",
+            dataset_uri=input_file_path.as_uri(),
+            output_dir=str(tmp_path / "output"),
+        ),
+        publish_progress=progress_updates.append,
+    )
+
+    assert progress_updates == [25, 75, 100]
+    assert result.metrics.output_rows == 1
+
+
+def _artifact(artifacts: list[Artifact], artifact_type: str) -> Artifact:
+    for artifact in artifacts:
+        if artifact.type == artifact_type:
+            return artifact
+
+    raise AssertionError(f"Missing artifact with type={artifact_type}")

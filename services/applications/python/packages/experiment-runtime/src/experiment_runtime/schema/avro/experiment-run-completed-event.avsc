@@ -15,7 +15,37 @@
             { "name": "experimentUuid",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "experimentType",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "status",           "type": "string", "avro.java.string": "String" },
-            { "name": "resultJson",       "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+            {
+              "name": "result",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "ExperimentRunCompletedResult",
+                  "fields": [
+                    {
+                      "name": "artifact",
+                      "type": {
+                        "type": "array",
+                        "items": {
+                          "type": "record",
+                          "name": "ExperimentRunCompletedArtifact",
+                          "fields": [
+                            { "name": "format", "type": "string", "avro.java.string": "String" },
+                            { "name": "type",   "type": "string", "avro.java.string": "String" },
+                            { "name": "uri",    "type": "string", "avro.java.string": "String" },
+                            { "name": "size",   "type": "long" }
+                          ]
+                        }
+                      },
+                      "default": []
+                    },
+                    { "name": "metricsJson", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+                  ]
+                }
+              ],
+              "default": null
+            }
           ]
         }
       ],

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlparse
@@ -17,15 +18,22 @@ from analysis_worker.executors.csv_profile_analysis.model import (
 from experiment_runtime.models.experiment_run_completed_event import Artifact
 from experiment_runtime.storage import ObjectStorage
 
+CSV_READ_ENCODINGS = ("utf-8", "utf-8-sig", "cp1252", "latin1")
+
 
 class CsvCleaningError(Exception):
+    """Raised when CSV cleaning cannot complete for the supplied context."""
+
     pass
 
 
 def clean_context(
     context: CsvProfileAnalysisContext,
+    publish_progress: Callable[[int], None],
     object_storage: ObjectStorage | None = None,
 ) -> CsvCleaningOutput:
+    """Clean the requested CSV dataset, persist artifacts, and return the result."""
+
     output_dir = _resolve_output_dir(context)
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -41,7 +49,8 @@ def clean_context(
 
     config = context.cleaning_config
 
-    df = pd.read_csv(input_file_path)
+    df = _read_csv(input_file_path)
+    publish_progress(25)
 
     input_rows = len(df)
     input_columns = len(df.columns)
@@ -119,6 +128,7 @@ def clean_context(
     report_file_path = output_dir / f"{input_file_path.stem}_cleaning_report.json"
 
     df.to_csv(cleaned_file_path, index=False)
+    publish_progress(75)
 
     metrics = CsvCleaningMetrics(
         input_rows=input_rows,
@@ -146,8 +156,7 @@ def clean_context(
         cleaned_dataset_uri=cleaned_dataset_uri,
         report_file_path=report_file_path,
         cleaning_report_uri=cleaning_report_uri,
-        metrics=metrics,
-        context=context,
+        metrics=metrics
     )
 
     cleaning_report_uri = _write_and_upload_report(
@@ -163,8 +172,7 @@ def clean_context(
         cleaned_dataset_uri=cleaned_dataset_uri,
         report_file_path=report_file_path,
         cleaning_report_uri=cleaning_report_uri,
-        metrics=metrics,
-        context=context,
+        metrics=metrics
     )
 
     for _ in range(5):
@@ -174,6 +182,7 @@ def clean_context(
             report_file_path=report_file_path,
             cleaned_output=cleaned_output,
             metrics=metrics,
+            experiment_run_uuid=context.experiment_run_uuid,
         )
 
         actual_report_size = report_file_path.stat().st_size
@@ -186,8 +195,7 @@ def clean_context(
             cleaned_dataset_uri=cleaned_dataset_uri,
             report_file_path=report_file_path,
             cleaning_report_uri=cleaning_report_uri,
-            metrics=metrics,
-            context=context,
+            metrics=metrics
         )
 
     _upload_artifact(
@@ -204,6 +212,8 @@ def _resolve_input_file_path(
     output_dir: Path,
     object_storage: ObjectStorage | None,
 ) -> Path:
+    """Resolve a local input CSV path from a file, plain path, or storage URI."""
+
     dataset_uri = context.dataset_uri
 
     parsed_uri = urlparse(dataset_uri)
@@ -228,7 +238,25 @@ def _resolve_input_file_path(
     raise CsvCleaningError(f"Unsupported datasetUri scheme: {parsed_uri.scheme}")
 
 
+def _read_csv(input_file_path: Path) -> pd.DataFrame:
+    """Read CSV files that may use UTF-8 or common legacy encodings."""
+
+    last_error: UnicodeDecodeError | None = None
+
+    for encoding in CSV_READ_ENCODINGS:
+        try:
+            return pd.read_csv(input_file_path, encoding=encoding)
+        except UnicodeDecodeError as error:
+            last_error = error
+
+    raise CsvCleaningError(
+        f"Unable to decode CSV file with supported encodings: {CSV_READ_ENCODINGS}"
+    ) from last_error
+
+
 def _resolve_output_dir(context: CsvProfileAnalysisContext) -> Path:
+    """Return the configured output directory or the default run-scoped path."""
+
     if context.output_dir:
         return Path(context.output_dir)
 
@@ -236,6 +264,8 @@ def _resolve_output_dir(context: CsvProfileAnalysisContext) -> Path:
 
 
 def _normalize_column_name(column: Any) -> str:
+    """Convert a raw CSV column name into a stable snake_case identifier."""
+
     name = str(column).strip().lower()
     name = re.sub(r"[^a-z0-9]+", "_", name)
     name = re.sub(r"_+", "_", name)
@@ -245,6 +275,8 @@ def _normalize_column_name(column: Any) -> str:
 
 
 def _deduplicate_column_names(columns: list[str]) -> list[str]:
+    """Append numeric suffixes to repeated column names while preserving order."""
+
     seen: dict[str, int] = {}
     result: list[str] = []
 
@@ -260,6 +292,8 @@ def _deduplicate_column_names(columns: list[str]) -> list[str]:
 
 
 def _to_file_uri(path: Path) -> str:
+    """Convert a local filesystem path into an absolute file URI."""
+
     return path.resolve().as_uri()
 
 
@@ -268,6 +302,8 @@ def _upload_artifact(
     context: CsvProfileAnalysisContext,
     object_storage: ObjectStorage | None,
 ) -> str:
+    """Upload an artifact to object storage or return a local file URI."""
+
     if object_storage is None:
         return _to_file_uri(path)
 
@@ -284,10 +320,13 @@ def _write_and_upload_report(
     context: CsvProfileAnalysisContext,
     object_storage: ObjectStorage | None,
 ) -> str:
+    """Write the cleaning report and publish it as an artifact."""
+
     _write_report(
         report_file_path=report_file_path,
         cleaned_output=cleaned_output,
         metrics=metrics,
+        experiment_run_uuid=context.experiment_run_uuid,
     )
 
     return _upload_artifact(
@@ -302,9 +341,10 @@ def _build_cleaning_output(
     cleaned_dataset_uri: str,
     report_file_path: Path,
     cleaning_report_uri: str,
-    metrics: CsvCleaningMetrics,
-    context: CsvProfileAnalysisContext,
+    metrics: CsvCleaningMetrics
 ) -> CsvCleaningOutput:
+    """Build the serialized cleaning result from artifact paths and metrics."""
+
     return CsvCleaningOutput(
         artifact=[
             _build_artifact(
@@ -321,9 +361,6 @@ def _build_cleaning_output(
             ),
         ],
         metrics=metrics,
-        cleaned_dataset_path=str(cleaned_file_path),
-        cleaning_report_path=str(report_file_path),
-        experiment_run_uuid=context.experiment_run_uuid,
     )
 
 
@@ -333,6 +370,8 @@ def _build_artifact(
     uri: str,
     path: Path,
 ) -> Artifact:
+    """Create artifact metadata for a generated output file."""
+
     size = path.stat().st_size if path.exists() else 0
 
     return Artifact(
@@ -344,6 +383,8 @@ def _build_artifact(
 
 
 def _artifact_size(output: CsvCleaningOutput, artifact_type: str) -> int:
+    """Return the recorded size for an artifact in a cleaning result."""
+
     for artifact in output.artifact:
         if artifact.type == artifact_type:
             return artifact.size
@@ -355,10 +396,13 @@ def _write_report(
     report_file_path: Path,
     cleaned_output: CsvCleaningOutput,
     metrics: CsvCleaningMetrics,
+    experiment_run_uuid: str,
 ) -> None:
+    """Write the JSON report that captures the cleaning result context."""
+
     report = CsvCleaningReport(
         status="SUCCEEDED",
-        experiment_run_uuid=cleaned_output.experiment_run_uuid,
+        experiment_run_uuid=experiment_run_uuid,
         metrics=metrics,
         context=cleaned_output.model_dump(by_alias=True),
     )
@@ -370,6 +414,8 @@ def _write_report(
 
 
 def _artifact_object_key(context: CsvProfileAnalysisContext, filename: str) -> str:
+    """Build the object-storage key for a run artifact."""
+
     return (
         f"workspaces/{_key_part(context.workspace_uuid)}/"
         f"projects/{_key_part(context.project_uuid)}/"
@@ -380,6 +426,8 @@ def _artifact_object_key(context: CsvProfileAnalysisContext, filename: str) -> s
 
 
 def _object_key_from_storage_uri(storage_uri: str) -> str:
+    """Extract an object key from a s3 storage URI."""
+
     parsed_uri = urlparse(storage_uri)
 
     if parsed_uri.scheme != "s3":
@@ -394,8 +442,12 @@ def _object_key_from_storage_uri(storage_uri: str) -> str:
 
 
 def _safe_filename(filename: str) -> str:
+    """Replace unsafe object-key filename characters with underscores."""
+
     return re.sub(r"[^a-zA-Z0-9._-]", "_", filename) or "artifact"
 
 
 def _key_part(value: str | None) -> str:
+    """Sanitize a path segment used in object-storage keys."""
+
     return _safe_filename(value or "unknown")

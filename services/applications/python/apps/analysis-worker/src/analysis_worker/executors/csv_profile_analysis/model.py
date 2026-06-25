@@ -9,6 +9,8 @@ from experiment_runtime.models.experiment_run_completed_event import Metric, Res
 
 
 class CsvCleaningConfig(ExperimentOpsModel):
+    """CSV cleaning options supplied with a profile analysis request."""
+
     normalize_column_names: bool = True
     remove_unnamed_columns: bool = True
     trim_string_values: bool = True
@@ -19,6 +21,8 @@ class CsvCleaningConfig(ExperimentOpsModel):
 
 
 class CsvProfileAnalysisContext(ExperimentOpsModel):
+    """Execution context used to locate input data and configure CSV cleaning."""
+
     model_config = ConfigDict(extra="allow")
 
     workspace_uuid: str | None = None
@@ -31,6 +35,8 @@ class CsvProfileAnalysisContext(ExperimentOpsModel):
 
 
 class CsvCleaningMetrics(Metric):
+    """Row, column, and data quality counts produced by the cleaning step."""
+
     input_rows: int
     output_rows: int
     input_columns: int
@@ -45,36 +51,14 @@ class CsvCleaningMetrics(Metric):
 
 
 class CsvCleaningOutput(Result):
+    """Completed cleaning result containing output artifacts and typed metrics."""
+
     metrics: CsvCleaningMetrics
-    cleaned_dataset_path: str = Field(exclude=True)
-    cleaning_report_path: str = Field(exclude=True)
-    experiment_run_uuid: str = Field(exclude=True)
-
-    @property
-    def cleaned_dataset_uri(self) -> str:
-        return self._artifact_uri("CLEANED_DATASET")
-
-    @property
-    def cleaning_report_uri(self) -> str:
-        return self._artifact_uri("CLEANING_REPORT")
-
-    @property
-    def cleaning_metrics(self) -> CsvCleaningMetrics:
-        return self.metrics
-
-    @property
-    def rows_processed(self) -> int:
-        return self.metrics.output_rows
-
-    def _artifact_uri(self, artifact_type: str) -> str:
-        for artifact in self.artifact:
-            if artifact.type == artifact_type:
-                return artifact.uri
-
-        raise ValueError(f"Missing artifact with type={artifact_type}")
 
 
 class CsvCleaningReport(ExperimentOpsModel):
+    """Persisted report payload for a successful CSV cleaning execution."""
+
     status: Literal["SUCCEEDED"]
     experiment_run_uuid: str
     metrics: CsvCleaningMetrics

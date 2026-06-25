@@ -28,11 +28,11 @@ public class DatasetVersion extends ExperimentOpsEntity {
     @Column(name = "storage_uri")
     private String storageUri;
 
-    @Column(name = "checksum")
-    private String checksum;
+    @Column(name = "format")
+    private String format;
 
-    @Column(name = "row_count")
-    private Integer rowCount;
+    @Column(name = "size_bytes")
+    private Long size;
 
     @Column(name = "dataset_uuid")
     private String datasetUuid;
@@ -59,4 +59,3 @@ public class DatasetVersion extends ExperimentOpsEntity {
         return Objects.hash(getUuid());
     }
 }
-
