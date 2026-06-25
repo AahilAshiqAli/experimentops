@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Mapping
 
-# dataclass means it adds all getters setters and constructors.
-@dataclass(frozen=True)
-class KafkaMessage:
+from experiment_runtime.base_model import ExperimentOpsModel
+
+
+class KafkaMessage(ExperimentOpsModel):
     topic: str
     partition: int
     offset: int

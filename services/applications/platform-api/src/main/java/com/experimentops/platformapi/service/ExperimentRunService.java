@@ -2,7 +2,10 @@ package com.experimentops.platformapi.service;
 
 import com.experimentops.common.exceptions.runtime.EntityNotFoundException;
 import com.experimentops.common.kafka.KafkaProducer;
+import com.experimentops.experiment.run.event.ExperimentRunCompletedEvent;
 import com.experimentops.experiment.run.event.ExperimentRunEvent;
+import com.experimentops.experiment.run.event.ExperimentRunFailureEvent;
+import com.experimentops.experiment.run.event.ExperimentRunProgressEvent;
 import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunResponseModel;
 import com.experimentops.platformapi.dal.repository.DatasetVersionRepository;
@@ -13,6 +16,7 @@ import com.experimentops.platformapi.model.entity.DatasetVersion;
 import com.experimentops.platformapi.model.entity.Experiment;
 import com.experimentops.platformapi.model.entity.ExperimentRun;
 import com.experimentops.platformapi.model.entity.RunDataset;
+import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
 import com.experimentops.platformapi.transformer.ExperimentRunTransformer;
 import com.experimentops.platformapi.validator.ExperimentRunValidator;
 import com.experimentops.utils.ExperimentOpsLogger;
@@ -65,8 +69,34 @@ public class ExperimentRunService {
         log.info(headers, "saving run dataset object");
         runDatasetRepository.save(runDataset);
 
-        ExperimentRunEvent experimentRunEvent = experimentRunTransformer.transformExperimentRunEvent(experiment, datasetUri, experimentRunRequestModel, headers);
+        ExperimentRunEvent experimentRunEvent = experimentRunTransformer.transformExperimentRunEvent(experiment, datasetUri, experimentRunRequestModel, experimentRun.getUuid(), headers);
         kafkaProducer.sendMessage(experimentRunRequestTopic, experimentRunEvent, experimentRunEvent.getMetadata());
         return experimentRunTransformer.transformExperimentRunResponseModelFromEntity(experimentRun, runDataset.getUuid(), headers);
+    }
+
+    public void processExperimentRunCompleted(@NonNull ExperimentRunCompletedEvent event, @NonNull ExperimentOpsHeaders headers) {
+        updateExperimentRunStatus(event.getMetadata().getUuid(), headers, ExperimentStatusEnum.SUCCEEDED);
+    }
+
+    public void processExperimentRunFailure(@NonNull ExperimentRunFailureEvent event, @NonNull ExperimentOpsHeaders headers) {
+        updateExperimentRunStatus(event.getMetadata().getUuid(), headers, ExperimentStatusEnum.FAILED);
+    }
+
+    private void updateExperimentRunStatus(
+            @NonNull String experimentRunUuid,
+            @NonNull ExperimentOpsHeaders headers,
+            @NonNull ExperimentStatusEnum status) {
+
+        ExperimentRun experimentRun = experimentRunRepository
+                .findByUuidAndWorkspaceUuidAndEnabled(experimentRunUuid, headers.getWorkspaceUuid(), true)
+                .orElseThrow(() -> new EntityNotFoundException("experiment run uuid", experimentRunUuid));
+
+        log.info(headers, "updating experiment run status");
+        experimentRun.setExperimentStatus(status);
+        experimentRunRepository.save(experimentRun);
+    }
+
+    public void processExperimentRunProgress(@NonNull ExperimentRunProgressEvent event, @NonNull ExperimentOpsHeaders headers) {
+
     }
 }

@@ -60,7 +60,7 @@ class S3Storage(ObjectStorage):
             Body=content,
         )
 
-        return object_key
+        return f"s3://{self.bucket_name}/{object_key}"
 
     def download_file(self, key: str) -> bytes:
         response = self.client.get_object(

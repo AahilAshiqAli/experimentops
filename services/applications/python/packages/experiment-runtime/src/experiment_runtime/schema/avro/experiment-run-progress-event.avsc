@@ -1,0 +1,21 @@
+{
+  "namespace": "com.experimentops.experiment.run.event",
+  "type": "record",
+  "name": "ExperimentRunProgressEvent",
+  "fields": [
+    { "name": "metadata", "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent" },
+    {
+      "name": "payload",
+      "type": [ "null",
+        {
+          "type": "record",
+          "name": "ExperimentRunProgressEventPayload",
+          "fields": [
+            { "name": "progress",  "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+          ]
+        }
+      ],
+      "default": null
+    }
+  ]
+}
