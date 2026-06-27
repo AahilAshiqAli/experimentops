@@ -1,25 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html {
-    @apply bg-background text-slate-100 antialiased;
+    @apply bg-background font-sans text-secondary antialiased;
   }
 
   body {
     @apply min-h-screen bg-background;
-    background-image:
-      radial-gradient(circle at top, rgba(15, 118, 110, 0.24), transparent 38%),
-      radial-gradient(
-        circle at right top,
-        rgba(245, 158, 11, 0.18),
-        transparent 30%
-      );
   }
 
   #root {
@@ -35,5 +30,119 @@
   textarea,
   select {
     font: inherit;
+  }
+}
+
+.toast-notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1100;
+  width: 384px;
+  max-width: calc(100vw - 48px);
+}
+
+.toast-notification-notice {
+  position: relative;
+  margin-bottom: 16px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #314261;
+  padding: 16px 24px;
+  color: #fff;
+  box-shadow:
+    0 6px 16px 0 rgb(0 0 0 / 8%),
+    0 3px 6px -4px rgb(0 0 0 / 12%),
+    0 9px 28px 8px rgb(0 0 0 / 5%);
+  animation: toast-notification-slide-in 0.2s ease-in-out both;
+}
+
+.toast-notification-notice-content {
+  display: flex;
+  gap: 10px;
+  padding-right: 20px;
+}
+
+.toast-notification-notice-icon {
+  display: inline-flex;
+  height: 20px;
+  width: 20px;
+  flex: 0 0 20px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid currentcolor;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.toast-notification-notice-icon-success {
+  color: #52c41a;
+}
+
+.toast-notification-notice-icon-error {
+  color: #ff4d4f;
+}
+
+.toast-notification-notice-icon-info {
+  color: #fff;
+}
+
+.toast-notification-notice-icon-warning {
+  color: #faad14;
+}
+
+.toast-notification-notice-message {
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.toast-notification-close-x {
+  position: absolute;
+  top: 11px;
+  right: 14px;
+  display: flex;
+  height: 22px;
+  width: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.toast-notification-close-x:hover {
+  background: rgb(255 255 255 / 12%);
+}
+
+.toast-notification-notice-leave {
+  animation: toast-notification-fade-out 0.2s ease-in-out both;
+}
+
+@keyframes toast-notification-slide-in {
+  from {
+    transform: translate3d(100%, 0, 0);
+    opacity: 0;
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-notification-fade-out {
+  to {
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
   }
 }

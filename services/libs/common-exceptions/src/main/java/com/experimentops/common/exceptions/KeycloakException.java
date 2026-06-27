@@ -15,8 +15,13 @@ public class KeycloakException extends ExperimentOpsException {
         this.errorToken = null;
     }
 
+    public KeycloakException(ErrorCode errorCode, String username, Exception exception) {
+        super(errorCode, errorCode.getMessage()+String.format(" for: %s",username));
+        this.errorToken = null;
+    }
+
     public KeycloakException(ErrorCode errorCode, Exception exception) {
-        super(errorCode, errorCode.getMessage()+String.format(" Cause: %s",exception));
+        super(errorCode, errorCode.getMessage()+String.format(" for: %s",exception));
         this.errorToken = null;
     }
 

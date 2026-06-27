@@ -4,14 +4,23 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#0f766e',
-        secondary: '#f59e0b',
-        background: '#020617',
-        surface: '#0f172a',
-        muted: '#334155',
+        primary: {
+          DEFAULT: '#2596be',
+          100: '#2596bf',
+          200: '#2596ce',
+        },
+        secondary: '#314261',
+        background: '#f8fafc',
+        surface: '#ffffff',
+        muted: '#64748b',
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        heading: ['Georgia', 'serif'],
       },
       boxShadow: {
-        glow: '0 0 0 1px rgba(15, 118, 110, 0.2), 0 20px 40px -12px rgba(15, 118, 110, 0.35)',
+        card: '0 10px 30px -12px rgb(49 66 97 / 18%)',
+        glow: '0 0 0 1px rgb(37 150 190 / 20%), 0 20px 40px -12px rgb(37 150 190 / 35%)',
       },
     },
   },

@@ -82,7 +82,7 @@ public class KeyCloakGateway {
                       errorCode = ErrorCode.KEYCLOAK_TOKEN_FIRST_TIME_LOGIN;
                   }
               }
-              throw new KeycloakException(errorCode, exception);
+              throw new KeycloakException(errorCode, authLoginRequest.getUsername(), exception);
           }
       }
 
