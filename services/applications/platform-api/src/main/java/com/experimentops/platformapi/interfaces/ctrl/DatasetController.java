@@ -2,6 +2,7 @@ package com.experimentops.platformapi.interfaces.ctrl;
 
 import com.experimentops.dataset.api.v1.DatasetApi;
 import com.experimentops.dataset.model.v1.DatasetDetailResponseModel;
+import com.experimentops.dataset.model.v1.DatasetListResponseModel;
 import com.experimentops.dataset.model.v1.DatasetRequestModel;
 import com.experimentops.dataset.model.v1.DatasetResponseModel;
 import com.experimentops.dataset.model.v1.DatasetStatusChangeRequestModel;
@@ -19,8 +20,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -47,9 +46,9 @@ public class DatasetController implements DatasetApi {
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_DATASET + "')")
     @Override
-    public ResponseEntity<List<DatasetResponseModel>> getDatasetList(String projectUuid) {
+    public ResponseEntity<DatasetListResponseModel> getDatasetList(String projectUuid, Integer page, Integer size) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
-        return ResponseEntity.status(HttpStatus.OK).body(datasetService.getDatasetList(projectUuid, headers));
+        return ResponseEntity.status(HttpStatus.OK).body(datasetService.getDatasetList(projectUuid, page, size, headers));
     }
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.EDIT_DATASET + "')")

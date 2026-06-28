@@ -2,8 +2,10 @@ package com.experimentops.platformapi.interfaces.ctrl;
 
 import com.experimentops.platformapi.service.ProjectService;
 import com.experimentops.project.api.v1.ProjectApi;
+import com.experimentops.project.model.v1.ProjectListResponseModel;
 import com.experimentops.project.model.v1.ProjectRequestModel;
 import com.experimentops.project.model.v1.ProjectResponseModel;
+import com.experimentops.project.model.v1.ProjectSummaryResponseModel;
 import com.experimentops.project.model.v1.ProjectStatusChangeRequestModel;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.HeaderUtil;
@@ -16,8 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -37,16 +37,16 @@ public class ProjectController implements ProjectApi {
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_PROJECT + "')")
     @Override
-    public ResponseEntity<ProjectResponseModel> getProject(String uuid) {
+    public ResponseEntity<ProjectListResponseModel> getProjectList(Integer page, Integer size) {
         ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
-        return ResponseEntity.status(HttpStatus.OK).body(projectService.getProject(uuid, experimentOpsHeaders));
+        return ResponseEntity.status(HttpStatus.OK).body(projectService.getProjectList(page, size, experimentOpsHeaders));
     }
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_PROJECT + "')")
     @Override
-    public ResponseEntity<List<ProjectResponseModel>> getProjectList() {
+    public ResponseEntity<ProjectSummaryResponseModel> getProject(String uuid) {
         ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
-        return ResponseEntity.status(HttpStatus.OK).body(projectService.getProjectList(experimentOpsHeaders));
+        return ResponseEntity.status(HttpStatus.OK).body(projectService.getProject(uuid, experimentOpsHeaders));
     }
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.EDIT_PROJECT + "')")

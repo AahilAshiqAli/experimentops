@@ -1,6 +1,7 @@
 package com.experimentops.platformapi.interfaces.ctrl;
 
 import com.experimentops.experiment.api.v1.ExperimentApi;
+import com.experimentops.experiment.model.v1.ExperimentListResponseModel;
 import com.experimentops.experiment.model.v1.ExperimentListItemModel;
 import com.experimentops.experiment.model.v1.ExperimentRequestModel;
 import com.experimentops.experiment.model.v1.ExperimentResponseModel;
@@ -17,8 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -45,9 +44,9 @@ public class ExperimentController implements ExperimentApi {
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_EXPERIMENT + "')")
     @Override
-    public ResponseEntity<List<ExperimentListItemModel>> getExperimentList(String projectUuid) {
+    public ResponseEntity<ExperimentListResponseModel> getExperimentList(String projectUuid, Integer page, Integer size) {
         ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
-        return ResponseEntity.status(HttpStatus.OK).body(experimentService.getExperimentList(projectUuid, experimentOpsHeaders));
+        return ResponseEntity.status(HttpStatus.OK).body(experimentService.getExperimentList(projectUuid, page, size, experimentOpsHeaders));
     }
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.EDIT_EXPERIMENT + "')")

@@ -3,19 +3,23 @@ package com.experimentops.platformapi.service;
 import com.experimentops.common.exceptions.runtime.EntityAlreadyExistsException;
 import com.experimentops.common.exceptions.runtime.EntityNotFoundException;
 import com.experimentops.common.kafka.KafkaProducer;
-import com.experimentops.platformapi.dal.repository.ProjectRepository;
-import com.experimentops.platformapi.model.entity.Project;
+import com.experimentops.platformapi.dal.repository.*;
+import com.experimentops.platformapi.model.entity.*;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.ProjectTransformer;
 import com.experimentops.platformapi.validator.ProjectValidator;
 import com.experimentops.project.event.ProjectMutationEvent;
+import com.experimentops.project.model.v1.ProjectListResponseModel;
 import com.experimentops.project.model.v1.ProjectRequestModel;
 import com.experimentops.project.model.v1.ProjectResponseModel;
+import com.experimentops.project.model.v1.ProjectSummaryResponseModel;
 import com.experimentops.project.model.v1.ProjectStatusChangeRequestModel;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -29,8 +33,13 @@ public class ProjectService {
 
     private final ProjectValidator projectValidator;
     private final ProjectRepository projectRepository;
+    private final ProjectSummaryRepository projectSummaryRepository;
     private final ProjectTransformer projectTransformer;
     private final KafkaProducer kafkaProducer;
+    private final ExperimentRepository experimentRepository;
+    private final ExperimentRunRepository experimentRunRepository;
+    private final DatasetRepository datasetRepository;
+    private final DatasetVersionRepository datasetVersionRepository;
 
     @Value("${project.topic.name}")
     private String projectTopic;
@@ -117,22 +126,30 @@ public class ProjectService {
     }
 
     @NonNull
-    public ProjectResponseModel getProject(@NonNull String uuid, @NonNull ExperimentOpsHeaders headers) {
+    public ProjectSummaryResponseModel getProject(@NonNull String uuid, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "getting project with uuid " + uuid);
-        Project project = projectRepository
-                .findByUuidAndWorkspaceUuidAndStatusAndEnabled(uuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
+        ProjectSummary projectSummary = projectSummaryRepository
+                .findByProjectUuidAndWorkspaceUuidAndStatusAndEnabled(uuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
                 .orElseThrow(() -> new EntityNotFoundException("Project uuid", uuid));
-        return projectTransformer.transformProjectResponseModelFromEntity(project, headers);
+
+        return projectTransformer.transformProjectSummaryResponseModel(projectSummary, headers);
     }
 
     @NonNull
-    public List<ProjectResponseModel> getProjectList(@NonNull ExperimentOpsHeaders headers) {
+    public ProjectListResponseModel getProjectList(Integer page, Integer size, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "getting project list for workspace uuid " + headers.getWorkspaceUuid());
-        return projectRepository
-                .findAllByWorkspaceUuidAndStatusAndEnabled(headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
+        Pageable pageable = PaginationUtil.createPageRequest(page, size);
+        Page<Project> projectsPage = projectRepository
+                .findAllByWorkspaceUuidAndStatusAndEnabledOrderByCreationDateDesc(headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true, pageable);
+        List<ProjectResponseModel> projects = projectsPage
+                .getContent()
                 .stream()
-                .map(project -> projectTransformer.transformProjectResponseModelFromEntity(project, headers))
+                .map(projectTransformer::transformProjectResponseModel)
                 .toList();
+        ProjectListResponseModel response = new ProjectListResponseModel();
+        response.setData(projects);
+        response.setTotalElements(projectsPage.getTotalElements());
+        return response;
     }
 
 }

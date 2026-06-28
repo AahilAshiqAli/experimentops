@@ -1,3 +1,5 @@
 export * from './auth.queries'
+export * from './dataset.queries'
+export * from './experiment.queries'
 export * from './project.queries'
 export * from './queryClient'
