@@ -25,9 +25,9 @@ FROM `experimentOps`.tbl_project p
 
          LEFT JOIN `experimentOps`.tbl_dataset_versions dv
                    ON dv.dataset_uuid = d.uuid
-                       AND d.workspace_uuid = p.workspace_uuid
-                       AND d.enabled = 1
-                       AND d.status = 1
+                       AND dv.workspace_uuid = p.workspace_uuid
+                       AND dv.enabled = 1
+                       AND dv.status = 1
 
          LEFT JOIN `experimentOps`.tbl_experiment e
                    ON e.project_uuid = p.uuid
