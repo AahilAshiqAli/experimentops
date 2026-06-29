@@ -9,6 +9,7 @@ import com.experimentops.experiment.model.v1.ExperimentListItemModel;
 import com.experimentops.experiment.model.v1.ExperimentRequestModel;
 import com.experimentops.experiment.model.v1.ExperimentResponseModel;
 import com.experimentops.experiment.model.v1.ExperimentStatusChangeRequestModel;
+import com.experimentops.platformapi.model.ExperimentListItemProjection;
 import com.experimentops.platformapi.model.entity.Experiment;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.utils.ExperimentOpsLogger;
@@ -123,17 +124,18 @@ public class ExperimentTransformer {
     }
 
     @NonNull
-    public ExperimentListItemModel transformExperimentListItemModel(@NonNull Experiment experiment, int configCount, int runCount, @NonNull ExperimentOpsHeaders headers) {
+    public ExperimentListItemModel transformExperimentListItemModel(@NonNull ExperimentListItemProjection experiment, @NonNull ExperimentOpsHeaders headers) {
 
-        log.info(headers, "transforming the Experiment entity to Experiment List Item Model");
+        log.info(headers, "transforming the Experiment list item projection to Experiment List Item Model");
 
         ExperimentListItemModel listItem = new ExperimentListItemModel();
-        listItem.setExperimentUuid(experiment.getUuid());
+        listItem.setExperimentUuid(experiment.getExperimentUuid());
         listItem.setName(experiment.getName());
         listItem.setDescription(experiment.getDescription());
         listItem.setExperimentType(experiment.getExperimentType());
-        listItem.setConfigCount(configCount);
-        listItem.setRunCount(runCount);
+        listItem.setStatus(experiment.getStatus().name());
+        listItem.setConfigCount(experiment.getConfigCount().intValue());
+        listItem.setRunCount(experiment.getRunCount().intValue());
         listItem.setCreatedAt(experiment.getCreationDate().toLocalDateTime().toString());
 
         return listItem;

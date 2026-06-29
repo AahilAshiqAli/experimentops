@@ -6,6 +6,7 @@ import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.common.kafka.KafkaProducer;
 import com.experimentops.dataset.event.DatasetMutationEvent;
 import com.experimentops.dataset.model.v1.DatasetDetailResponseModel;
+import com.experimentops.dataset.model.v1.DatasetListResponseModel;
 import com.experimentops.dataset.model.v1.DatasetRequestModel;
 import com.experimentops.dataset.model.v1.DatasetResponseModel;
 import com.experimentops.dataset.model.v1.DatasetStatusChangeRequestModel;
@@ -27,6 +28,8 @@ import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -184,16 +187,23 @@ public class DatasetService {
     }
 
     @NonNull
-    public List<DatasetResponseModel> getDatasetList(@NonNull String projectUuid, @NonNull ExperimentOpsHeaders headers) {
+    public DatasetListResponseModel getDatasetList(@NonNull String projectUuid, Integer page, Integer size, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "getting dataset list for project uuid " + projectUuid);
-        return datasetRepository
-                .findAllByProjectUuidAndWorkspaceUuidAndStatusAndEnabledOrderByLastUpdatedDesc(projectUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
+        Pageable pageable = PaginationUtil.createPageRequest(page, size);
+        Page<Dataset> datasetsPage = datasetRepository
+                .findAllByProjectUuidAndWorkspaceUuidAndStatusAndEnabledOrderByLastUpdatedDesc(projectUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true, pageable);
+        List<DatasetResponseModel> datasets = datasetsPage
+                .getContent()
                 .stream()
                 .map(dataset -> {
                     int versionCount = (int) datasetVersionRepository.countByDatasetUuidAndWorkspaceUuidAndEnabled(dataset.getUuid(), headers.getWorkspaceUuid(), true);
                     return datasetTransformer.transformDatasetResponseModelFromEntity(dataset, versionCount, headers);
                 })
                 .toList();
+        DatasetListResponseModel response = new DatasetListResponseModel();
+        response.setData(datasets);
+        response.setTotalElements(datasetsPage.getTotalElements());
+        return response;
     }
 
     @NonNull

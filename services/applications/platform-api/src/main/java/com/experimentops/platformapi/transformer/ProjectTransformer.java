@@ -4,11 +4,13 @@ import com.experimentops.avroevent.type.EventType;
 import com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent;
 import com.experimentops.common.kafka.utils.ExperimentOpsMetadataUtil;
 import com.experimentops.platformapi.model.entity.Project;
+import com.experimentops.platformapi.model.entity.ProjectSummary;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.project.event.ProjectMutationEvent;
 import com.experimentops.project.event.ProjectMutationEventPayload;
 import com.experimentops.project.model.v1.ProjectRequestModel;
 import com.experimentops.project.model.v1.ProjectResponseModel;
+import com.experimentops.project.model.v1.ProjectSummaryResponseModel;
 import com.experimentops.project.model.v1.ProjectStatusChangeRequestModel;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.ExperimentOpsUtils;
@@ -99,6 +101,18 @@ public class ProjectTransformer {
         return projectResponseModel;
     }
 
+    public ProjectResponseModel transformProjectResponseModel(@NonNull Project project) {
+
+
+        ProjectResponseModel projectResponseModel = new ProjectResponseModel();
+        projectResponseModel.setUuid(project.getUuid());
+        projectResponseModel.setName(project.getName());
+        projectResponseModel.setDescription(project.getDescription());
+        projectResponseModel.setCreationDate(String.valueOf(project.getCreationDate()));
+
+        return projectResponseModel;
+    }
+
     @NonNull
     public ProjectResponseModel transformProjectResponseModelFromEntity(@NonNull Project project, @NonNull ExperimentOpsHeaders headers) {
 
@@ -110,6 +124,25 @@ public class ProjectTransformer {
         projectResponseModel.setDescription(project.getDescription());
 
         return projectResponseModel;
+    }
+
+    @NonNull
+    public ProjectSummaryResponseModel transformProjectSummaryResponseModel(@NonNull ProjectSummary projectSummary, @NonNull ExperimentOpsHeaders headers) {
+
+        log.info(headers, "transforming the ProjectSummary entity to Project Summary Response Model");
+
+        ProjectSummaryResponseModel responseModel = new ProjectSummaryResponseModel();
+        responseModel.setProjectUuid(projectSummary.getProjectUuid());
+        responseModel.setName(projectSummary.getName());
+        responseModel.setDescription(projectSummary.getDescription());
+        responseModel.setCreatedAt(projectSummary.getCreatedAt().toLocalDateTime().toString());
+        responseModel.setDatasetCount((int) projectSummary.getDatasetCount());
+        responseModel.setExperimentCount((int) projectSummary.getExperimentCount());
+        responseModel.setExperimentConfigCount((int) projectSummary.getExperimentConfigCount());
+        responseModel.setDatasetVersionCount((int) projectSummary.getDatasetVersionCount());
+        responseModel.setExperimentRunCount((int) projectSummary.getExperimentRunCount());
+
+        return responseModel;
     }
 
     @NonNull

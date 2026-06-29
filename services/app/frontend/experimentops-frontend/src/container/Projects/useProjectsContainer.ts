@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { useQueryProjects } from '../../queries'
 import { ApiServiceError } from '../../utils/api.service'
@@ -7,18 +7,21 @@ const PROJECTS_PER_PAGE = 6
 
 export function useProjectsContainer() {
   const [page, setPage] = useState(1)
-  const { data: projects = [], error, isLoading } = useQueryProjects()
-  const totalPages = Math.max(1, Math.ceil(projects.length / PROJECTS_PER_PAGE))
+  const { data: projectsPage, error, isLoading } = useQueryProjects({
+    page: page - 1,
+    size: PROJECTS_PER_PAGE,
+  })
+  const projects = projectsPage?.data ?? []
+  const totalProjects = projectsPage?.totalElements ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalProjects / PROJECTS_PER_PAGE))
   const activePage = Math.min(page, totalPages)
 
-  const paginatedProjects = useMemo(() => {
-    const startIndex = (activePage - 1) * PROJECTS_PER_PAGE
-    return projects.slice(startIndex, startIndex + PROJECTS_PER_PAGE)
-  }, [activePage, projects])
-
   const firstProjectNumber =
-    projects.length === 0 ? 0 : (activePage - 1) * PROJECTS_PER_PAGE + 1
-  const lastProjectNumber = Math.min(activePage * PROJECTS_PER_PAGE, projects.length)
+    totalProjects === 0 ? 0 : (activePage - 1) * PROJECTS_PER_PAGE + 1
+  const lastProjectNumber = Math.min(
+    activePage * PROJECTS_PER_PAGE,
+    totalProjects,
+  )
 
   return {
     errorMessage:
@@ -31,9 +34,9 @@ export function useProjectsContainer() {
     isLoading,
     lastProjectNumber,
     page: activePage,
-    paginatedProjects,
+    paginatedProjects: projects,
     setPage,
     totalPages,
-    totalProjects: projects.length,
+    totalProjects,
   }
 }

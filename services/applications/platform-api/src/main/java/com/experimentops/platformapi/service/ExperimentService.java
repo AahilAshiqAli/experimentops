@@ -5,12 +5,12 @@ import com.experimentops.common.exceptions.runtime.EntityNotFoundException;
 import com.experimentops.common.kafka.KafkaProducer;
 import com.experimentops.experiment.event.ExperimentMutationEvent;
 import com.experimentops.experiment.model.v1.ExperimentListItemModel;
+import com.experimentops.experiment.model.v1.ExperimentListResponseModel;
 import com.experimentops.experiment.model.v1.ExperimentRequestModel;
 import com.experimentops.experiment.model.v1.ExperimentResponseModel;
 import com.experimentops.experiment.model.v1.ExperimentStatusChangeRequestModel;
-import com.experimentops.platformapi.dal.repository.ExperimentConfigRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentRepository;
-import com.experimentops.platformapi.dal.repository.ExperimentRunRepository;
+import com.experimentops.platformapi.model.ExperimentListItemProjection;
 import com.experimentops.platformapi.model.entity.Experiment;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.ExperimentTransformer;
@@ -20,6 +20,8 @@ import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,8 +34,6 @@ public class ExperimentService {
 
     private final ExperimentValidator experimentValidator;
     private final ExperimentRepository experimentRepository;
-    private final ExperimentConfigRepository experimentConfigRepository;
-    private final ExperimentRunRepository experimentRunRepository;
     private final ExperimentTransformer experimentTransformer;
     private final KafkaProducer kafkaProducer;
 
@@ -138,17 +138,20 @@ public class ExperimentService {
     }
 
     @NonNull
-    public List<ExperimentListItemModel> getExperimentList(@NonNull String projectUuid, @NonNull ExperimentOpsHeaders headers) {
+    public ExperimentListResponseModel getExperimentList(@NonNull String projectUuid, Integer page, Integer size, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "getting experiment list for project uuid " + projectUuid);
-        return experimentRepository
-                .findAllByProjectUuidAndWorkspaceUuidAndStatusAndEnabledOrderByCreationDateDesc(projectUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
+        Pageable pageable = PaginationUtil.createPageRequest(page, size);
+        Page<ExperimentListItemProjection> experimentsPage = experimentRepository
+                .findExperimentListItems(projectUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, pageable);
+        List<ExperimentListItemModel> experiments = experimentsPage
+                .getContent()
                 .stream()
-                .map(experiment -> {
-                    int configCount = (int) experimentConfigRepository.countByExperimentUuidAndEnabled(experiment.getUuid(), true);
-                    int runCount = (int) experimentRunRepository.countByExperimentUuidAndEnabled(experiment.getUuid(), true);
-                    return experimentTransformer.transformExperimentListItemModel(experiment, configCount, runCount, headers);
-                })
+                .map(experimentListItem -> experimentTransformer.transformExperimentListItemModel(experimentListItem, headers))
                 .toList();
+        ExperimentListResponseModel response = new ExperimentListResponseModel();
+        response.setData(experiments);
+        response.setTotalElements(experimentsPage.getTotalElements());
+        return response;
     }
 
 }

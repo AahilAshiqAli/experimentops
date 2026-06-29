@@ -44,15 +44,32 @@ paths:
       tags:
         - Project
       operationId: getProjectList
+      parameters:
+        - name: page
+          in: query
+          description: Zero-based page index
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of entries to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 20
       responses:
         200:
           description: successful operation
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ProjectResponseModel'
+                $ref: '#/components/schemas/ProjectListResponseModel'
 
   /project/{uuid}:
     get:
@@ -74,7 +91,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProjectResponseModel'
+                $ref: '#/components/schemas/ProjectSummaryResponseModel'
 
     put:
       summary: Update Project
@@ -133,6 +150,17 @@ paths:
 
 components:
   schemas:
+    ProjectListResponseModel:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectResponseModel'
+        totalElements:
+          type: integer
+          format: int64
+          example: 123
     ProjectResponseModel:
       type: object
       properties:
@@ -145,6 +173,8 @@ components:
         description:
           type: string
           example: "Project about Data Cleaning"
+        creationDate:
+          type: string
     ProjectRequestModel:
       type: object
       properties:
@@ -154,14 +184,41 @@ components:
         description:
           type: string
           example: "Project about Data Cleaning"
+    ProjectSummaryResponseModel:
+      type: object
+      properties:
+        projectUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        name:
+          type: string
+          example: "Project-1"
+        description:
+          type: string
+          example: "Project about Data Cleaning"
+        createdAt:
+          type: string
+          example: "2026-06-11T11:40:00"
+        datasetCount:
+          type: integer
+          example: 3
+        experimentCount:
+          type: integer
+          example: 5
+        experimentConfigCount:
+          type: integer
+          example: 8
+        datasetVersionCount:
+          type: integer
+          example: 8
+        experimentRunCount:
+          type: integer
+          example: 10
     ProjectStatusChangeRequestModel:
       type: object
       properties:
         status:
           type: string
           example: "ACTIVE"
-
-
-
 
 

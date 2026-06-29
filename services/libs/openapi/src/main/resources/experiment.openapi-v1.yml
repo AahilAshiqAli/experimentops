@@ -57,15 +57,31 @@ paths:
           required: true
           schema:
             type: string
+        - name: page
+          in: query
+          description: Zero-based page index
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of entries to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 20
       responses:
         200:
           description: successful operation
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ExperimentListItemModel'
+                $ref: '#/components/schemas/ExperimentListResponseModel'
 
   /project/{projectUuid}/experiment/{uuid}:
     get:
@@ -161,6 +177,17 @@ paths:
 
 components:
   schemas:
+    ExperimentListResponseModel:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentListItemModel'
+        totalElements:
+          type: integer
+          format: int64
+          example: 123
     ExperimentResponseModel:
       type: object
       properties:
@@ -203,9 +230,12 @@ components:
         description:
           type: string
           example: "bla bla bla"
+        status:
+          type: string
+          example: "ACTIVE"
         experimentType:
           type: string
-          example: "TEXT_CLASSIFICATION"
+          example: CSV_PROFILE_ANALYSIS
         configCount:
           type: integer
           example: 3

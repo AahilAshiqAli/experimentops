@@ -1,8 +1,11 @@
+import { useNavigate } from 'react-router-dom'
+
 import { useDocumentTitle } from '../../hooks'
 import { useProjectsContainer } from './useProjectsContainer'
 
 export function Projects() {
   useDocumentTitle('Projects')
+  const navigate = useNavigate()
 
   const {
     errorMessage,
@@ -19,7 +22,9 @@ export function Projects() {
   return (
     <section className="rounded-2xl border border-slate-200 bg-surface shadow-card">
       <div className="flex flex-col gap-2 border-b border-slate-200 px-6 py-5 sm:px-8">
-        <h1 className="font-heading text-3xl font-semibold text-secondary">Projects</h1>
+        <h1 className="font-heading text-3xl font-semibold text-secondary">
+          Projects
+        </h1>
         <p className="text-slate-600">Projects available in this workspace.</p>
       </div>
 
@@ -34,15 +39,22 @@ export function Projects() {
         )}
 
         {!isLoading && errorMessage && (
-          <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">
+          <div
+            className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+            role="alert"
+          >
             {errorMessage}
           </div>
         )}
 
         {!isLoading && !errorMessage && totalProjects === 0 && (
           <div className="rounded-md border border-dashed border-slate-300 px-6 py-12 text-center">
-            <h2 className="font-heading text-xl font-semibold text-secondary">No projects yet</h2>
-            <p className="mt-2 text-sm text-slate-600">Projects created for this workspace will appear here.</p>
+            <h2 className="font-heading text-xl font-semibold text-secondary">
+              No projects yet
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Projects created for this workspace will appear here.
+            </p>
           </div>
         )}
 
@@ -52,13 +64,36 @@ export function Projects() {
               <table className="min-w-full divide-y divide-slate-200 text-left">
                 <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                   <tr>
-                    <th className="px-5 py-3 font-semibold" scope="col">Project</th>
-                    <th className="px-5 py-3 font-semibold" scope="col">Description</th>
+                    <th className="px-5 py-3 font-semibold" scope="col">
+                      Project
+                    </th>
+                    <th className="px-5 py-3 font-semibold" scope="col">
+                      Description
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {paginatedProjects.map((project) => (
-                    <tr className="transition hover:bg-slate-50" key={project.uuid}>
+                    <tr
+                      aria-label={`View ${project.name}`}
+                      className="cursor-pointer transition hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-primary"
+                      key={project.uuid}
+                      onClick={() =>
+                        navigate(`/projects/${project.uuid}`, {
+                          state: { project },
+                        })
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          navigate(`/projects/${project.uuid}`, {
+                            state: { project },
+                          })
+                        }
+                      }}
+                      role="link"
+                      tabIndex={0}
+                    >
                       <td className="whitespace-nowrap px-5 py-4 text-sm font-medium text-secondary">
                         {project.name}
                       </td>
