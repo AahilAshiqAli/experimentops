@@ -4,22 +4,21 @@ import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.model.type.converter.StatusEnumConverter;
 import com.experimentops.utils.ExperimentOpsJsonType;
 import com.experimentops.utils.model.entity.ExperimentOpsEntity;
-import com.fasterxml.jackson.databind.JsonNode;
-import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Type;
 
+import java.util.List;
 import java.util.Objects;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "tbl_experiment_config")
+@Table(name="tbl_experiment_types")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExperimentConfig extends ExperimentOpsEntity {
+public class ExperimentType extends ExperimentOpsEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,25 +29,20 @@ public class ExperimentConfig extends ExperimentOpsEntity {
     private String name;
 
     @Type(ExperimentOpsJsonType.class)
-    @Column(columnDefinition = "json", name = "config")
-    private JsonNode config;
+    @Column(name = "default_config", columnDefinition = "json")
+    private List<ExperimentTypeDefaultConfig> defaultConfig;
 
-    @Column(name = "experiment_uuid")
-    private String experimentUuid;
-
-    @Column(name = "workspace_uuid")
-    private String workspaceUuid;
-
-    @Column(name = "status")
+    @Column(name ="status")
     @Convert(converter = StatusEnumConverter.class)
     private StatusEnum status;
+
 
     @Override
     @Generated
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ExperimentConfig)) return false;
-        return (getUuid().equals(((ExperimentConfig) o).getUuid()));
+        if (!(o instanceof ExperimentType)) return false;
+        return (getUuid().equals(((ExperimentType) o).getUuid()));
     }
 
     @Override

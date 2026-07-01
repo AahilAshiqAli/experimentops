@@ -36,32 +36,14 @@ public final class JSONUtil {
         nonTypedMapper.setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.ALWAYS, JsonInclude.Include.NON_NULL));
         nonTypedMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         nonTypedMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+
+        // The only difference between typedMapper and nonTypedMapper is that non typed mapper accepts a single element as array/
     }
 
     // private constructor to prevent initialization
     private JSONUtil() {
     }
 
-    /**
-     * Converts a POJO to a JSON string.
-     *
-     * @param obj the POJO to serialize to JSON
-     * @return the JSON text string, or an empty string if conversion failed
-     */
-    public static String toTypedJsonFromObject(Object obj) {
-        String json = StringUtils.EMPTY;
-        if (obj == null) {
-            return json;
-        }
-        try {
-            typedMapper.addMixIn(obj.getClass(), IgnoreSchemaProperty.class);
-            typedMapper.addMixIn(org.apache.avro.specific.SpecificRecord.class, JacksonIgnoreAvroPropertiesMixIn.class);
-            json = typedMapper.writeValueAsString(obj);
-        } catch (IOException e) {
-            logger.warn(CONVERSION_FAILED, e.getMessage());
-        }
-        return json;
-    }
 
     /**
      * Converts a JSON string to a POJO of the specified class.
@@ -81,6 +63,14 @@ public final class JSONUtil {
         return obj;
     }
 
+    /**
+     * Converts a JSON string to a POJO list of the specified class.
+     *
+     * @param <T>   the type of the deserialized object
+     * @param json  the JSON string to deserialize
+     * @param clazz the class of the deserialized object
+     * @return a POJO (or null if it could not be deserialized)
+     */
     public static <T> List<T> toListFromTypedJson(String json, Class<T> clazz) {
         try {
             return nonTypedMapper.readValue(json, nonTypedMapper.getTypeFactory().constructCollectionType(List.class, clazz));
@@ -91,28 +81,6 @@ public final class JSONUtil {
         return Collections.emptyList();
     }
 
-    /**
-     * Converts a JSON string to a POJO of the specified class without default
-     * typing
-     *
-     * @param <T>   the type of the deserialized object
-     * @param json  the JSON string to deserialize
-     * @param clazz the class of the deserialized object
-     * @return a POJO (or null if it could not be deserialized)
-     */
-    public static <T> T toObjectFromNonTypedJson(String json, Class<T> clazz) {
-        if (StringUtils.isBlank(json)) {
-            return null;
-        }
-        T obj = null;
-        try {
-            nonTypedMapper.registerModule(new JavaTimeModule());
-            obj = nonTypedMapper.readValue(json, clazz);
-        } catch (IOException e) {
-            logger.warn("Conversion of JSON to object failed: {} Json was: {}", e.getMessage(), json);
-        }
-        return obj;
-    }
 
     /**
      * Converts a POJO to a barebones JSON string.

@@ -2,7 +2,6 @@ package com.experimentops.platformapi.interfaces.ctrl;
 
 import com.experimentops.experiment.api.v1.ExperimentApi;
 import com.experimentops.experiment.model.v1.ExperimentListResponseModel;
-import com.experimentops.experiment.model.v1.ExperimentListItemModel;
 import com.experimentops.experiment.model.v1.ExperimentRequestModel;
 import com.experimentops.experiment.model.v1.ExperimentResponseModel;
 import com.experimentops.experiment.model.v1.ExperimentStatusChangeRequestModel;

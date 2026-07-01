@@ -11,7 +11,10 @@ public enum RoleType {
 
     PLATFORM_ADMIN("PLATFORM_ADMIN", List.of(
             PermissionConstants.ADD_WORKSPACE,
-            PermissionConstants.ADD_USER
+            PermissionConstants.ADD_USER,
+            PermissionConstants.GET_EXPERIMENT_TYPE,
+            PermissionConstants.ADD_EXPERIMENT_TYPE,
+            PermissionConstants.EDIT_EXPERIMENT_TYPE
     ), true),
     WORKSPACE_ADMIN("WORKSPACE_ADMIN", List.of(
             PermissionConstants.ADD_USER,
@@ -24,7 +27,8 @@ public enum RoleType {
             PermissionConstants.ADD_EXPERIMENT,
             PermissionConstants.EDIT_EXPERIMENT,
             PermissionConstants.GET_EXPERIMENT,
-            PermissionConstants.RUN_EXPERIMENT
+            PermissionConstants.RUN_EXPERIMENT,
+            PermissionConstants.GET_EXPERIMENT_TYPE
     ), false),
     RESEARCHER("RESEARCHER", List.of(
             PermissionConstants.ADD_DATASET,
@@ -33,7 +37,8 @@ public enum RoleType {
             PermissionConstants.ADD_EXPERIMENT,
             PermissionConstants.EDIT_EXPERIMENT,
             PermissionConstants.GET_EXPERIMENT,
-            PermissionConstants.RUN_EXPERIMENT
+            PermissionConstants.RUN_EXPERIMENT,
+            PermissionConstants.GET_EXPERIMENT_TYPE
     ), false),
     INTERNAL("INTERNAL", List.of(), true);
 

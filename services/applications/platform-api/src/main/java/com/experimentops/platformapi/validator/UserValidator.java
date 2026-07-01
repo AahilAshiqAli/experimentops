@@ -18,7 +18,7 @@ public class UserValidator extends GenericValidator {
         validateInputString("userRole", requestModel.getUserRole());
 
         if (!RoleType.isValid(requestModel.getUserRole())){
-            throw new ValidationException(ErrorCode.INVALID_INPUTS, "user role should be one of WORKSPACE_ADMIN or RESEARCHER");
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "user role should be one of ADMINISTRATOR, WORKSPACE_ADMIN or RESEARCHER");
         }
     }
 }
