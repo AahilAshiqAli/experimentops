@@ -1,0 +1,177 @@
+openapi: 3.0.1
+
+info:
+  title: ExperimentOps
+  description: ExperimentOps API.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+    variables:
+      basePath:
+        default: api/v1
+
+tags:
+  - name: Experiment Type
+    description: Everything about experiment
+
+paths:
+  /experiment-type:
+    post:
+      summary: Add Experiment Type
+      description: This API will add experiment type.
+      tags:
+        - Experiment Type
+      operationId: addExperimentType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentTypeRequestModel'
+      responses:
+        202:
+          description: Experiment type create event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentTypeResponseModel'
+    get:
+      summary: Get Experiment Type List
+      description: This API will get experiment type list.
+      tags:
+        - Experiment Type
+      operationId: getExperimentTypeList
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentTypeListResponseModel'
+
+  /experiment-type/{uuid}:
+    put:
+      summary: Update Experiment Type
+      description: This API will update experiment type.
+      tags:
+        - Experiment Type
+      operationId: updateExperimentType
+      parameters:
+        - name: uuid
+          in: path
+          description: Experiment type uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentTypeRequestModel'
+      responses:
+        202:
+          description: Experiment type update event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentTypeResponseModel'
+    patch:
+      summary: Change Status of Experiment Type
+      description: This API will change status of experiment type.
+      tags:
+        - Experiment Type
+      operationId: updateStatusExperimentType
+      parameters:
+        - name: uuid
+          in: path
+          description: Experiment type uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentTypeStatusChangeRequestModel'
+      responses:
+        202:
+          description: Experiment type status change event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentTypeResponseModel'
+
+components:
+  schemas:
+    ExperimentTypeListResponseModel:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentTypeResponseModel'
+        totalElements:
+          type: integer
+          format: int64
+          example: 123
+    ExperimentTypeResponseModel:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        name:
+          type: string
+          example: "CSV_PROFILE_ANALYSIS"
+        defaultConfig:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentTypeDefaultConfigModel'
+          example:
+            - name: "normalizeColumnNames"
+              datatype: "boolean"
+              defaultValue: true
+        status:
+          type: string
+          example: "ACTIVE"
+        updatedAt:
+          type: string
+          example: "2026-06-11T10:30:00"
+    ExperimentTypeRequestModel:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "CSV_PROFILE_ANALYSIS"
+        defaultConfig:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentTypeDefaultConfigModel'
+    ExperimentTypeDefaultConfigModel:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "normalizeColumnNames"
+        datatype:
+          type: string
+          enum:
+            - boolean
+            - string
+            - number
+            - list
+          example: "boolean"
+        defaultValue:
+          type: object
+          nullable: true
+          example: true
+    ExperimentTypeStatusChangeRequestModel:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ACTIVE"
