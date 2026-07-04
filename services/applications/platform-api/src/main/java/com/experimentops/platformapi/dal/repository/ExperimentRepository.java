@@ -19,6 +19,8 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
 
     Optional<Experiment> findByUuidAndWorkspaceUuidAndEnabled(String uuid, String workspaceUuid, boolean enabled);
 
+    Optional<Experiment> findByUuidAndWorkspaceUuidAndStatusAndEnabled(String uuid, String workspaceUuid, StatusEnum status, boolean enabled);
+
     Optional<Experiment> findByUuidAndProjectUuidAndWorkspaceUuidAndStatusAndEnabled(String uuid, String projectUuid, String workspaceUuid, StatusEnum status, boolean enabled);
 
     Optional<Experiment> findByNameAndProjectUuidAndWorkspaceUuidAndStatusAndEnabled(String name, String projectUuid, String workspaceUuid, StatusEnum status, boolean enabled);

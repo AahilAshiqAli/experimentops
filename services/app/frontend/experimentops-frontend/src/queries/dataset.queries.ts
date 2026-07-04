@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { useLogin } from '../context-api/logincontext'
 import {
-  getDatasetDetails,
+  getDataset,
   getProjectDatasets,
   type PaginationParams,
 } from '../services/dataset.service'
@@ -27,14 +27,25 @@ export function useQueryProjectDatasets(
   })
 }
 
-export function useQueryDataset(datasetUuid?: string) {
+export function useQueryDataset(
+  projectUuid?: string,
+  datasetUuid?: string,
+  pagination: PaginationParams = { page: 0, size: 20 },
+) {
   const { accessToken, hasPermission } = useLogin()
   const canGetDataset = hasPermission(PERMISSIONS_KEYS.DATASET.GET_DATASET)
 
   return useQuery({
-    enabled: Boolean(accessToken && datasetUuid && canGetDataset),
+    enabled: Boolean(
+      accessToken && projectUuid && datasetUuid && canGetDataset,
+    ),
     queryFn: () =>
-      getDatasetDetails(accessToken as string, datasetUuid as string),
-    queryKey: ['datasets', datasetUuid],
+      getDataset(
+        accessToken as string,
+        projectUuid as string,
+        datasetUuid as string,
+        pagination,
+      ),
+    queryKey: ['projects', projectUuid, 'datasets', datasetUuid, pagination],
   })
 }

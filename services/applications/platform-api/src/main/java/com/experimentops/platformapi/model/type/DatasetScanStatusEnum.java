@@ -8,18 +8,18 @@ import org.jspecify.annotations.Nullable;
 
 @Getter
 @RequiredArgsConstructor
-public enum StatusEnum implements ExperimentOpsEnum {
-    PENDING(0),
-    ACTIVE(1),
-    INACTIVE(2),
-    FAILED(3);
+public enum DatasetScanStatusEnum implements ExperimentOpsEnum {
+    NOT_STARTED(0),
+    PENDING(1),
+    IN_PROGRESS(2),
+    COMPLETED(3),
+    FAILED(4);
 
     private final int code;
 
-
     @Nullable
-    public static StatusEnum of(String name) {
-        for (StatusEnum status : StatusEnum.values()) {
+    public static DatasetScanStatusEnum of(String name) {
+        for (DatasetScanStatusEnum status : DatasetScanStatusEnum.values()) {
             if (Strings.CI.equals(status.name(), name)) {
                 return status;
             }

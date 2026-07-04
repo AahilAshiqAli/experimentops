@@ -10,4 +10,10 @@ public class EntityNotFoundException extends ExperimentOpsException {
                 entityName + " not found for id: " + id
         );
     }
+    public EntityNotFoundException(String message){
+        super(
+               ErrorCode.ENTITY_NOT_FOUND,
+               message
+        );
+    }
 }

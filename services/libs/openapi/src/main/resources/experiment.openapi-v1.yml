@@ -15,6 +15,8 @@ servers:
 tags:
   - name: Experiment
     description: Everything about experiment
+  - name: Experiment config
+    description: Everything about experiment configuration
 
 paths:
   /project/{projectUuid}/experiment:
@@ -175,6 +177,164 @@ paths:
               schema:
                 $ref: '#/components/schemas/ExperimentResponseModel'
 
+  /experiment/{experimentUuid}/experiment-config:
+    post:
+      summary: Add Experiment Config
+      description: This API will add experiment config.
+      tags:
+        - Experiment config
+      operationId: addExperimentConfig
+      parameters:
+        - name: experimentUuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentConfigRequestModel'
+      responses:
+        201:
+          description: Experiment config created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentConfigResponseModel'
+    get:
+      summary: Get Experiment Config List
+      description: This API will get experiment config list.
+      tags:
+        - Experiment config
+      operationId: getExperimentConfigList
+      parameters:
+        - name: experimentUuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Zero-based page index
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of entries to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 20
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentConfigListResponseModel'
+
+  /experiment/{experimentUuid}/experiment-config/{uuid}:
+    get:
+      summary: Get Experiment Config
+      description: This API will get experiment config.
+      tags:
+        - Experiment config
+      operationId: getExperimentConfig
+      parameters:
+        - name: experimentUuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Experiment config uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentConfigResponseModel'
+    put:
+      summary: Update Experiment Config
+      description: This API will update experiment config.
+      tags:
+        - Experiment config
+      operationId: updateExperimentConfig
+      parameters:
+        - name: experimentUuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Experiment config uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentConfigRequestModel'
+      responses:
+        200:
+          description: Experiment config updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentConfigResponseModel'
+    patch:
+      summary: Change Status of Experiment Config
+      description: This API will change status of experiment config.
+      tags:
+        - Experiment config
+      operationId: updateStatusExperimentConfig
+      parameters:
+        - name: experimentUuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Experiment config uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentConfigStatusChangeRequestModel'
+      responses:
+        200:
+          description: Experiment config status changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentConfigResponseModel'
+
 components:
   schemas:
     ExperimentListResponseModel:
@@ -246,6 +406,53 @@ components:
           type: string
           example: "2026-06-11T11:40:00"
     ExperimentStatusChangeRequestModel:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "ACTIVE"
+    ExperimentConfigListResponseModel:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentConfigResponseModel'
+        totalElements:
+          type: integer
+          format: int64
+          example: 123
+    ExperimentConfigResponseModel:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        name:
+          type: string
+          example: "baseline-config"
+        config:
+          type: object
+          additionalProperties: true
+        experimentUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        status:
+          type: string
+          example: "ACTIVE"
+        updatedAt:
+          type: string
+          example: "2026-06-11T11:40:00"
+    ExperimentConfigRequestModel:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "baseline-config"
+        config:
+          type: object
+          additionalProperties: true
+    ExperimentConfigStatusChangeRequestModel:
       type: object
       properties:
         status:

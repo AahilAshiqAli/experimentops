@@ -1,0 +1,239 @@
+import { useState, type FormEvent } from 'react'
+
+const INLINE_CONTROL_CLASS =
+  'inline-block rounded-sm border-none p-0 font-mono outline-none focus:ring-1 focus:ring-primary'
+
+function renderIndent(depth: number) {
+  return '  '.repeat(depth)
+}
+
+function JsonPrimitiveInput({
+  onChange,
+  value,
+}: {
+  onChange: (value: unknown) => void
+  value: unknown
+}) {
+  if (typeof value === 'boolean') {
+    return (
+      <select
+        className={`${INLINE_CONTROL_CLASS} bg-purple-50 text-purple-700`}
+        onChange={(event) => onChange(event.target.value === 'true')}
+        value={String(value)}
+      >
+        <option value="true">true</option>
+        <option value="false">false</option>
+      </select>
+    )
+  }
+
+  if (typeof value === 'number') {
+    return (
+      <input
+        className={`${INLINE_CONTROL_CLASS} w-16 bg-amber-50 px-0.5 text-amber-600`}
+        onChange={(event) => {
+          const nextValue = event.target.valueAsNumber
+          onChange(Number.isNaN(nextValue) ? 0 : nextValue)
+        }}
+        type="number"
+        value={value}
+      />
+    )
+  }
+
+  if (value === null || value === undefined) {
+    return (
+      <input
+        className={`${INLINE_CONTROL_CLASS} w-16 bg-slate-50 px-0.5 italic text-slate-400`}
+        onChange={(event) =>
+          onChange(event.target.value === '' ? null : event.target.value)
+        }
+        placeholder="null"
+        value=""
+      />
+    )
+  }
+
+  const text = String(value)
+  return (
+    <span className="text-emerald-700">
+      "
+      <input
+        className={`${INLINE_CONTROL_CLASS} bg-emerald-50 px-0.5 text-emerald-700`}
+        onChange={(event) => onChange(event.target.value)}
+        size={Math.max(text.length, 1)}
+        type="text"
+        value={text}
+      />
+      "
+    </span>
+  )
+}
+
+function JsonNode({
+  depth,
+  onChange,
+  value,
+}: {
+  depth: number
+  onChange: (value: unknown) => void
+  value: unknown
+}) {
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return <span className="text-slate-500">[]</span>
+    }
+
+    return (
+      <span>
+        <span className="text-slate-500">[</span>
+        {'\n'}
+        {value.map((item, index) => (
+          <span key={index}>
+            {renderIndent(depth + 1)}
+            <JsonNode
+              depth={depth + 1}
+              onChange={(next) => {
+                const nextArray = [...value]
+                nextArray[index] = next
+                onChange(nextArray)
+              }}
+              value={item}
+            />
+            {index < value.length - 1 ? (
+              <span className="text-slate-500">,</span>
+            ) : null}
+            {'\n'}
+          </span>
+        ))}
+        {renderIndent(depth)}
+        <span className="text-slate-500">]</span>
+      </span>
+    )
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    const entries = Object.entries(value as Record<string, unknown>)
+
+    if (entries.length === 0) {
+      return <span className="text-slate-500">{'{}'}</span>
+    }
+
+    return (
+      <span>
+        <span className="text-slate-500">{'{'}</span>
+        {'\n'}
+        {entries.map(([key, item], index) => (
+          <span key={key}>
+            {renderIndent(depth + 1)}
+            <span className="text-sky-700">"{key}"</span>
+            <span className="text-slate-500">: </span>
+            <JsonNode
+              depth={depth + 1}
+              onChange={(next) =>
+                onChange({
+                  ...(value as Record<string, unknown>),
+                  [key]: next,
+                })
+              }
+              value={item}
+            />
+            {index < entries.length - 1 ? (
+              <span className="text-slate-500">,</span>
+            ) : null}
+            {'\n'}
+          </span>
+        ))}
+        {renderIndent(depth)}
+        <span className="text-slate-500">{'}'}</span>
+      </span>
+    )
+  }
+
+  return <JsonPrimitiveInput onChange={onChange} value={value} />
+}
+
+export function JsonEditor({
+  onChange,
+  value,
+}: {
+  onChange: (value: unknown) => void
+  value: unknown
+}) {
+  return (
+    <pre className="max-h-[60vh] overflow-auto whitespace-pre rounded-lg border border-slate-200 bg-white p-4 font-mono text-xs leading-relaxed text-slate-700">
+      <JsonNode depth={0} onChange={onChange} value={value} />
+    </pre>
+  )
+}
+
+export function JsonEditorDialog({
+  isSubmitting = false,
+  onClose,
+  onSubmit,
+  title,
+  value,
+}: {
+  isSubmitting?: boolean
+  onClose: () => void
+  onSubmit: (value: unknown) => void
+  title: string
+  value: unknown
+}) {
+  const [draft, setDraft] = useState(value)
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    onSubmit(draft)
+  }
+
+  return (
+    <div
+      aria-labelledby="json-editor-title"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/40 p-4"
+      role="dialog"
+    >
+      <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl">
+        <div className="flex items-center justify-between gap-4">
+          <h2
+            className="font-heading text-xl font-semibold text-secondary"
+            id="json-editor-title"
+          >
+            {title}
+          </h2>
+          <button
+            aria-label="Close JSON editor"
+            className="rounded-md p-2 text-slate-500 hover:bg-slate-100"
+            disabled={isSubmitting}
+            onClick={onClose}
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+
+        <form className="mt-4" onSubmit={handleSubmit}>
+          <JsonEditor onChange={setDraft} value={draft} />
+          <div className="mt-5 flex justify-end gap-3">
+            <button
+              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-secondary hover:bg-slate-50"
+              disabled={isSubmitting}
+              onClick={onClose}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSubmitting}
+              type="submit"
+            >
+              {isSubmitting ? 'Saving…' : 'Submit'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}

@@ -15,16 +15,30 @@ export type DatasetVersion = {
   datasetVersionUuid: string
   format: string
   originalFileName: string
+  scanMessage?: string | null
+  scanStatus?: string | null
   size: number
+  status: string
   updatedAt: string
 }
 
-export type DatasetDetails = {
+export type DatasetDetail = {
   datasetUuid: string
   name: string
   projectUuid: string
+  totalElements: number
   versions: DatasetVersion[]
 }
+
+export type DatasetVersionUploadTicket = {
+  expiresAt: string
+  method: string
+  requiredHeaders: Record<string, string>
+  uploadUrl: string
+  uuid: string
+}
+
+export type DatasetVersionStatus = 'ACTIVE' | 'FAILED'
 
 export type PaginationParams = {
   page?: number
@@ -69,35 +83,48 @@ function toPaginatedResponse<T>(
 }
 
 function isDatasetVersion(value: unknown): value is DatasetVersion {
+  const datasetVersion = value as DatasetVersion
+
   return (
     typeof value === 'object' &&
     value !== null &&
-    typeof (value as DatasetVersion).datasetVersionUuid === 'string' &&
-    typeof (value as DatasetVersion).originalFileName === 'string' &&
-    typeof (value as DatasetVersion).format === 'string' &&
-    typeof (value as DatasetVersion).size === 'number' &&
-    typeof (value as DatasetVersion).updatedAt === 'string'
+    typeof datasetVersion.datasetVersionUuid === 'string' &&
+    typeof datasetVersion.originalFileName === 'string' &&
+    typeof datasetVersion.format === 'string' &&
+    (datasetVersion.scanStatus === undefined ||
+      datasetVersion.scanStatus === null ||
+      typeof datasetVersion.scanStatus === 'string') &&
+    (datasetVersion.scanMessage === undefined ||
+      datasetVersion.scanMessage === null ||
+      typeof datasetVersion.scanMessage === 'string') &&
+    typeof datasetVersion.size === 'number' &&
+    typeof datasetVersion.status === 'string' &&
+    typeof datasetVersion.updatedAt === 'string'
   )
 }
 
-function toDatasetDetails(value: unknown): DatasetDetails | null {
-  if (
-    typeof value !== 'object' ||
-    value === null ||
-    typeof (value as DatasetDetails).datasetUuid !== 'string' ||
-    typeof (value as DatasetDetails).projectUuid !== 'string' ||
-    typeof (value as DatasetDetails).name !== 'string' ||
-    !Array.isArray((value as DatasetDetails).versions)
-  ) {
-    return null
-  }
+function isDatasetVersionUploadTicket(
+  value: unknown,
+): value is DatasetVersionUploadTicket {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as DatasetVersionUploadTicket).uuid === 'string' &&
+    typeof (value as DatasetVersionUploadTicket).uploadUrl === 'string'
+  )
+}
 
-  return {
-    datasetUuid: (value as DatasetDetails).datasetUuid,
-    name: (value as DatasetDetails).name,
-    projectUuid: (value as DatasetDetails).projectUuid,
-    versions: (value as DatasetDetails).versions.filter(isDatasetVersion),
-  }
+function isDatasetDetail(value: unknown): value is DatasetDetail {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as DatasetDetail).datasetUuid === 'string' &&
+    typeof (value as DatasetDetail).name === 'string' &&
+    typeof (value as DatasetDetail).projectUuid === 'string' &&
+    typeof (value as DatasetDetail).totalElements === 'number' &&
+    Array.isArray((value as DatasetDetail).versions) &&
+    (value as DatasetDetail).versions.every(isDatasetVersion)
+  )
 }
 
 export async function getProjectDatasets(
@@ -129,20 +156,24 @@ export async function getProjectDatasets(
   return datasets
 }
 
-export async function getDatasetDetails(
+export async function getDataset(
   accessToken: string,
+  projectUuid: string,
   datasetUuid: string,
-): Promise<DatasetDetails> {
+  pagination?: PaginationParams,
+): Promise<DatasetDetail> {
   const payload = await ApiService.get<unknown>(
     ServicesUrlEndpoints.GET_DATASET.replace(
-      ':datasetUuid',
-      encodeURIComponent(datasetUuid),
-    ),
-    { headers: getAuthenticatedRequestHeaders(accessToken) },
+      ':projectUuid',
+      encodeURIComponent(projectUuid),
+    ).replace(':datasetUuid', encodeURIComponent(datasetUuid)),
+    {
+      headers: getAuthenticatedRequestHeaders(accessToken),
+      params: pagination,
+    },
   )
-  const dataset = toDatasetDetails(payload)
 
-  if (!dataset) {
+  if (!isDatasetDetail(payload)) {
     throw new ApiServiceError(
       'The dataset service returned an invalid response.',
       500,
@@ -150,5 +181,83 @@ export async function getDatasetDetails(
     )
   }
 
-  return dataset
+  return payload
+}
+
+export async function initiateDatasetVersionUpload(
+  accessToken: string,
+  datasetUuid: string,
+  fileName: string,
+): Promise<DatasetVersionUploadTicket> {
+  const payload = await ApiService.post<unknown>(
+    ServicesUrlEndpoints.INITIATE_DATASET_VERSION_UPLOAD.replace(
+      ':datasetUuid',
+      encodeURIComponent(datasetUuid),
+    ),
+    { fileName },
+    { headers: getAuthenticatedRequestHeaders(accessToken) },
+  )
+
+  if (!isDatasetVersionUploadTicket(payload)) {
+    throw new ApiServiceError(
+      'The dataset service returned an invalid upload response.',
+      500,
+      payload,
+    )
+  }
+
+  return payload
+}
+
+export async function uploadDatasetVersionFile(
+  ticket: DatasetVersionUploadTicket,
+  file: File,
+  onProgress?: (percent: number) => void,
+): Promise<void> {
+  // Uploads directly to the presigned URL - must not send our API auth headers here.
+  await ApiService.put<unknown, File>(ticket.uploadUrl, file, {
+    headers: ticket.requiredHeaders,
+    onUploadProgress: (progressEvent) => {
+      if (!onProgress || !progressEvent.total) return
+      onProgress(
+        Math.round((progressEvent.loaded / progressEvent.total) * 100),
+      )
+    },
+  })
+}
+
+export async function updateDatasetVersionStatus(
+  accessToken: string,
+  datasetUuid: string,
+  datasetVersionUuid: string,
+  status: DatasetVersionStatus,
+  failureMessage?: string,
+): Promise<void> {
+  await ApiService.patch<unknown>(
+    ServicesUrlEndpoints.UPDATE_DATASET_VERSION_STATUS.replace(
+      ':datasetUuid',
+      encodeURIComponent(datasetUuid),
+    ).replace(':datasetVersionUuid', encodeURIComponent(datasetVersionUuid)),
+    status === 'FAILED' ? { failureMessage, status } : { status },
+    { headers: getAuthenticatedRequestHeaders(accessToken) },
+  )
+}
+
+export async function downloadDatasetVersion(
+  accessToken: string,
+  datasetUuid: string,
+  datasetVersionUuid: string,
+): Promise<Blob> {
+  const endpoint = ServicesUrlEndpoints.GET_DATASET_VERSION.replace(
+    ':datasetUuid',
+    encodeURIComponent(datasetUuid),
+  ).replace(':datasetVersionUuid', encodeURIComponent(datasetVersionUuid))
+  const { Accept: omittedAccept, ...downloadHeaders } =
+    getAuthenticatedRequestHeaders(accessToken)
+  void omittedAccept
+
+  return ApiService.get<Blob>(endpoint, {
+    headers: downloadHeaders,
+    responseType: 'blob',
+  })
 }

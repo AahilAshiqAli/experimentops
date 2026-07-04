@@ -1,6 +1,8 @@
 package com.experimentops.platformapi.model.entity;
 
+import com.experimentops.platformapi.model.type.DatasetScanStatusEnum;
 import com.experimentops.platformapi.model.type.StatusEnum;
+import com.experimentops.platformapi.model.type.converter.DatasetScanStatusEnumConverter;
 import com.experimentops.platformapi.model.type.converter.StatusEnumConverter;
 import com.experimentops.utils.model.entity.ExperimentOpsEntity;
 import jakarta.persistence.*;
@@ -44,6 +46,15 @@ public class DatasetVersion extends ExperimentOpsEntity {
     @Convert(converter = StatusEnumConverter.class)
     private StatusEnum status;
 
+    @Column(name = "scan_status")
+    @Convert(converter = DatasetScanStatusEnumConverter.class)
+    private DatasetScanStatusEnum scanStatus;
+
+    @Column(name = "scan_message")
+    private String scanMessage;
+
+    @Column(name = "preview_uri")
+    private String previewUri;
 
     @Override
     @Generated
