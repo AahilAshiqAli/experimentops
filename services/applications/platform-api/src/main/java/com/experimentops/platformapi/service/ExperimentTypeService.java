@@ -104,7 +104,9 @@ public class ExperimentTypeService {
                 .orElseThrow(() -> new EntityNotFoundException(EXPERIMENT_TYPE_UUID, uuid));
         ExperimentTypeMutationEvent event = experimentTypeTransformer.transformExperimentTypeStatusChangeEvent(uuid, statusChangeRequestModel, headers);
         kafkaProducer.sendMessage(experimentTypeTopic, event, event.getMetadata());
-        return experimentTypeTransformer.transformExperimentTypeResponseModelFromEntity(experimentType, headers);
+        ExperimentTypeResponseModel experimentTypeResponseModel = experimentTypeTransformer.transformExperimentTypeResponseModelFromEntity(experimentType, headers);
+        experimentTypeResponseModel.status(statusChangeRequestModel.getStatus());
+        return experimentTypeResponseModel;
     }
 
     public void changeStatusExperimentType(@NonNull ExperimentTypeMutationEvent event, @NonNull ExperimentOpsHeaders headers) {

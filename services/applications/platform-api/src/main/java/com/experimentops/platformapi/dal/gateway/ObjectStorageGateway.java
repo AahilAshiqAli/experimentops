@@ -1,76 +1,83 @@
 package com.experimentops.platformapi.dal.gateway;
 
-import com.experimentops.platformapi.dal.gateway.dto.UploadedObject;
+import com.experimentops.common.exceptions.constant.ErrorCode;
+import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
-import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Map;
 
 @Component
 public class ObjectStorageGateway {
     private static final ExperimentOpsLogger log = ExperimentOpsLogger.getLogger(ObjectStorageGateway.class);
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
     private final String bucketName;
+    private final Duration uploadUrlExpiration;
 
-    public ObjectStorageGateway(S3Client s3Client,
-            @Value("${experimentops.storage.s3.bucket}") String bucketName) {
+    public ObjectStorageGateway(
+            S3Client s3Client,
+            S3Presigner s3Presigner,
+            @Value("${experimentops.storage.s3.bucket}") String bucketName,
+            @Value("${experimentops.storage.s3.presigned-upload-expiration-minutes:15}") long uploadUrlExpirationMinutes) {
         this.s3Client = s3Client;
+        this.s3Presigner = s3Presigner;
         this.bucketName = bucketName;
+        this.uploadUrlExpiration = Duration.ofMinutes(uploadUrlExpirationMinutes);
     }
 
-    public UploadedObject uploadDatasetFile(String workspaceId, String projectId, String datasetId, MultipartFile multipartFile, ExperimentOpsHeaders headers) {
-        validateMultipartFile(multipartFile);
-
-        String originalFilename = getOriginalFilename(multipartFile);
-        String sanitizedFilename = sanitizeFilename(originalFilename);
-
+    public PresignedDatasetUpload createPresignedDatasetUpload(
+            String workspaceId,
+            String projectId,
+            String datasetId,
+            String datasetVersionId,
+            String filename,
+            ExperimentOpsHeaders headers) {
+        String sanitizedFilename = sanitizeFilename(filename);
         String objectKey = buildDatasetObjectKey(
                 workspaceId,
                 projectId,
                 datasetId,
+                datasetVersionId,
                 sanitizedFilename
         );
 
-        log.info(headers, "uploading dataset with object key: " + objectKey );
+        log.info(headers, "creating presigned dataset upload for object key: " + objectKey);
 
-        try {
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(objectKey)
-                    .contentType(multipartFile.getContentType())
-                    .contentLength(multipartFile.getSize())
-                    .build();
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(objectKey)
+                .build();
+        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+                .signatureDuration(uploadUrlExpiration)
+                .putObjectRequest(putObjectRequest)
+                .build();
+        PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
+        Map<String, String> requiredHeaders = Map.of();
 
-            s3Client.putObject(
-                    putObjectRequest,
-                    RequestBody.fromInputStream(
-                            multipartFile.getInputStream(),
-                            multipartFile.getSize()
-                    )
-            );
-
-            return new UploadedObject(bucketName, objectKey,
-                    originalFilename, multipartFile.getContentType(),
-                    multipartFile.getSize()
-            );
-
-        } catch (IOException exception) {
-            throw new IllegalStateException(
-                    "Unable to read dataset file before uploading to object storage",
-                    exception
-            );
-        }
+        return new PresignedDatasetUpload(
+                "s3://" + bucketName + "/" + objectKey,
+                presignedRequest.url().toString(),
+                Instant.now().plus(uploadUrlExpiration),
+                requiredHeaders
+        );
     }
 
     public byte[] downloadFile(String objectKey) {
@@ -85,6 +92,23 @@ public class ObjectStorageGateway {
         return responseBytes.asByteArray();
     }
 
+    public DatasetFileMetadata getDatasetFileMetadata(String objectKey) {
+        HeadObjectResponse response;
+        try {
+            response = s3Client.headObject(HeadObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(objectKey)
+                    .build());
+        } catch (S3Exception exception) {
+            if (exception.statusCode() == 404) {
+                throw new ValidationException(ErrorCode.INVALID_INPUTS, "Dataset version file was not uploaded");
+            }
+            throw exception;
+        }
+        log.info(new ExperimentOpsHeaders(), "File logging " + response );
+        return new DatasetFileMetadata(response.contentLength(), response.contentType());
+    }
+
     public void deleteFile(String objectKey) {
         DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                 .bucket(bucketName)
@@ -94,29 +118,23 @@ public class ObjectStorageGateway {
         s3Client.deleteObject(deleteObjectRequest);
     }
 
-    private String buildDatasetObjectKey(String workspaceId, String projectId, String datasetId, String filename) {
-        return "workspaces/%s/projects/%s/datasets/%s/raw/%s"
-                .formatted(workspaceId, projectId, datasetId, filename);
-    }
-
-    private void validateMultipartFile(MultipartFile multipartFile) {
-        if (multipartFile == null || multipartFile.isEmpty()) {
-            throw new IllegalArgumentException("Dataset file is required");
-        }
-    }
-
-    private String getOriginalFilename(MultipartFile multipartFile) {
-        String originalFilename = multipartFile.getOriginalFilename();
-
-        if (originalFilename == null || originalFilename.isBlank()) {
-            return "dataset-file";
-        }
-
-        return originalFilename;
+    private String buildDatasetObjectKey(String workspaceId, String projectId, String datasetId, String datasetVersionId, String filename) {
+        return "workspaces/%s/projects/%s/datasets/%s/versions/%s/raw/%s"
+                .formatted(workspaceId, projectId, datasetId, datasetVersionId, filename);
     }
 
     private String sanitizeFilename(String filename) {
         return filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
+
+    public record PresignedDatasetUpload(
+            String storageUri,
+            String uploadUrl,
+            Instant expiresAt,
+            Map<String, String> requiredHeaders) {
+    }
+
+    public record DatasetFileMetadata(long size, String contentType) {
     }
 
 }

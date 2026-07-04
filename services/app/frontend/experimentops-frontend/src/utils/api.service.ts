@@ -84,8 +84,15 @@ const put = <TResponse, TRequest = unknown>(
   requestConfig?: AxiosRequestConfig,
 ) => handleApiRequest<TResponse, TRequest>('put', url, data, requestConfig)
 
+const patch = <TResponse, TRequest = unknown>(
+  url: string,
+  data?: TRequest,
+  requestConfig?: AxiosRequestConfig,
+) => handleApiRequest<TResponse, TRequest>('patch', url, data, requestConfig)
+
 const ApiService = {
   get,
+  patch,
   post,
   put,
 }

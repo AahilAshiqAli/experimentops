@@ -1,0 +1,26 @@
+{
+  "namespace": "com.experimentops.dataset.version.scan.event",
+  "type": "record",
+  "name": "DatasetVersionScanRequestedEvent",
+  "fields": [
+    { "name": "metadata", "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent" },
+    {
+      "name": "payload",
+      "type": [ "null",
+        {
+          "type": "record",
+          "name": "DatasetVersionScanRequestedEventPayload",
+          "fields": [
+            { "name": "originalName",  "type": "string", "avro.java.string": "String" },
+            { "name": "storageUri",    "type": "string", "avro.java.string": "String" },
+            { "name": "format",        "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "sizeBytes",     "type": ["null", "long"], "default": null },
+            { "name": "datasetUuid",   "type": "string", "avro.java.string": "String" },
+            { "name": "workspaceUuid", "type": "string", "avro.java.string": "String" }
+          ]
+        }
+      ],
+      "default": null
+    }
+  ]
+}

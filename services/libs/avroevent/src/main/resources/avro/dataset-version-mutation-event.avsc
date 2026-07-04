@@ -15,7 +15,9 @@
             { "name": "fileName",    "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "storageUri",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "format",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-            { "name": "size",        "type": ["null", "long"], "default": null }
+            { "name": "size",        "type": ["null", "long"], "default": null },
+            { "name": "status",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "failureMessage", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
           ]
         }
       ],

@@ -11,14 +11,17 @@ import com.experimentops.dataset.model.v1.DatasetRequestModel;
 import com.experimentops.dataset.model.v1.DatasetResponseModel;
 import com.experimentops.dataset.model.v1.DatasetStatusChangeRequestModel;
 import com.experimentops.dataset.model.v1.DatasetVersionResponseModel;
+import com.experimentops.dataset.model.v1.DatasetVersionStatusChangeRequestModel;
+import com.experimentops.dataset.model.v1.DatasetVersionUploadRequestModel;
 import com.experimentops.dataset.version.event.DatasetVersionMutationEvent;
+import com.experimentops.dataset.version.scan.event.DatasetVersionScanCompletedEvent;
+import com.experimentops.dataset.version.scan.event.DatasetVersionScanRequestedEvent;
 import com.experimentops.platformapi.model.entity.DatasetVersion;
 import com.experimentops.platformapi.dal.gateway.ObjectStorageGateway;
-import com.experimentops.platformapi.dal.gateway.dto.UploadedObject;
 import com.experimentops.platformapi.dal.repository.DatasetRepository;
 import com.experimentops.platformapi.dal.repository.DatasetVersionRepository;
 import com.experimentops.platformapi.model.entity.Dataset;
-import com.experimentops.platformapi.model.type.DatasetFileFormatEnum;
+import com.experimentops.platformapi.model.type.DatasetScanStatusEnum;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.DatasetTransformer;
 import com.experimentops.platformapi.validator.DatasetValidator;
@@ -26,12 +29,12 @@ import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.ExperimentOpsUtils;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -52,12 +55,16 @@ public class DatasetService {
     private final DatasetFileFormatDetector datasetFileFormatDetector;
 
     private static final String DATASET_UUID = "dataset_uuid";
+    private static final String DATASET_VERSION_UUID = "dataset_version_uuid";
 
     @Value("${dataset.topic.name}")
     private String datasetTopic;
 
     @Value("${dataset.version.topic.name}")
     private String datasetVersionTopic;
+
+    @Value("${dataset.version.scan.requested.topic}")
+    private String datasetVersionScanRequestedTopic;
 
     @NonNull
     public DatasetResponseModel publishDatasetCreationEvent(@NonNull String projectUuid, @NonNull DatasetRequestModel requestModel, @NonNull ExperimentOpsHeaders headers) {
@@ -144,30 +151,24 @@ public class DatasetService {
     }
 
     @NonNull
-    public DatasetVersionResponseModel publishUploadDatasetVersion(@NonNull String datasetUuid, @NonNull MultipartFile file, @NonNull ExperimentOpsHeaders headers) {
-        log.info(headers, "uploading dataset version for dataset uuid: " + datasetUuid);
-        DatasetFileFormatEnum datasetFileFormat = validateDatasetVersionFile(file);
+    public DatasetVersionResponseModel initiateDatasetVersionUpload(@NonNull String datasetUuid, @NonNull DatasetVersionUploadRequestModel requestModel, @NonNull ExperimentOpsHeaders headers) {
+        log.info(headers, "initiating dataset version upload for dataset uuid: " + datasetUuid);
+        datasetValidator.validateDatasetVersionUploadRequest(requestModel);
         Dataset dataset = datasetRepository
                 .findByUuidAndWorkspaceUuidAndStatusAndEnabled(datasetUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
                 .orElseThrow(() -> new EntityNotFoundException(DATASET_UUID, datasetUuid));
         String versionUuid = ExperimentOpsUtils.uuid();
-        UploadedObject uploadedObject = objectStorageGateway.uploadDatasetFile(headers.getWorkspaceUuid(), dataset.getProjectUuid(), versionUuid, file, headers);
-        log.info(headers, uploadedObject.toString());
-        long countVersions = datasetVersionRepository.countByDatasetUuidAndWorkspaceUuidAndEnabled(datasetUuid, headers.getWorkspaceUuid(), true);
-        String fileName = "v" + (countVersions + 1) + "_" + uploadedObject.originalFilename();
-        DatasetVersionMutationEvent datasetVersionMutationEvent = datasetTransformer.transformDatasetVersionCreationEvent(
-                versionUuid,
-                datasetUuid,
-                fileName,
-                uploadedObject.storageUri(),
-                datasetFileFormat.name(),
-                uploadedObject.sizeBytes(),
-                headers
+        ObjectStorageGateway.PresignedDatasetUpload upload = objectStorageGateway.createPresignedDatasetUpload(
+                headers.getWorkspaceUuid(), dataset.getProjectUuid(), datasetUuid, versionUuid, requestModel.getFileName(), headers
         );
-        kafkaProducer.sendMessage(datasetVersionTopic, datasetVersionMutationEvent, datasetVersionMutationEvent.getMetadata() );
-        DatasetVersionResponseModel responseModel = new DatasetVersionResponseModel();
-        responseModel.setUuid(versionUuid);
-        return responseModel;
+
+        DatasetVersionMutationEvent datasetVersionMutationEvent = datasetTransformer.transformDatasetVersionCreationEvent(
+                versionUuid, datasetUuid, requestModel.getFileName(), upload.storageUri(), null, null, headers
+        );
+
+        kafkaProducer.sendMessage(datasetVersionTopic, datasetVersionMutationEvent, datasetVersionMutationEvent.getMetadata());
+
+        return datasetTransformer.transformDatasetVersionResponseModel(versionUuid, upload, headers);
     }
 
     public void createDatasetVersion(@NonNull DatasetVersionMutationEvent event, @NonNull ExperimentOpsHeaders headers) {
@@ -176,14 +177,97 @@ public class DatasetService {
         log.info(headers, "saved dataset version with uuid: " + datasetVersion.getUuid());
     }
 
+    public void publishDatasetVersionStatusChangeEvent(@NonNull String datasetUuid, @NonNull String uuid, @NonNull DatasetVersionStatusChangeRequestModel requestModel, @NonNull ExperimentOpsHeaders headers) {
+        log.info(headers, "publishing status change for dataset version with uuid " + uuid);
+        StatusEnum status = datasetValidator.validateDatasetVersionStatusChangeRequestModel(requestModel);
+        validateDatasetExists(datasetUuid, headers);
+        DatasetVersion datasetVersion = datasetVersionRepository
+                .findByUuidAndDatasetUuidAndWorkspaceUuidAndEnabled(uuid, datasetUuid, headers.getWorkspaceUuid(), true)
+                .orElseThrow(() -> new EntityNotFoundException(DATASET_VERSION_UUID, uuid));
+
+        Long size = null;
+        String format = null;
+        if (StatusEnum.ACTIVE == status) {
+            ObjectStorageGateway.DatasetFileMetadata metadata = objectStorageGateway
+                    .getDatasetFileMetadata(toObjectKey(datasetVersion.getStorageUri()));
+            size = metadata.size();
+            format = datasetFileFormatDetector.detect(datasetVersion.getName(), metadata.contentType()).name();
+        } else if (StatusEnum.FAILED == status) {
+            log.error(headers, "Dataset version scan failed for uuid " + uuid + ": " + requestModel.getFailureMessage());
+        }
+
+        DatasetVersionMutationEvent event = datasetTransformer.transformDatasetVersionStatusChangeEvent(
+                uuid, datasetUuid, status, size, format, requestModel.getFailureMessage(), headers
+        );
+        kafkaProducer.sendMessage(datasetVersionTopic, event, event.getMetadata());
+    }
+
+    public void changeStatusDatasetVersion(@NonNull DatasetVersionMutationEvent event, @NonNull ExperimentOpsHeaders headers) {
+        StatusEnum status = StatusEnum.of(event.getPayload().getStatus());
+        DatasetVersion datasetVersion = datasetVersionRepository
+                .findByUuidAndDatasetUuidAndWorkspaceUuidAndEnabled(
+                        event.getMetadata().getUuid(),
+                        event.getPayload().getDatasetUuid(),
+                        headers.getWorkspaceUuid(),
+                        true)
+                .orElseThrow(() -> new EntityNotFoundException(DATASET_VERSION_UUID, event.getMetadata().getUuid()));
+        datasetVersion.setStatus(status);
+        if (event.getPayload().getSize() != null) datasetVersion.setSize(event.getPayload().getSize());
+        if (event.getPayload().getFormat() != null) datasetVersion.setFormat(event.getPayload().getFormat());
+        if (StatusEnum.ACTIVE == status) {
+            datasetVersion.setScanStatus(DatasetScanStatusEnum.PENDING);
+            datasetVersion.setScanMessage(null);
+        }
+        datasetVersion.setUpdatedBy(headers.getUserUuid());
+        datasetVersion = datasetVersionRepository.save(datasetVersion);
+        if (StatusEnum.ACTIVE == status) {
+            DatasetVersionScanRequestedEvent scanRequestedEvent = datasetTransformer.transformDatasetVersionScanRequestedEvent(datasetVersion, headers);
+            kafkaProducer.sendMessage(datasetVersionScanRequestedTopic, scanRequestedEvent, scanRequestedEvent.getMetadata());
+        }
+    }
+
+    public void processDatasetVersionScanCompleted(@NonNull DatasetVersionScanCompletedEvent event, @NonNull ExperimentOpsHeaders headers) {
+        String message = event.getPayload().getMessage();
+        DatasetScanStatusEnum scanStatus = StringUtils.isBlank(message) ? DatasetScanStatusEnum.COMPLETED : DatasetScanStatusEnum.FAILED;
+        DatasetVersion datasetVersion = datasetVersionRepository
+                .findByUuidAndWorkspaceUuidAndEnabled(event.getMetadata().getUuid(), headers.getWorkspaceUuid(), true)
+                .orElseThrow(() -> new EntityNotFoundException(DATASET_VERSION_UUID, event.getMetadata().getUuid()));
+        datasetVersion.setScanStatus(scanStatus);
+        datasetVersion.setScanMessage(message);
+        datasetVersion.setUpdatedBy(headers.getUserUuid());
+        datasetVersionRepository.save(datasetVersion);
+        if (DatasetScanStatusEnum.FAILED == scanStatus) {
+            log.error(headers, "Dataset version scan failed for uuid " + event.getMetadata().getUuid() + ": " + message);
+        }
+    }
+
     @NonNull
-    public DatasetDetailResponseModel getDataset(@NonNull String uuid, @NonNull String projectUuid, @NonNull ExperimentOpsHeaders headers) {
+    public DatasetVersionFile getDatasetVersion(@NonNull String datasetUuid, @NonNull String uuid, @NonNull ExperimentOpsHeaders headers) {
+        log.info(headers, "getting dataset version with uuid " + uuid);
+        validateDatasetExists(datasetUuid, headers);
+        DatasetVersion datasetVersion = findActiveDatasetVersion(datasetUuid, uuid, headers);
+        if (StringUtils.isBlank(datasetVersion.getPreviewUri())){
+            throw new EntityNotFoundException("Preview not available for uuid " + uuid);
+        }
+        byte[] content = objectStorageGateway.downloadFile(toObjectKey(datasetVersion.getPreviewUri()));
+        return new DatasetVersionFile(datasetVersion.getName(), content);
+    }
+
+    @NonNull
+    public DatasetDetailResponseModel getDataset(@NonNull String uuid, @NonNull String projectUuid, Integer page, Integer size, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "getting dataset with uuid " + uuid);
         Dataset dataset = datasetRepository
                 .findByUuidAndProjectUuidAndWorkspaceUuidAndStatusAndEnabled(uuid, projectUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
                 .orElseThrow(() -> new EntityNotFoundException(DATASET_UUID, uuid));
-        List<DatasetVersion> versions = datasetVersionRepository.findAllByDatasetUuidAndWorkspaceUuidAndEnabledOrderByCreationDateDesc(dataset.getUuid(), headers.getWorkspaceUuid(), true);
-        return datasetTransformer.transformDatasetDetailResponseModel(dataset, versions, headers);
+        Pageable pageable = PaginationUtil.createPageRequest(page, size);
+        Page<DatasetVersion> datasetVersionPage = datasetVersionRepository
+                .findAllByDatasetUuidAndWorkspaceUuidAndStatusAndEnabledOrderByCreationDateDesc(
+                        dataset.getUuid(),
+                        headers.getWorkspaceUuid(),
+                        StatusEnum.ACTIVE,
+                        true,
+                        pageable);
+        return datasetTransformer.transformDatasetDetailResponseModel(dataset, datasetVersionPage.getContent(), datasetVersionPage.getTotalElements(), headers);
     }
 
     @NonNull
@@ -206,18 +290,40 @@ public class DatasetService {
         return response;
     }
 
+    private void validateDatasetExists(@NonNull String datasetUuid, @NonNull ExperimentOpsHeaders headers) {
+        datasetRepository
+                .findByUuidAndWorkspaceUuidAndStatusAndEnabled(datasetUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
+                .orElseThrow(() -> new EntityNotFoundException(DATASET_UUID, datasetUuid));
+    }
+
     @NonNull
-    private DatasetFileFormatEnum validateDatasetVersionFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new ValidationException(INVALID_INPUTS, "Dataset file is required");
-        }
+    private DatasetVersion findActiveDatasetVersion(@NonNull String datasetUuid, @NonNull String uuid, @NonNull ExperimentOpsHeaders headers) {
+        return datasetVersionRepository
+                .findByUuidAndDatasetUuidAndWorkspaceUuidAndStatusAndEnabled(
+                        uuid,
+                        datasetUuid,
+                        headers.getWorkspaceUuid(),
+                        StatusEnum.ACTIVE,
+                        true)
+                .orElseThrow(() -> new EntityNotFoundException(DATASET_VERSION_UUID, uuid));
+    }
 
-        DatasetFileFormatEnum datasetFileFormat = datasetFileFormatDetector.detect(file.getOriginalFilename(), file.getContentType());
-        if (DatasetFileFormatEnum.UNKNOWN == datasetFileFormat) {
-            throw new ValidationException(INVALID_INPUTS, "Unsupported dataset file format. Supported formats are CSV, EXCEL, TEXT");
+    @NonNull
+    private String toObjectKey(String storageUri) {
+        if (storageUri == null || storageUri.isBlank()) {
+            throw new ValidationException(INVALID_INPUTS, "Dataset version storage uri is missing");
         }
+        if (!storageUri.startsWith("s3://")) {
+            return storageUri;
+        }
+        int objectKeyStart = storageUri.indexOf('/', "s3://".length());
+        if (objectKeyStart < 0 || objectKeyStart == storageUri.length() - 1) {
+            throw new ValidationException(INVALID_INPUTS, "Dataset version storage uri is invalid");
+        }
+        return storageUri.substring(objectKeyStart + 1);
+    }
 
-        return datasetFileFormat;
+    public record DatasetVersionFile(String fileName, byte[] content) {
     }
 
 }

@@ -27,6 +27,9 @@ public enum RoleType {
             PermissionConstants.ADD_EXPERIMENT,
             PermissionConstants.EDIT_EXPERIMENT,
             PermissionConstants.GET_EXPERIMENT,
+            PermissionConstants.ADD_EXPERIMENT_CONFIG,
+            PermissionConstants.EDIT_EXPERIMENT_CONFIG,
+            PermissionConstants.GET_EXPERIMENT_CONFIG,
             PermissionConstants.RUN_EXPERIMENT,
             PermissionConstants.GET_EXPERIMENT_TYPE
     ), false),
@@ -37,6 +40,9 @@ public enum RoleType {
             PermissionConstants.ADD_EXPERIMENT,
             PermissionConstants.EDIT_EXPERIMENT,
             PermissionConstants.GET_EXPERIMENT,
+            PermissionConstants.ADD_EXPERIMENT_CONFIG,
+            PermissionConstants.EDIT_EXPERIMENT_CONFIG,
+            PermissionConstants.GET_EXPERIMENT_CONFIG,
             PermissionConstants.RUN_EXPERIMENT,
             PermissionConstants.GET_EXPERIMENT_TYPE
     ), false),

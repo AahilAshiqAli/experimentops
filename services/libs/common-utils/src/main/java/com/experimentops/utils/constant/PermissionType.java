@@ -20,6 +20,9 @@ public enum PermissionType {
     EDIT_EXPERIMENT(PermissionConstants.EDIT_EXPERIMENT, "Edit Experiment"),
     GET_EXPERIMENT(PermissionConstants.GET_EXPERIMENT, "Get Experiment"),
     RUN_EXPERIMENT(PermissionConstants.RUN_EXPERIMENT, "Run Experiment"),
+    ADD_EXPERIMENT_CONFIG(PermissionConstants.ADD_EXPERIMENT_CONFIG, "Add Experiment Config"),
+    EDIT_EXPERIMENT_CONFIG(PermissionConstants.EDIT_EXPERIMENT_CONFIG, "Edit Experiment Config"),
+    GET_EXPERIMENT_CONFIG(PermissionConstants.GET_EXPERIMENT_CONFIG, "Get Experiment Config"),
     ADD_EXPERIMENT_TYPE(PermissionConstants.ADD_EXPERIMENT_TYPE, "Add Experiment Type"),
     EDIT_EXPERIMENT_TYPE(PermissionConstants.EDIT_EXPERIMENT_TYPE, "Edit Experiment Type"),
     GET_EXPERIMENT_TYPE(PermissionConstants.GET_EXPERIMENT_TYPE, "Get Experiment Type");

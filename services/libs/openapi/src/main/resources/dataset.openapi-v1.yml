@@ -103,6 +103,24 @@ paths:
           required: true
           schema:
             type: string
+        - name: page
+          in: query
+          description: Zero-based page index for dataset versions
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of dataset versions to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 20
       responses:
         200:
           description: successful operation
@@ -177,11 +195,11 @@ paths:
 
   /dataset/{datasetUuid}/version:
     post:
-      summary: Upload Dataset Version
-      description: This API will upload a new file version under a dataset.
+      summary: Initiate Dataset Version Upload
+      description: Publishes creation of a pending dataset version and returns a presigned URL for uploading its file.
       tags:
         - Dataset
-      operationId: uploadDatasetVersion
+      operationId: initiateDatasetVersionUpload
       parameters:
         - name: datasetUuid
           in: path
@@ -192,21 +210,77 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: The file to upload
+              $ref: '#/components/schemas/DatasetVersionUploadRequestModel'
       responses:
         200:
-          description: Dataset version uploaded successfully
+          description: Dataset version upload initiated successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DatasetVersionResponseModel'
+
+  /dataset/{datasetUuid}/version/{uuid}:
+    get:
+      summary: Get Dataset Version
+      description: This API will download dataset version file.
+      tags:
+        - Dataset
+      operationId: getDatasetVersion
+      parameters:
+        - name: datasetUuid
+          in: path
+          description: Dataset uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Dataset version uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+    patch:
+      summary: Change Status of Dataset Version
+      description: This API will change status of dataset version.
+      tags:
+        - Dataset
+      operationId: updateStatusDatasetVersion
+      parameters:
+        - name: datasetUuid
+          in: path
+          description: Dataset uuid
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          in: path
+          description: Dataset version uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatasetVersionStatusChangeRequestModel'
+      responses:
+        200:
+          description: Dataset version status changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasetVersionItemModel'
 
 components:
   schemas:
@@ -270,6 +344,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DatasetVersionItemModel'
+        totalElements:
+          type: integer
+          format: int64
+          example: 123
     DatasetVersionItemModel:
       type: object
       properties:
@@ -291,12 +369,63 @@ components:
           type: integer
           format: int64
           example: 102400
+        scanStatus:
+          type: string
+          example: "NOT_STARTED"
+        scanMessage:
+          type: string
+          example: "Successful"
         updatedAt:
           type: string
           example: "2026-06-11T10:40:00"
+        status:
+          type: string
+          example: "ACTIVE"
+    DatasetVersionStatusChangeRequestModel:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - FAILED
+          example: "ACTIVE"
+        failureMessage:
+          type: string
+          maxLength: 1000
+          description: Required when status is FAILED.
     DatasetVersionResponseModel:
       type: object
+      required:
+        - uuid
+        - uploadUrl
+        - expiresAt
+        - method
       properties:
         uuid:
           type: string
           example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        uploadUrl:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+        method:
+          type: string
+          example: "PUT"
+        requiredHeaders:
+          type: object
+          additionalProperties:
+            type: string
+    DatasetVersionUploadRequestModel:
+      type: object
+      required:
+        - fileName
+      properties:
+        fileName:
+          type: string
+          minLength: 1
+          example: "training-data.csv"
