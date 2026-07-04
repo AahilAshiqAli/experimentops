@@ -188,10 +188,6 @@ paths:
       responses:
         202:
           description: Dataset status change event published successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DatasetResponseModel'
 
   /dataset/{datasetUuid}/version:
     post:

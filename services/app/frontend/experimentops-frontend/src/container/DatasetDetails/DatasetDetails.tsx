@@ -226,6 +226,8 @@ export function DatasetDetails() {
                       <th className="px-5 py-3 font-semibold">Version</th>
                       <th className="px-5 py-3 font-semibold">Format</th>
                       <th className="px-5 py-3 font-semibold">Size</th>
+                      <th className="px-5 py-3 font-semibold">Scan Status</th>
+                      <th className="px-5 py-3 font-semibold">Scan Message</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
@@ -259,6 +261,12 @@ export function DatasetDetails() {
                         </td>
                         <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
                           {formatBytes(version.size)}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
+                          {formatLabel(version.scanStatus ?? 'NOT_STARTED')}
+                        </td>
+                        <td className="min-w-56 max-w-md px-5 py-4 text-sm text-slate-600">
+                          {version.scanMessage ?? '—'}
                         </td>
                       </tr>
                     ))}

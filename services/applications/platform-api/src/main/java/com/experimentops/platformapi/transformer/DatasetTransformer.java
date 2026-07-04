@@ -161,6 +161,7 @@ public class DatasetTransformer {
         item.setSize(datasetVersion.getSize());
         item.setUpdatedAt(datasetVersion.getLastUpdated().toLocalDateTime().toString());
         item.setStatus(datasetVersion.getStatus().name());
+        item.setScanStatus(datasetVersion.getScanStatus().name());
         item.setScanMessage(datasetVersion.getScanMessage());
         return item;
     }

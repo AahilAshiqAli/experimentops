@@ -67,9 +67,10 @@ public class DatasetController implements DatasetApi {
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.EDIT_DATASET + "')")
     @Override
-    public ResponseEntity<DatasetResponseModel> updateStatusDataset(String projectUuid, String uuid, DatasetStatusChangeRequestModel datasetStatusChangeRequestModel) {
+    public ResponseEntity<Void> updateStatusDataset(String projectUuid, String uuid, DatasetStatusChangeRequestModel datasetStatusChangeRequestModel) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(datasetService.publishDatasetStatusChangeEvent(uuid, projectUuid, datasetStatusChangeRequestModel, headers));
+        datasetService.publishDatasetStatusChangeEvent(uuid, projectUuid, datasetStatusChangeRequestModel, headers);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.ADD_DATASET + "')")

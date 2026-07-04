@@ -15,6 +15,8 @@ export type DatasetVersion = {
   datasetVersionUuid: string
   format: string
   originalFileName: string
+  scanMessage?: string | null
+  scanStatus?: string | null
   size: number
   status: string
   updatedAt: string
@@ -81,15 +83,23 @@ function toPaginatedResponse<T>(
 }
 
 function isDatasetVersion(value: unknown): value is DatasetVersion {
+  const datasetVersion = value as DatasetVersion
+
   return (
     typeof value === 'object' &&
     value !== null &&
-    typeof (value as DatasetVersion).datasetVersionUuid === 'string' &&
-    typeof (value as DatasetVersion).originalFileName === 'string' &&
-    typeof (value as DatasetVersion).format === 'string' &&
-    typeof (value as DatasetVersion).size === 'number' &&
-    typeof (value as DatasetVersion).status === 'string' &&
-    typeof (value as DatasetVersion).updatedAt === 'string'
+    typeof datasetVersion.datasetVersionUuid === 'string' &&
+    typeof datasetVersion.originalFileName === 'string' &&
+    typeof datasetVersion.format === 'string' &&
+    (datasetVersion.scanStatus === undefined ||
+      datasetVersion.scanStatus === null ||
+      typeof datasetVersion.scanStatus === 'string') &&
+    (datasetVersion.scanMessage === undefined ||
+      datasetVersion.scanMessage === null ||
+      typeof datasetVersion.scanMessage === 'string') &&
+    typeof datasetVersion.size === 'number' &&
+    typeof datasetVersion.status === 'string' &&
+    typeof datasetVersion.updatedAt === 'string'
   )
 }
 

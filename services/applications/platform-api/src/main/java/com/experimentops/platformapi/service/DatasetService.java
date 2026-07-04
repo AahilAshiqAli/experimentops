@@ -120,16 +120,13 @@ public class DatasetService {
         log.info(headers, "dataset update completed");
     }
 
-    @NonNull
-    public DatasetResponseModel publishDatasetStatusChangeEvent(@NonNull String uuid, @NonNull String projectUuid, @NonNull DatasetStatusChangeRequestModel statusChangeRequestModel, @NonNull ExperimentOpsHeaders headers) {
+    public void publishDatasetStatusChangeEvent(@NonNull String uuid, @NonNull String projectUuid, @NonNull DatasetStatusChangeRequestModel statusChangeRequestModel, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "changing status of dataset with uuid " + uuid);
-        Dataset dataset = datasetRepository
+        datasetRepository
                 .findByUuidAndProjectUuidAndWorkspaceUuidAndEnabled(uuid, projectUuid, headers.getWorkspaceUuid(), true)
                 .orElseThrow(() -> new EntityNotFoundException(DATASET_UUID, uuid));
         DatasetMutationEvent datasetMutationEvent = datasetTransformer.transformDatasetStatusChangeEvent(uuid, projectUuid, statusChangeRequestModel, headers);
         kafkaProducer.sendMessage(datasetTopic, datasetMutationEvent, datasetMutationEvent.getMetadata());
-        int versionCount = (int) datasetVersionRepository.countByDatasetUuidAndWorkspaceUuidAndEnabled(dataset.getUuid(), headers.getWorkspaceUuid(), true);
-        return datasetTransformer.transformDatasetResponseModelFromEntity(dataset, versionCount, headers);
     }
 
     public void changeStatusDataset(@NonNull DatasetMutationEvent datasetMutationEvent, @NonNull ExperimentOpsHeaders headers) {
@@ -280,7 +277,7 @@ public class DatasetService {
                 .getContent()
                 .stream()
                 .map(dataset -> {
-                    int versionCount = (int) datasetVersionRepository.countByDatasetUuidAndWorkspaceUuidAndEnabled(dataset.getUuid(), headers.getWorkspaceUuid(), true);
+                    int versionCount = (int) datasetVersionRepository.countByDatasetUuidAndWorkspaceUuidAndStatusAndEnabled(dataset.getUuid(), headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true);
                     return datasetTransformer.transformDatasetResponseModelFromEntity(dataset, versionCount, headers);
                 })
                 .toList();
