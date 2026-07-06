@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 
+import { DataTable } from '../../components/DataTable'
 import { useDocumentTitle } from '../../hooks'
+import { projectColumns } from './columns'
 import { useProjectsContainer } from './useProjectsContainer'
 
 export function Projects() {
@@ -9,9 +11,7 @@ export function Projects() {
 
   const {
     errorMessage,
-    firstProjectNumber,
     isLoading,
-    lastProjectNumber,
     page,
     paginatedProjects,
     setPage,
@@ -29,15 +29,6 @@ export function Projects() {
       </div>
 
       <div className="p-6 sm:p-8">
-        {isLoading && (
-          <div className="space-y-3" role="status">
-            <div className="h-14 animate-pulse rounded-md bg-slate-100" />
-            <div className="h-14 animate-pulse rounded-md bg-slate-100" />
-            <div className="h-14 animate-pulse rounded-md bg-slate-100" />
-            <span className="sr-only">Loading projects</span>
-          </div>
-        )}
-
         {!isLoading && errorMessage && (
           <div
             className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
@@ -47,89 +38,25 @@ export function Projects() {
           </div>
         )}
 
-        {!isLoading && !errorMessage && totalProjects === 0 && (
-          <div className="rounded-md border border-dashed border-slate-300 px-6 py-12 text-center">
-            <h2 className="font-heading text-xl font-semibold text-secondary">
-              No projects yet
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Projects created for this workspace will appear here.
-            </p>
-          </div>
-        )}
-
-        {!isLoading && !errorMessage && totalProjects > 0 && (
-          <>
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-              <table className="min-w-full divide-y divide-slate-200 text-left">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-5 py-3 font-semibold" scope="col">
-                      Project
-                    </th>
-                    <th className="px-5 py-3 font-semibold" scope="col">
-                      Description
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {paginatedProjects.map((project) => (
-                    <tr
-                      aria-label={`View ${project.name}`}
-                      className="cursor-pointer transition hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-primary"
-                      key={project.uuid}
-                      onClick={() =>
-                        navigate(`/projects/${project.uuid}`, {
-                          state: { project },
-                        })
-                      }
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault()
-                          navigate(`/projects/${project.uuid}`, {
-                            state: { project },
-                          })
-                        }
-                      }}
-                      role="link"
-                      tabIndex={0}
-                    >
-                      <td className="whitespace-nowrap px-5 py-4 text-sm font-medium text-secondary">
-                        {project.name}
-                      </td>
-                      <td className="min-w-72 px-5 py-4 text-sm text-slate-600">
-                        {project.description || '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="mt-5 flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-              <p>{`Showing ${firstProjectNumber}–${lastProjectNumber} of ${totalProjects} projects`}</p>
-              <div className="flex items-center gap-2">
-                <button
-                  className="rounded-md border border-slate-300 bg-white px-3 py-2 font-medium text-secondary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={page === 1}
-                  onClick={() => setPage((currentPage) => currentPage - 1)}
-                  type="button"
-                >
-                  Previous
-                </button>
-                <span className="px-2 text-slate-500">{`Page ${page} of ${totalPages}`}</span>
-                <button
-                  className="rounded-md border border-slate-300 bg-white px-3 py-2 font-medium text-secondary transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={page === totalPages}
-                  onClick={() => setPage((currentPage) => currentPage + 1)}
-                  type="button"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+        {!errorMessage ? (
+          <DataTable
+            columns={projectColumns}
+            data={paginatedProjects}
+            emptyMessage="Projects created for this workspace will appear here."
+            getRowKey={(project) => project.uuid}
+            isLoading={isLoading}
+            onRowClick={(project) =>
+              navigate(`/projects/${project.uuid}`, { state: { project } })
+            }
+            pagination={{
+              onPageChange: setPage,
+              page,
+              totalItems: totalProjects,
+              totalPages,
+            }}
+            searchPlaceholder="Search projects..."
+          />
+        ) : null}
       </div>
     </section>
   )

@@ -2,6 +2,7 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { CsvPreview, type CsvPreviewData } from '../../components/CsvPreview'
+import { DataTable } from '../../components/DataTable'
 import { useLogin } from '../../context-api/logincontext'
 import { useDocumentTitle } from '../../hooks'
 import { useQueryDataset, useQueryProject } from '../../queries'
@@ -17,15 +18,11 @@ import {
   FolderIcon,
   PageSkeleton,
   PageState,
-  Pagination,
   ProjectFrame,
   SectionState,
 } from '../ProjectDetails/projectDetails.shared'
-import {
-  formatBytes,
-  formatLabel,
-  getErrorMessage,
-} from '../ProjectDetails/projectDetails.utils'
+import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
+import { getDatasetVersionColumns } from './columns'
 
 const VERSIONS_PER_PAGE = 20
 
@@ -206,76 +203,29 @@ export function DatasetDetails() {
             ) : null}
           </div>
 
-          {versionsQuery.data.versions.length ? (
-            <>
-              <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200">
-                <table className="min-w-full divide-y divide-slate-200 text-left">
-                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                    <tr>
-                      <th className="px-5 py-3 font-semibold">File</th>
-                      <th className="px-5 py-3 font-semibold">Version</th>
-                      <th className="px-5 py-3 font-semibold">Format</th>
-                      <th className="px-5 py-3 font-semibold">Size</th>
-                      <th className="px-5 py-3 font-semibold">Scan Status</th>
-                      <th className="px-5 py-3 font-semibold">Scan Message</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {versionsQuery.data.versions.map((version, index) => (
-                      <tr key={version.datasetVersionUuid}>
-                        <td className="min-w-64 px-5 py-4 text-sm font-semibold text-secondary">
-                          <button
-                            className="text-left hover:text-primary hover:underline disabled:cursor-wait disabled:opacity-60"
-                            disabled={previewingVersionUuid !== null}
-                            onClick={() =>
-                              void handlePreview(
-                                version.datasetVersionUuid,
-                                version.originalFileName,
-                              )
-                            }
-                            type="button"
-                          >
-                            {previewingVersionUuid ===
-                            version.datasetVersionUuid
-                              ? `Opening ${version.originalFileName}…`
-                              : version.originalFileName}
-                          </button>
-                        </td>
-                        <td className="px-5 py-4 text-sm text-slate-600">
-                          <span className="rounded bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
-                            v{versionsQuery.data.totalElements - index}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 text-sm text-slate-600">
-                          {formatLabel(version.format)}
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                          {formatBytes(version.size)}
-                        </td>
-                        <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-600">
-                          {formatLabel(version.scanStatus ?? 'NOT_STARTED')}
-                        </td>
-                        <td className="min-w-56 max-w-md px-5 py-4 text-sm text-slate-600">
-                          {version.scanMessage ?? '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-5">
-                <Pagination
-                  onPageChange={setPage}
-                  page={page}
-                  totalPages={totalPages}
-                />
-              </div>
-            </>
-          ) : (
-            <div className="mt-6">
-              <SectionState message="No versions have been uploaded to this dataset folder." />
-            </div>
-          )}
+          <div className="mt-6">
+            <DataTable
+              columns={getDatasetVersionColumns({
+                onPreview: (version) =>
+                  void handlePreview(
+                    version.datasetVersionUuid,
+                    version.originalFileName,
+                  ),
+                pendingUuid: previewingVersionUuid,
+                totalElements: versionsQuery.data.totalElements,
+              })}
+              data={versionsQuery.data.versions}
+              emptyMessage="No versions have been uploaded to this dataset folder."
+              getRowKey={(version) => version.datasetVersionUuid}
+              pagination={{
+                onPageChange: setPage,
+                page,
+                totalItems: versionsQuery.data.totalElements,
+                totalPages,
+              }}
+              searchPlaceholder="Search dataset versions..."
+            />
+          </div>
         </>
       ) : (
         <SectionState message="This dataset is not available." />
@@ -428,7 +378,9 @@ function AddDatasetVersionDialog({
             />
           </label>
 
-          {fileError ? <p className="text-xs text-red-600">{fileError}</p> : null}
+          {fileError ? (
+            <p className="text-xs text-red-600">{fileError}</p>
+          ) : null}
           {isUploading ? (
             <div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
