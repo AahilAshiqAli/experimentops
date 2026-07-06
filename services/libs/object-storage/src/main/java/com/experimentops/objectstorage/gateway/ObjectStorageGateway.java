@@ -1,12 +1,12 @@
-package com.experimentops.platformapi.dal.gateway;
+package com.experimentops.objectstorage.gateway;
 
 import com.experimentops.common.exceptions.constant.ErrorCode;
 import com.experimentops.common.exceptions.runtime.ValidationException;
+import com.experimentops.objectstorage.gateway.dto.UploadedObject;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -23,7 +23,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
-@Component
 public class ObjectStorageGateway {
     private static final ExperimentOpsLogger log = ExperimentOpsLogger.getLogger(ObjectStorageGateway.class);
 
@@ -35,8 +34,8 @@ public class ObjectStorageGateway {
     public ObjectStorageGateway(
             S3Client s3Client,
             S3Presigner s3Presigner,
-            @Value("${experimentops.storage.s3.bucket}") String bucketName,
-            @Value("${experimentops.storage.s3.presigned-upload-expiration-minutes:15}") long uploadUrlExpirationMinutes) {
+            String bucketName,
+            long uploadUrlExpirationMinutes) {
         this.s3Client = s3Client;
         this.s3Presigner = s3Presigner;
         this.bucketName = bucketName;
@@ -83,13 +82,17 @@ public class ObjectStorageGateway {
     public byte[] downloadFile(String objectKey) {
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
-                .key(objectKey)
+                .key(toObjectKey(objectKey))
                 .build();
 
         ResponseBytes<GetObjectResponse> responseBytes =
                 s3Client.getObjectAsBytes(getObjectRequest);
 
         return responseBytes.asByteArray();
+    }
+
+    public byte[] downloadObject(String storageUriOrObjectKey) {
+        return downloadFile(storageUriOrObjectKey);
     }
 
     public DatasetFileMetadata getDatasetFileMetadata(String objectKey) {
@@ -105,8 +108,43 @@ public class ObjectStorageGateway {
             }
             throw exception;
         }
-        log.info(new ExperimentOpsHeaders(), "File logging " + response );
+        log.info(new ExperimentOpsHeaders(), "File logging " + response);
         return new DatasetFileMetadata(response.contentLength(), response.contentType());
+    }
+
+    public UploadedObject uploadObject(
+            String objectKey,
+            byte[] content,
+            String originalFilename,
+            String contentType,
+            ExperimentOpsHeaders headers) {
+        validateUploadObject(objectKey, content);
+        String normalizedObjectKey = toObjectKey(objectKey);
+        String resolvedContentType = contentType == null || contentType.isBlank()
+                ? "application/octet-stream"
+                : contentType;
+        String resolvedOriginalFilename = originalFilename == null || originalFilename.isBlank()
+                ? filenameFromObjectKey(normalizedObjectKey)
+                : originalFilename;
+
+        log.info(headers, "uploading object with object key: " + normalizedObjectKey);
+
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(normalizedObjectKey)
+                .contentType(resolvedContentType)
+                .contentLength((long) content.length)
+                .build();
+
+        s3Client.putObject(putObjectRequest, RequestBody.fromBytes(content));
+
+        return new UploadedObject(
+                bucketName,
+                normalizedObjectKey,
+                resolvedOriginalFilename,
+                resolvedContentType,
+                content.length
+        );
     }
 
     public void deleteFile(String objectKey) {
@@ -123,8 +161,39 @@ public class ObjectStorageGateway {
                 .formatted(workspaceId, projectId, datasetId, datasetVersionId, filename);
     }
 
+    public String toObjectKey(String storageUriOrObjectKey) {
+        if (storageUriOrObjectKey == null || storageUriOrObjectKey.isBlank()) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "Object storage uri or key is missing");
+        }
+        if (!storageUriOrObjectKey.startsWith("s3://")) {
+            return storageUriOrObjectKey;
+        }
+        int objectKeyStart = storageUriOrObjectKey.indexOf('/', "s3://".length());
+        if (objectKeyStart < 0 || objectKeyStart == storageUriOrObjectKey.length() - 1) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "Object storage uri is invalid");
+        }
+        return storageUriOrObjectKey.substring(objectKeyStart + 1);
+    }
+
     private String sanitizeFilename(String filename) {
         return filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
+
+    private void validateUploadObject(String objectKey, byte[] content) {
+        if (objectKey == null || objectKey.isBlank()) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "Object key is missing");
+        }
+        if (content == null || content.length == 0) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "Object content is missing");
+        }
+    }
+
+    private String filenameFromObjectKey(String objectKey) {
+        int fileNameStart = objectKey.lastIndexOf('/');
+        if (fileNameStart < 0 || fileNameStart == objectKey.length() - 1) {
+            return objectKey;
+        }
+        return objectKey.substring(fileNameStart + 1);
     }
 
     public record PresignedDatasetUpload(
@@ -136,5 +205,4 @@ public class ObjectStorageGateway {
 
     public record DatasetFileMetadata(long size, String contentType) {
     }
-
 }

@@ -25,6 +25,7 @@
     <module>openapi</module>
     <module>avroevent</module>
     <module>spring-web-authorization-utils</module>
+    <module>object-storage</module>
   </modules>
 
   <dependencies>

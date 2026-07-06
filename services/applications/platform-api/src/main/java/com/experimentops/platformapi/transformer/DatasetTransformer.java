@@ -15,7 +15,7 @@ import com.experimentops.dataset.version.event.DatasetVersionMutationEvent;
 import com.experimentops.dataset.version.event.DatasetVersionMutationEventPayload;
 import com.experimentops.dataset.version.scan.event.DatasetVersionScanRequestedEvent;
 import com.experimentops.dataset.version.scan.event.DatasetVersionScanRequestedEventPayload;
-import com.experimentops.platformapi.dal.gateway.ObjectStorageGateway.PresignedDatasetUpload;
+import com.experimentops.objectstorage.gateway.ObjectStorageGateway.PresignedDatasetUpload;
 import com.experimentops.platformapi.model.entity.Dataset;
 import com.experimentops.platformapi.model.entity.DatasetVersion;
 import com.experimentops.platformapi.model.type.DatasetScanStatusEnum;
