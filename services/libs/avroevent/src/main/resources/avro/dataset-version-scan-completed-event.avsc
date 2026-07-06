@@ -11,7 +11,8 @@
           "type": "record",
           "name": "DatasetVersionScanCompletedEventPayload",
           "fields": [
-            { "name": "message", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+            { "name": "message", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "previewUri", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
           ]
         }
       ],

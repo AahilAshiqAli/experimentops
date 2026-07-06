@@ -1,11 +1,12 @@
-import { type ChangeEvent, type FormEvent, useState } from 'react'
+import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
+import { CsvPreview, type CsvPreviewData } from '../../components/CsvPreview'
 import { useLogin } from '../../context-api/logincontext'
 import { useDocumentTitle } from '../../hooks'
 import { useQueryDataset, useQueryProject } from '../../queries'
 import {
-  downloadDatasetVersion,
+  getDatasetVersionPreview,
   initiateDatasetVersionUpload,
   updateDatasetVersionStatus,
   uploadDatasetVersionFile,
@@ -40,14 +41,16 @@ export function DatasetDetails() {
     page: page - 1,
     size: VERSIONS_PER_PAGE,
   })
-  const [downloadingVersionUuid, setDownloadingVersionUuid] = useState<
+  const [previewingVersionUuid, setPreviewingVersionUuid] = useState<
     string | null
   >(null)
-  const [downloadError, setDownloadError] = useState<string | null>(null)
+  const [preview, setPreview] = useState<{
+    data: CsvPreviewData
+    fileName: string
+  } | null>(null)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [uploadError, setUploadError] = useState<string | null>(null)
   const canGetDataset = hasPermission(PERMISSIONS_KEYS.DATASET.GET_DATASET)
   const canAddDataset = hasPermission(PERMISSIONS_KEYS.DATASET.ADD_DATASET)
   const totalPages = Math.max(
@@ -57,32 +60,26 @@ export function DatasetDetails() {
 
   useDocumentTitle('Dataset versions')
 
-  const handleDownload = async (
+  const handlePreview = async (
     datasetVersionUuid: string,
     originalFileName: string,
   ) => {
     if (!accessToken || !datasetUuid) return
 
-    setDownloadingVersionUuid(datasetVersionUuid)
-    setDownloadError(null)
+    setPreviewingVersionUuid(datasetVersionUuid)
     try {
-      const file = await downloadDatasetVersion(
+      const data = await getDatasetVersionPreview(
         accessToken,
         datasetUuid,
         datasetVersionUuid,
       )
-      const url = URL.createObjectURL(file)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = originalFileName
-      link.click()
-      URL.revokeObjectURL(url)
+      setPreview({ data, fileName: originalFileName })
     } catch (error) {
-      setDownloadError(
-        getErrorMessage(error, 'Unable to download this dataset version.'),
+      Toaster.error(
+        getErrorMessage(error, 'Unable to preview this dataset version.'),
       )
     } finally {
-      setDownloadingVersionUuid(null)
+      setPreviewingVersionUuid(null)
     }
   }
 
@@ -91,7 +88,6 @@ export function DatasetDetails() {
 
     setIsUploading(true)
     setUploadProgress(0)
-    setUploadError(null)
     let uploadedVersionUuid: string | null = null
 
     try {
@@ -131,7 +127,7 @@ export function DatasetDetails() {
         }
         void versionsQuery.refetch()
       }
-      setUploadError(failureMessage)
+      Toaster.error(failureMessage)
     } finally {
       setIsUploading(false)
     }
@@ -210,12 +206,6 @@ export function DatasetDetails() {
             ) : null}
           </div>
 
-          {downloadError ? (
-            <div className="mt-4">
-              <SectionState message={downloadError} tone="error" />
-            </div>
-          ) : null}
-
           {versionsQuery.data.versions.length ? (
             <>
               <div className="mt-6 overflow-x-auto rounded-lg border border-slate-200">
@@ -236,18 +226,18 @@ export function DatasetDetails() {
                         <td className="min-w-64 px-5 py-4 text-sm font-semibold text-secondary">
                           <button
                             className="text-left hover:text-primary hover:underline disabled:cursor-wait disabled:opacity-60"
-                            disabled={downloadingVersionUuid !== null}
+                            disabled={previewingVersionUuid !== null}
                             onClick={() =>
-                              void handleDownload(
+                              void handlePreview(
                                 version.datasetVersionUuid,
                                 version.originalFileName,
                               )
                             }
                             type="button"
                           >
-                            {downloadingVersionUuid ===
+                            {previewingVersionUuid ===
                             version.datasetVersionUuid
-                              ? `Downloading ${version.originalFileName}…`
+                              ? `Opening ${version.originalFileName}…`
                               : version.originalFileName}
                           </button>
                         </td>
@@ -297,14 +287,71 @@ export function DatasetDetails() {
           onClose={() => {
             if (isUploading) return
             setIsAddOpen(false)
-            setUploadError(null)
           }}
           onSubmit={(file) => void handleAddDatasetVersion(file)}
-          uploadError={uploadError}
           uploadProgress={uploadProgress}
         />
       )}
+      {preview ? (
+        <DatasetPreviewDialog
+          data={preview.data}
+          fileName={preview.fileName}
+          onClose={() => setPreview(null)}
+        />
+      ) : null}
     </ProjectFrame>
+  )
+}
+
+function DatasetPreviewDialog({
+  data,
+  fileName,
+  onClose,
+}: {
+  data: CsvPreviewData
+  fileName: string
+  onClose: () => void
+}) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  return (
+    <div
+      aria-labelledby="dataset-preview-title"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/50 p-4 sm:p-6"
+      role="dialog"
+    >
+      <div className="flex max-h-[92vh] w-full max-w-7xl flex-col rounded-xl bg-white p-5 shadow-2xl sm:p-6">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h2
+              className="truncate font-heading text-xl font-semibold text-secondary"
+              id="dataset-preview-title"
+              title={fileName}
+            >
+              {fileName}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">Read-only CSV preview</p>
+          </div>
+          <button
+            aria-label="Close dataset preview"
+            className="rounded-md p-2 text-xl leading-none text-slate-500 hover:bg-slate-100"
+            onClick={onClose}
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <CsvPreview data={data} />
+      </div>
+    </div>
   )
 }
 
@@ -312,13 +359,11 @@ function AddDatasetVersionDialog({
   isUploading,
   onClose,
   onSubmit,
-  uploadError,
   uploadProgress,
 }: {
   isUploading: boolean
   onClose: () => void
   onSubmit: (file: File) => void
-  uploadError: string | null
   uploadProgress: number
 }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -384,10 +429,6 @@ function AddDatasetVersionDialog({
           </label>
 
           {fileError ? <p className="text-xs text-red-600">{fileError}</p> : null}
-          {uploadError ? (
-            <p className="text-xs text-red-600">{uploadError}</p>
-          ) : null}
-
           {isUploading ? (
             <div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">

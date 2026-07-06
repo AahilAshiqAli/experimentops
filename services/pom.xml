@@ -47,6 +47,7 @@
   <modules>
     <module>libs</module>
     <module>applications</module>
+      <module>applications/scanner</module>
   </modules>
 
   <dependencies>

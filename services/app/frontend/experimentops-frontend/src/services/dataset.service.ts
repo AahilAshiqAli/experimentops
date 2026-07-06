@@ -1,4 +1,5 @@
 import ApiService, { ApiServiceError } from '../utils/api.service'
+import type { CsvPreviewData } from '../components/CsvPreview'
 import { getAuthenticatedRequestHeaders } from './jwt.service'
 import { ServicesUrlEndpoints } from './servicesEndpointConstant'
 
@@ -252,12 +253,61 @@ export async function downloadDatasetVersion(
     ':datasetUuid',
     encodeURIComponent(datasetUuid),
   ).replace(':datasetVersionUuid', encodeURIComponent(datasetVersionUuid))
-  const { Accept: omittedAccept, ...downloadHeaders } =
-    getAuthenticatedRequestHeaders(accessToken)
-  void omittedAccept
-
   return ApiService.get<Blob>(endpoint, {
-    headers: downloadHeaders,
+    headers: {
+      ...getAuthenticatedRequestHeaders(accessToken),
+      Accept: 'application/octet-stream',
+    },
     responseType: 'blob',
   })
+}
+
+export async function getDatasetVersionPreview(
+  accessToken: string,
+  datasetUuid: string,
+  datasetVersionUuid: string,
+): Promise<CsvPreviewData> {
+  const endpoint = ServicesUrlEndpoints.GET_DATASET_VERSION.replace(
+    ':datasetUuid',
+    encodeURIComponent(datasetUuid),
+  ).replace(':datasetVersionUuid', encodeURIComponent(datasetVersionUuid))
+  const response = await ApiService.get<Blob>(endpoint, {
+    headers: {
+      ...getAuthenticatedRequestHeaders(accessToken),
+      Accept: 'application/octet-stream',
+    },
+    responseType: 'blob',
+  })
+  let payload: unknown
+
+  try {
+    payload = JSON.parse(await response.text()) as unknown
+  } catch {
+    throw new ApiServiceError(
+      'The dataset version returned an invalid CSV preview.',
+      500,
+      response,
+    )
+  }
+
+  if (
+    typeof payload !== 'object' ||
+    payload === null ||
+    !Array.isArray((payload as CsvPreviewData).columns) ||
+    !(payload as CsvPreviewData).columns.every(
+      (column) => typeof column === 'string',
+    ) ||
+    !Array.isArray((payload as CsvPreviewData).rows) ||
+    !(payload as CsvPreviewData).rows.every(
+      (row) => typeof row === 'object' && row !== null && !Array.isArray(row),
+    )
+  ) {
+    throw new ApiServiceError(
+      'The dataset version returned an invalid CSV preview.',
+      500,
+      payload,
+    )
+  }
+
+  return payload as CsvPreviewData
 }

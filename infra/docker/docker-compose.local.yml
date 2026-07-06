@@ -68,7 +68,7 @@ services:
 
       # This overrides SpringBoot local address with docker container address
       experimentops.db.host: host.docker.internal
-      experimentops.db.port: 55002
+      experimentops.db.port: 55016
       experimentops.db.schema: experimentOps
       experimentops.db.username: experimentops_user
       experimentops.db.password: experimentops_password
@@ -88,6 +88,26 @@ services:
       EXPERIMENTOPS_MAIL_AUTH: false
       EXPERIMENTOPS_MAIL_SSL: false
       EXPERIMENTOPS_MAIL_START_TLS: false
+
+  scanner:
+    build:
+      context: ../../services/applications/scanner
+      dockerfile: Dockerfile
+    image: scanner:local
+    container_name: experimentops-scanner
+    depends_on:
+      - kafka
+      - schema-registry
+    env_file:
+      - .env.local
+    environment:
+      # aws
+      EXPERIMENTOPS_STORAGE_S3_BUCKET: ${EXPERIMENTOPS_S3_BUCKET}
+      EXPERIMENTOPS_STORAGE_S3_REGION: ${AWS_REGION}
+
+      # kafka
+      kafka.bootstrap-servers: kafka:29092
+      kafka.schema.registry-url: http://schema-registry:8081
 
 
   analysis-worker:
@@ -127,7 +147,7 @@ services:
     image: flyway/flyway:latest
     container_name: experimentops-flyway
     command:
-      -url=jdbc:mysql://host.docker.internal:55002/experimentOps
+      -url=jdbc:mysql://host.docker.internal:55016/experimentOps
       -user=experimentops_user
       -password=experimentops_password
       -connectRetries=60

@@ -15,9 +15,10 @@ import com.experimentops.dataset.model.v1.DatasetVersionStatusChangeRequestModel
 import com.experimentops.dataset.model.v1.DatasetVersionUploadRequestModel;
 import com.experimentops.dataset.version.event.DatasetVersionMutationEvent;
 import com.experimentops.dataset.version.scan.event.DatasetVersionScanCompletedEvent;
+import com.experimentops.dataset.version.scan.event.DatasetVersionScanCompletedEventPayload;
 import com.experimentops.dataset.version.scan.event.DatasetVersionScanRequestedEvent;
+import com.experimentops.objectstorage.gateway.ObjectStorageGateway;
 import com.experimentops.platformapi.model.entity.DatasetVersion;
-import com.experimentops.platformapi.dal.gateway.ObjectStorageGateway;
 import com.experimentops.platformapi.dal.repository.DatasetRepository;
 import com.experimentops.platformapi.dal.repository.DatasetVersionRepository;
 import com.experimentops.platformapi.model.entity.Dataset;
@@ -224,17 +225,18 @@ public class DatasetService {
     }
 
     public void processDatasetVersionScanCompleted(@NonNull DatasetVersionScanCompletedEvent event, @NonNull ExperimentOpsHeaders headers) {
-        String message = event.getPayload().getMessage();
-        DatasetScanStatusEnum scanStatus = StringUtils.isBlank(message) ? DatasetScanStatusEnum.COMPLETED : DatasetScanStatusEnum.FAILED;
+        DatasetVersionScanCompletedEventPayload eventPayload = event.getPayload();
+        DatasetScanStatusEnum scanStatus = StringUtils.isBlank(eventPayload.getMessage()) ? DatasetScanStatusEnum.COMPLETED : DatasetScanStatusEnum.FAILED;
         DatasetVersion datasetVersion = datasetVersionRepository
                 .findByUuidAndWorkspaceUuidAndEnabled(event.getMetadata().getUuid(), headers.getWorkspaceUuid(), true)
                 .orElseThrow(() -> new EntityNotFoundException(DATASET_VERSION_UUID, event.getMetadata().getUuid()));
         datasetVersion.setScanStatus(scanStatus);
-        datasetVersion.setScanMessage(message);
+        datasetVersion.setScanMessage(eventPayload.getMessage());
+        datasetVersion.setPreviewUri(eventPayload.getPreviewUri());
         datasetVersion.setUpdatedBy(headers.getUserUuid());
         datasetVersionRepository.save(datasetVersion);
         if (DatasetScanStatusEnum.FAILED == scanStatus) {
-            log.error(headers, "Dataset version scan failed for uuid " + event.getMetadata().getUuid() + ": " + message);
+            log.error(headers, "Dataset version scan failed for uuid " + event.getMetadata().getUuid() + ": " + eventPayload.getMessage());
         }
     }
 

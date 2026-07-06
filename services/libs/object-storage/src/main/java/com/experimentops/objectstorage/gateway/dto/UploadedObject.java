@@ -1,4 +1,4 @@
-package com.experimentops.platformapi.dal.gateway.dto;
+package com.experimentops.objectstorage.gateway.dto;
 
 public record UploadedObject(
         String bucketName,
