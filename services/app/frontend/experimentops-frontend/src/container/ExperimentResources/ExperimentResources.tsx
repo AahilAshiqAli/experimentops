@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { JsonEditor, JsonEditorDialog } from '../../components/JsonViewer'
+import { DataTable } from '../../components/DataTable'
 import { useLogin } from '../../context-api/logincontext'
 import { useDocumentTitle } from '../../hooks'
 import {
@@ -18,11 +19,11 @@ import { PERMISSIONS_KEYS } from '../../utils'
 import {
   PageSkeleton,
   PageState,
-  Pagination,
   ProjectFrame,
   SectionState,
 } from '../ProjectDetails/projectDetails.shared'
 import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
+import { getExperimentConfigColumns } from './columns'
 
 const CONFIGS_PER_PAGE = 20
 
@@ -114,47 +115,20 @@ export function ExperimentConfigs() {
             )}
             tone="error"
           />
-        ) : configsQuery.data?.data.length ? (
-          <>
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-              <table className="min-w-full divide-y divide-slate-200 text-left">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-5 py-3 font-semibold">Name</th>
-                    <th className="px-5 py-3 font-semibold">Config</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {configsQuery.data.data.map((experimentConfig) => (
-                    <tr key={experimentConfig.uuid}>
-                      <td className="px-5 py-4 text-sm font-semibold text-secondary">
-                        {experimentConfig.name}
-                      </td>
-                      <td className="min-w-72 max-w-md px-5 py-4">
-                        <button
-                          className="block max-w-full truncate rounded bg-slate-100 px-2 py-1 text-left font-mono text-xs text-slate-700 transition hover:bg-slate-200 hover:text-primary"
-                          onClick={() => setEditingConfig(experimentConfig)}
-                          title={JSON.stringify(experimentConfig.config)}
-                          type="button"
-                        >
-                          {JSON.stringify(experimentConfig.config)}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-5">
-              <Pagination
-                onPageChange={setPage}
-                page={page}
-                totalPages={totalPages}
-              />
-            </div>
-          </>
         ) : (
-          <SectionState message="No configs have been added to this experiment yet." />
+          <DataTable
+            columns={getExperimentConfigColumns(setEditingConfig)}
+            data={configsQuery.data?.data ?? []}
+            emptyMessage="No configs have been added to this experiment yet."
+            getRowKey={(config) => config.uuid}
+            pagination={{
+              onPageChange: setPage,
+              page,
+              totalItems: configsQuery.data?.totalElements ?? 0,
+              totalPages,
+            }}
+            searchPlaceholder="Search configs..."
+          />
         )}
       </div>
 
@@ -263,7 +237,10 @@ export function ExperimentRuns() {
 
 function buildDefaultConfig(experimentType: ExperimentType) {
   return Object.fromEntries(
-    experimentType.defaultConfig.map((field) => [field.name, field.defaultValue]),
+    experimentType.defaultConfig.map((field) => [
+      field.name,
+      field.defaultValue,
+    ]),
   ) as Record<string, unknown>
 }
 
@@ -419,4 +396,3 @@ function ExperimentRunsPanel() {
     </div>
   )
 }
-

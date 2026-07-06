@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { useLogin } from '../../context-api/logincontext'
@@ -11,17 +11,13 @@ import {
 import { Toaster } from '../../services/toaster.service'
 import { PERMISSIONS_KEYS } from '../../utils'
 import {
-  ExperimentActions,
   PageSkeleton,
   PageState,
-  Pagination,
   ProjectFrame,
   SectionState,
 } from '../ProjectDetails/projectDetails.shared'
-import {
-  formatDate,
-  getErrorMessage,
-} from '../ProjectDetails/projectDetails.utils'
+import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
+import { getExperimentColumns } from './columns'
 
 const EXPERIMENTS_PER_PAGE = 8
 
@@ -29,7 +25,6 @@ export function ProjectExperiments() {
   const { projectUuid } = useParams<{ projectUuid: string }>()
   const { hasPermission } = useLogin()
   const projectQuery = useQueryProject(projectUuid)
-  const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const experimentsQuery = useQueryProjectExperiments(projectUuid, {
     page: page - 1,
@@ -42,38 +37,12 @@ export function ProjectExperiments() {
   const canListExperiments = hasPermission(
     PERMISSIONS_KEYS.EXPERIMENT.GET_EXPERIMENT,
   )
-  const filteredExperiments = useMemo(() => {
-    const term = search.trim().toLowerCase()
-    const experiments = experimentsQuery.data?.data ?? []
-
-    return term
-      ? experiments.filter((experiment) =>
-          [
-            experiment.name,
-            experiment.description,
-            experiment.status,
-            experiment.experimentType,
-          ]
-            .join(' ')
-            .toLowerCase()
-            .includes(term),
-        )
-      : experiments
-  }, [experimentsQuery.data, search])
-  const totalExperiments = search
-    ? filteredExperiments.length
-    : (experimentsQuery.data?.totalElements ?? 0)
+  const totalExperiments = experimentsQuery.data?.totalElements ?? 0
   const totalPages = Math.max(
     1,
     Math.ceil(totalExperiments / EXPERIMENTS_PER_PAGE),
   )
   const activePage = Math.min(page, totalPages)
-  const visibleExperiments = search
-    ? filteredExperiments.slice(
-        (activePage - 1) * EXPERIMENTS_PER_PAGE,
-        activePage * EXPERIMENTS_PER_PAGE,
-      )
-    : filteredExperiments
 
   useDocumentTitle(
     projectQuery.data ? `${projectQuery.data.name} experiments` : 'Experiments',
@@ -113,19 +82,6 @@ export function ProjectExperiments() {
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <label className="block sm:w-72">
-            <span className="sr-only">Search experiments</span>
-            <input
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
-              onChange={(event) => {
-                setSearch(event.target.value)
-                setPage(1)
-              }}
-              placeholder="Search experiments..."
-              type="search"
-              value={search}
-            />
-          </label>
           <button
             className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
             onClick={() => setIsCreateOpen(true)}
@@ -149,81 +105,19 @@ export function ProjectExperiments() {
             )}
             tone="error"
           />
-        ) : visibleExperiments.length ? (
-          <>
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-              <table className="min-w-full divide-y divide-slate-200 text-left">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-5 py-3 font-semibold">
-                      Experiment
-                    </th>
-                    <th className="px-5 py-3 text-center font-semibold">
-                      Experiment Type
-                    </th>
-                    <th className="px-5 py-3 text-center font-semibold">
-                      Runs
-                    </th>
-                    <th className="px-5 py-3 text-center font-semibold">
-                      Configs
-                    </th>
-                    <th className="px-5 py-3 font-semibold">Created</th>
-                    <th className="px-5 py-3 text-right font-semibold">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {visibleExperiments.map((experiment) => (
-                    <tr key={experiment.experimentUuid}>
-                      <td className="min-w-72 px-5 py-4">
-                        <p className="text-sm font-semibold text-secondary">
-                          {experiment.name}
-                        </p>
-                        <p className="mt-1 line-clamp-1 text-xs text-slate-500">
-                          {experiment.description || 'No description provided.'}
-                        </p>
-                      </td>
-                      <td className="px-5 py-4 text-center text-sm text-secondary">
-                        {experiment.experimentType}
-                      </td>
-                      <td className="px-5 py-4 text-center text-sm text-secondary">
-                        {experiment.runCount}
-                      </td>
-                      <td className="px-5 py-4 text-center text-sm text-secondary">
-                        {experiment.configCount}
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-sm text-slate-500">
-                        {formatDate(experiment.createdAt)}
-                      </td>
-                      <td className="whitespace-nowrap px-5 py-4 text-right">
-                        <span className="inline-flex gap-2">
-                          <ExperimentActions
-                            experimentUuid={experiment.experimentUuid}
-                            projectUuid={projectQuery.data.projectUuid}
-                          />
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-5">
-              <Pagination
-                onPageChange={setPage}
-                page={activePage}
-                totalPages={totalPages}
-              />
-            </div>
-          </>
         ) : (
-          <SectionState
-            message={
-              search
-                ? 'No experiments match your search.'
-                : 'No experiments have been created yet.'
-            }
+          <DataTable
+            columns={getExperimentColumns(projectQuery.data.projectUuid)}
+            data={experimentsQuery.data?.data ?? []}
+            emptyMessage="No experiments have been created yet."
+            getRowKey={(experiment) => experiment.experimentUuid}
+            pagination={{
+              onPageChange: setPage,
+              page: activePage,
+              totalItems: totalExperiments,
+              totalPages,
+            }}
+            searchPlaceholder="Search experiments..."
           />
         )}
       </div>
@@ -371,3 +265,4 @@ function TableSkeleton() {
     </div>
   )
 }
+import { DataTable } from '../../components/DataTable'
