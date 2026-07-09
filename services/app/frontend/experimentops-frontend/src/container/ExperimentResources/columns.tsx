@@ -1,10 +1,18 @@
 import type { DataTableColumn } from '../../components/DataTable'
 import type { ExperimentConfig } from '../../services/experimentConfig.service'
 
-export function getExperimentConfigColumns(
-  onEdit: (config: ExperimentConfig) => void,
-): DataTableColumn<ExperimentConfig>[] {
-  return [
+export function getExperimentConfigColumns({
+  onEdit,
+  onSelect,
+  selectable = false,
+  selectedConfigUuids = [],
+}: {
+  onEdit?: (config: ExperimentConfig) => void
+  onSelect?: (config: ExperimentConfig) => void
+  selectable?: boolean
+  selectedConfigUuids?: string[]
+}): DataTableColumn<ExperimentConfig>[] {
+  const columns: DataTableColumn<ExperimentConfig>[] = [
     {
       className: 'text-sm font-semibold text-secondary',
       header: 'Name',
@@ -13,10 +21,21 @@ export function getExperimentConfigColumns(
       value: (config) => config.name,
     },
     {
+      filter: true,
+      header: 'Experiment Type',
+      key: 'experimentType',
+      sort: true,
+      value: (config) => config.experimentType,
+    },
+    {
       cell: (experimentConfig) => (
         <button
           className="block max-w-md truncate rounded bg-slate-100 px-2 py-1 text-left font-mono text-xs text-slate-700 transition hover:bg-slate-200 hover:text-primary"
-          onClick={() => onEdit(experimentConfig)}
+          onClick={(event) => {
+            event.stopPropagation()
+            onEdit?.(experimentConfig)
+          }}
+          disabled={!onEdit}
           title={JSON.stringify(experimentConfig.config)}
           type="button"
         >
@@ -28,5 +47,35 @@ export function getExperimentConfigColumns(
       key: 'config',
       value: (config) => JSON.stringify(config.config),
     },
+  ]
+
+  if (!selectable) return columns
+
+  return [
+    {
+      cell: (config) => {
+        const isSelected = selectedConfigUuids.includes(config.uuid)
+
+        return (
+          <button
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+              isSelected
+                ? 'bg-primary/10 text-primary'
+                : 'border border-slate-300 text-secondary hover:border-primary hover:text-primary'
+            }`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onSelect?.(config)
+            }}
+            type="button"
+          >
+            {isSelected ? 'Selected' : 'Select'}
+          </button>
+        )
+      },
+      header: 'Select',
+      key: 'select',
+    },
+    ...columns,
   ]
 }

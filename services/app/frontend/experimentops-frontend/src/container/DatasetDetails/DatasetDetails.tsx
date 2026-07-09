@@ -180,7 +180,7 @@ export function DatasetDetails() {
             </Link>{' '}
             <span aria-hidden="true">/</span> Dataset versions
           </nav>
-          <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <FolderIcon className="h-12 w-12" />
               <div>
@@ -192,18 +192,9 @@ export function DatasetDetails() {
                 </p>
               </div>
             </div>
-            {canAddDataset ? (
-              <button
-                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
-                onClick={() => setIsAddOpen(true)}
-                type="button"
-              >
-                + Add Dataset
-              </button>
-            ) : null}
           </div>
 
-          <div className="mt-6">
+          <div className="mt-4">
             <DataTable
               columns={getDatasetVersionColumns({
                 onPreview: (version) =>
@@ -224,6 +215,19 @@ export function DatasetDetails() {
                 totalPages,
               }}
               searchPlaceholder="Search dataset versions..."
+              toolbarEnd={
+                <>
+                  {canAddDataset ? (
+                    <button
+                      className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
+                      onClick={() => setIsAddOpen(true)}
+                      type="button"
+                    >
+                      + Add Dataset
+                    </button>
+                  ) : null}
+                </>
+              }
             />
           </div>
         </>
@@ -317,18 +321,15 @@ function AddDatasetVersionDialog({
   uploadProgress: number
 }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [fileError, setFileError] = useState<string | null>(null)
-
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null
 
     if (file && !file.name.toLowerCase().endsWith('.csv')) {
-      setFileError('Only CSV files are supported.')
+      Toaster.error('Only CSV files are supported.')
       setSelectedFile(null)
       return
     }
 
-    setFileError(null)
     setSelectedFile(file)
   }
 
@@ -378,9 +379,6 @@ function AddDatasetVersionDialog({
             />
           </label>
 
-          {fileError ? (
-            <p className="text-xs text-red-600">{fileError}</p>
-          ) : null}
           {isUploading ? (
             <div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">

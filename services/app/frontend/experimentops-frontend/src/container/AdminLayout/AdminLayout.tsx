@@ -9,7 +9,7 @@ import { useLogin } from '../../context-api/logincontext'
 
 export function AdminLayout() {
   const { user, role, logout } = useLogin()
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   return (
     <div className="min-h-screen bg-background text-secondary">
@@ -34,7 +34,7 @@ export function AdminLayout() {
           onNavigate={() => setIsMobileSidebarOpen(false)}
           onToggle={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
         />
-        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+        <main className="min-w-0 flex-1 p-4 sm:p-5 lg:p-6">
           <Outlet />
         </main>
       </div>

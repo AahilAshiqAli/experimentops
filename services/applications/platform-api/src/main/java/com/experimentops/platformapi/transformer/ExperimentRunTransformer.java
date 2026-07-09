@@ -5,9 +5,10 @@ import com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent;
 import com.experimentops.common.kafka.utils.ExperimentOpsMetadataUtil;
 import com.experimentops.experiment.run.event.ExperimentRunEvent;
 import com.experimentops.experiment.run.event.ExperimentRunEventPayload;
-import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunResponseModel;
+import com.experimentops.platformapi.model.ExperimentRunExecutionConfig;
 import com.experimentops.platformapi.model.entity.DatasetVersion;
+import com.experimentops.platformapi.model.entity.ExecutionMode;
 import com.experimentops.platformapi.model.entity.Experiment;
 import com.experimentops.platformapi.model.entity.ExperimentRun;
 import com.experimentops.platformapi.model.entity.RunDataset;
@@ -19,6 +20,8 @@ import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class ExperimentRunTransformer {
     private static final ExperimentOpsLogger log = ExperimentOpsLogger.getLogger(ExperimentRunTransformer.class);
@@ -28,7 +31,7 @@ public class ExperimentRunTransformer {
     public ExperimentRunEvent transformExperimentRunEvent(
             @NonNull Experiment experiment,
             @NonNull String datasetUri,
-            @NonNull ExperimentRunRequestModel requestModel,
+            @NonNull List<ExperimentRunExecutionConfig> executionConfigs,
             @NonNull String experimentRunUuid,
             @NonNull ExperimentOpsHeaders headers
             ) {
@@ -38,9 +41,8 @@ public class ExperimentRunTransformer {
         ExperimentRunEventPayload payload = ExperimentRunEventPayload.newBuilder()
                 .setProjectUuid(experiment.getProjectUuid())
                 .setWorkspaceUuid(headers.getWorkspaceUuid())
-                .setConfigJson(JSONUtil.toNonTypedJsonFromObject(requestModel.getConfigJson()))
+                .setConfigJson(JSONUtil.toNonTypedJsonFromObject(executionConfigs))
                 .setDatasetUri(datasetUri)
-                .setExperimentType(experiment.getExperimentType())
                 .setExperimentUuid(experiment.getUuid())
                 .build();
 
@@ -60,13 +62,14 @@ public class ExperimentRunTransformer {
     @NonNull
     public ExperimentRun transformExperimentRunEntity(
             @NonNull String experimentUuid,
+            @NonNull List<ExecutionMode> executionMode,
             @NonNull ExperimentOpsHeaders headers) {
 
         log.info(headers, "transforming the payload to Experiment Run Entity");
 
         ExperimentRun experimentRun = ExperimentRun.builder()
                 .experimentUuid(experimentUuid)
-                .experimentConfigUuid(ExperimentOpsUtils.uuid())
+                .executionMode(executionMode)
                 .workspaceUuid(headers.getWorkspaceUuid())
                 .experimentStatus(ExperimentStatusEnum.PENDING)
                 .runNumber(1)

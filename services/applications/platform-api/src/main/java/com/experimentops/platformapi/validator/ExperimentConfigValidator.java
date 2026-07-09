@@ -15,12 +15,14 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Component
 public class ExperimentConfigValidator extends GenericValidator {
 
     public void validateExperimentConfigRequestModel(@NonNull ExperimentConfigRequestModel requestModel) {
         validateInputString("name", requestModel.getName());
+        validateInputString("experimentType", requestModel.getExperimentType());
         if (ExperimentOpsUtils.isEmpty(requestModel.getConfig())) {
             throw new ValidationException(ErrorCode.REQUIRED_FIELD_MISSING, "config");
         }
@@ -35,7 +37,7 @@ public class ExperimentConfigValidator extends GenericValidator {
     }
 
     public void validateExperimentConfigMatchesExperimentTypeConfig(@NonNull ExperimentType experimentType, @NonNull Map<String, Object> config) {
-        Map<String, ExperimentTypeDefaultConfig.Datatype> expectedConfig = getStringDatatypeMap(experimentType);
+        Map<String, ExperimentTypeDefaultConfig> expectedConfig = getDefaultConfigByName(experimentType);
 
         for (String expectedConfigKey : expectedConfig.keySet()) {
             if (!config.containsKey(expectedConfigKey)) {
@@ -44,30 +46,34 @@ public class ExperimentConfigValidator extends GenericValidator {
         }
 
         for (Map.Entry<String, Object> configEntry : config.entrySet()) {
-            ExperimentTypeDefaultConfig.Datatype expectedDatatype = expectedConfig.get(configEntry.getKey());
-            validateConfigValueDatatype(configEntry.getKey(), configEntry.getValue(), expectedDatatype);
+            ExperimentTypeDefaultConfig expectedConfigItem = expectedConfig.get(configEntry.getKey());
+            if (expectedConfigItem == null) {
+                throw new ValidationException(ErrorCode.INVALID_INPUTS, "config." + configEntry.getKey());
+            }
+            validateConfigValue(configEntry.getKey(), configEntry.getValue(), expectedConfigItem);
         }
     }
 
-    private @NonNull Map<String, ExperimentTypeDefaultConfig.Datatype> getStringDatatypeMap(@NonNull ExperimentType experimentType) {
+    private @NonNull Map<String, ExperimentTypeDefaultConfig> getDefaultConfigByName(@NonNull ExperimentType experimentType) {
         List<ExperimentTypeDefaultConfig> defaultConfig = experimentType.getDefaultConfig();
         if (ExperimentOpsUtils.isEmpty(defaultConfig)) {
             throw new ValidationException(ErrorCode.INVALID_INPUTS, "experimentType.defaultConfig");
         }
 
-        Map<String, ExperimentTypeDefaultConfig.Datatype> expectedConfig = new HashMap<>();
+        Map<String, ExperimentTypeDefaultConfig> expectedConfig = new HashMap<>();
         for (ExperimentTypeDefaultConfig defaultConfigItem : defaultConfig) {
             if (defaultConfigItem == null || defaultConfigItem.getName() == null || defaultConfigItem.getDatatype() == null) {
                 throw new ValidationException(ErrorCode.INVALID_INPUTS, "experimentType.defaultConfig");
             }
-            if (expectedConfig.put(defaultConfigItem.getName(), defaultConfigItem.getDatatype()) != null) {
+            if (expectedConfig.put(defaultConfigItem.getName(), defaultConfigItem) != null) {
                 throw new ValidationException(ErrorCode.INVALID_INPUTS, "experimentType.defaultConfig." + defaultConfigItem.getName());
             }
         }
         return expectedConfig;
     }
 
-    private void validateConfigValueDatatype(@Nullable String name, @Nullable Object value, ExperimentTypeDefaultConfig.@NonNull Datatype datatype) {
+    private void validateConfigValue(@Nullable String name, @Nullable Object value, @NonNull ExperimentTypeDefaultConfig defaultConfigItem) {
+        ExperimentTypeDefaultConfig.Datatype datatype = defaultConfigItem.getDatatype();
         if (value == null) {
             throw new ValidationException(ErrorCode.INVALID_INPUTS, "config." + name + " should match datatype " + datatype.getValue());
         }
@@ -81,6 +87,17 @@ public class ExperimentConfigValidator extends GenericValidator {
 
         if (!isValid) {
             throw new ValidationException(ErrorCode.INVALID_INPUTS, "config." + name + " should match datatype " + datatype.getValue());
+        }
+        validateConfigValueRegex(name, value, defaultConfigItem);
+    }
+
+    private void validateConfigValueRegex(@Nullable String name, @NonNull Object value, @NonNull ExperimentTypeDefaultConfig defaultConfigItem) {
+        String regex = defaultConfigItem.getRegex();
+        if (regex == null || regex.isBlank()) {
+            return;
+        }
+        if (defaultConfigItem.getDatatype() == ExperimentTypeDefaultConfig.Datatype.STRING && !Pattern.matches(regex, value.toString())) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "config." + name + " should match regex");
         }
     }
 }

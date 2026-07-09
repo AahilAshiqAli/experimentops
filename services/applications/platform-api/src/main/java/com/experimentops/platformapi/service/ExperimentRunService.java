@@ -1,17 +1,21 @@
 package com.experimentops.platformapi.service;
 
+import com.experimentops.common.exceptions.constant.ErrorCode;
 import com.experimentops.common.exceptions.runtime.EntityNotFoundException;
+import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.common.kafka.KafkaProducer;
 import com.experimentops.experiment.run.event.*;
+import com.experimentops.experiment.run.model.v1.ExperimentRunExecutionModeModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunResponseModel;
 import com.experimentops.platformapi.dal.repository.DatasetVersionRepository;
+import com.experimentops.platformapi.dal.repository.ExperimentConfigRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentRunRepository;
 import com.experimentops.platformapi.dal.repository.RunDatasetRepository;
+import com.experimentops.platformapi.model.ExperimentRunExecutionConfig;
 import com.experimentops.platformapi.model.entity.*;
 import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
-import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.ExperimentRunTransformer;
 import com.experimentops.platformapi.validator.ExperimentRunValidator;
 import com.experimentops.utils.ExperimentOpsLogger;
@@ -20,6 +24,13 @@ import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +41,7 @@ public class ExperimentRunService {
     private final ExperimentRunValidator experimentRunValidator;
     private final ExperimentRunTransformer experimentRunTransformer;
     private final ExperimentRepository experimentRepository;
+    private final ExperimentConfigRepository experimentConfigRepository;
     private final ExperimentRunRepository experimentRunRepository;
     private final DatasetVersionRepository datasetVersionRepository;
     private final RunDatasetRepository runDatasetRepository;
@@ -44,7 +56,21 @@ public class ExperimentRunService {
         Experiment experiment = experimentRepository
                 .findByUuidAndWorkspaceUuidAndEnabled(experimentUuid, headers.getWorkspaceUuid(), true)
                 .orElseThrow(() -> new EntityNotFoundException("experiment", experimentUuid));
-        ExperimentRun experimentRun = experimentRunTransformer.transformExperimentRunEntity(experimentUuid, headers);
+        List<ExperimentRunExecutionModeModel> requestedExecutionMode = experimentRunRequestModel.getExecutionMode()
+                .stream()
+                .sorted(Comparator.comparing(ExperimentRunExecutionModeModel::getStepCount))
+                .toList();
+        Map<String, ExperimentConfig> experimentConfigsByUuid = getExperimentConfigsByUuid(
+                experimentUuid,
+                requestedExecutionMode,
+                headers
+        );
+        List<ExecutionMode> executionMode = transformExecutionMode(requestedExecutionMode);
+        List<ExperimentRunExecutionConfig> executionConfigs = transformExperimentRunExecutionConfigs(
+                requestedExecutionMode,
+                experimentConfigsByUuid
+        );
+        ExperimentRun experimentRun = experimentRunTransformer.transformExperimentRunEntity(experimentUuid, executionMode, headers);
         DatasetVersion datasetVersion = datasetVersionRepository
                 .findByUuidAndWorkspaceUuidAndEnabled(
                         experimentRunRequestModel.getDatasetVersionUuid(),
@@ -65,9 +91,79 @@ public class ExperimentRunService {
         log.info(headers, "saving run dataset object");
         runDatasetRepository.save(runDataset);
 
-        ExperimentRunEvent experimentRunEvent = experimentRunTransformer.transformExperimentRunEvent(experiment, datasetUri, experimentRunRequestModel, experimentRun.getUuid(), headers);
+        ExperimentRunEvent experimentRunEvent = experimentRunTransformer.transformExperimentRunEvent(
+                experiment,
+                datasetUri,
+                executionConfigs,
+                experimentRun.getUuid(),
+                headers
+        );
         kafkaProducer.sendMessage(experimentRunRequestTopic, experimentRunEvent, experimentRunEvent.getMetadata());
         return experimentRunTransformer.transformExperimentRunResponseModelFromEntity(experimentRun, runDataset.getUuid(), headers);
+    }
+
+    private Map<String, ExperimentConfig> getExperimentConfigsByUuid(
+            @NonNull String experimentUuid,
+            @NonNull List<ExperimentRunExecutionModeModel> executionMode,
+            @NonNull ExperimentOpsHeaders headers) {
+
+        LinkedHashSet<String> experimentConfigUuids = executionMode
+                .stream()
+                .map(ExperimentRunExecutionModeModel::getExperimentConfigUuid)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        Map<String, ExperimentConfig> experimentConfigsByUuid = experimentConfigRepository
+                .findAllByUuidInAndExperimentUuidAndWorkspaceUuidAndEnabled(
+                        experimentConfigUuids,
+                        experimentUuid,
+                        headers.getWorkspaceUuid(),
+                        true
+                )
+                .stream()
+                .collect(Collectors.toMap(ExperimentConfig::getUuid, Function.identity()));
+
+        List<String> missingExperimentConfigUuids = experimentConfigUuids
+                .stream()
+                .filter(experimentConfigUuid -> !experimentConfigsByUuid.containsKey(experimentConfigUuid))
+                .toList();
+
+        if (!missingExperimentConfigUuids.isEmpty()) {
+            throw new ValidationException(
+                    ErrorCode.INVALID_INPUTS,
+                    "Invalid experimentConfigUuid: " + String.join(", ", missingExperimentConfigUuids)
+            );
+        }
+
+        return experimentConfigsByUuid;
+    }
+
+    private List<ExecutionMode> transformExecutionMode(@NonNull List<ExperimentRunExecutionModeModel> executionMode) {
+        return executionMode
+                .stream()
+                .map(executionModeItem -> ExecutionMode
+                        .builder()
+                        .stepCount(executionModeItem.getStepCount())
+                        .experimentConfigUuid(executionModeItem.getExperimentConfigUuid())
+                        .build())
+                .toList();
+    }
+
+    private List<ExperimentRunExecutionConfig> transformExperimentRunExecutionConfigs(
+            @NonNull List<ExperimentRunExecutionModeModel> executionMode,
+            @NonNull Map<String, ExperimentConfig> experimentConfigsByUuid) {
+
+        return executionMode
+                .stream()
+                .map(executionModeItem -> {
+                    ExperimentConfig experimentConfig = experimentConfigsByUuid.get(executionModeItem.getExperimentConfigUuid());
+                    return ExperimentRunExecutionConfig
+                            .builder()
+                            .stepCount(executionModeItem.getStepCount())
+                            .experimentType(experimentConfig.getExperimentType())
+                            .experimentConfigJson(experimentConfig.getConfig())
+                            .build();
+                })
+                .toList();
     }
 
     public void processExperimentRunCompleted(@NonNull ExperimentRunCompletedEvent event, @NonNull ExperimentOpsHeaders headers) {

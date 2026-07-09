@@ -15,6 +15,7 @@ import { PERMISSIONS_KEYS } from '../utils'
 export function useQueryExperimentConfigs(
   experimentUuid?: string,
   pagination?: PaginationParams,
+  options?: { enabled?: boolean },
 ) {
   const { accessToken, hasPermission } = useLogin()
   const canListExperimentConfigs = hasPermission(
@@ -23,7 +24,10 @@ export function useQueryExperimentConfigs(
 
   return useQuery({
     enabled: Boolean(
-      accessToken && experimentUuid && canListExperimentConfigs,
+      accessToken &&
+      experimentUuid &&
+      canListExperimentConfigs &&
+      (options?.enabled ?? true),
     ),
     queryFn: () =>
       getExperimentConfigs(
@@ -69,7 +73,13 @@ export function useMutationUpdateExperimentConfig(experimentUuid: string) {
     }: {
       input: CreateExperimentConfigInput
       uuid: string
-    }) => updateExperimentConfig(accessToken as string, experimentUuid, uuid, input),
+    }) =>
+      updateExperimentConfig(
+        accessToken as string,
+        experimentUuid,
+        uuid,
+        input,
+      ),
     onSuccess: (updatedExperimentConfig) => {
       queryClient.setQueriesData<PaginatedResponse<ExperimentConfig>>(
         { queryKey: ['experiments', experimentUuid, 'configs'] },

@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -21,5 +23,7 @@ public interface ExperimentConfigRepository extends JpaRepository<ExperimentConf
     Optional<ExperimentConfig> findByNameAndExperimentUuidAndWorkspaceUuidAndStatusAndEnabled(String name, String experimentUuid, String workspaceUuid, StatusEnum status, boolean enabled);
 
     Page<ExperimentConfig> findAllByExperimentUuidAndWorkspaceUuidAndStatusAndEnabledOrderByLastUpdatedDesc(String experimentUuid, String workspaceUuid, StatusEnum status, boolean enabled, Pageable pageable);
+
+    List<ExperimentConfig> findAllByUuidInAndExperimentUuidAndWorkspaceUuidAndEnabled(Collection<String> uuids, String experimentUuid, String workspaceUuid, boolean enabled);
 
 }

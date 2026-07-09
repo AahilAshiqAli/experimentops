@@ -41,6 +41,8 @@ type DataTableProps<T> = {
   pagination?: DataTablePagination
   searchPlaceholder?: string
   searchable?: boolean
+  toolbarEnd?: ReactNode
+  toolbarStart?: ReactNode
 }
 
 function comparable(value: unknown) {
@@ -72,6 +74,8 @@ export function DataTable<T>({
   pagination,
   searchPlaceholder = 'Search...',
   searchable = true,
+  toolbarEnd,
+  toolbarStart,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<Record<string, string>>({})
@@ -132,46 +136,54 @@ export function DataTable<T>({
 
   return (
     <div>
-      {searchable || hasFilters ? (
-        <div className="mb-4 flex flex-wrap justify-end gap-2">
-          {hasFilters
-            ? columns
-                .filter((column) => column.filter)
-                .map((column) => (
-                  <label className="min-w-40" key={column.key}>
-                    <span className="sr-only">Filter table column</span>
-                    <select
-                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          [column.key]: event.target.value,
-                        }))
-                      }
-                      value={filters[column.key] ?? ''}
-                    >
-                      <option value="">All {String(column.header)}</option>
-                      {(filterOptions[column.key] ?? []).map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ))
-            : null}
-          {searchable ? (
-            <label className="block min-w-56 sm:w-72">
-              <span className="sr-only">Search table</span>
-              <input
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={searchPlaceholder}
-                type="search"
-                value={search}
-              />
-            </label>
-          ) : null}
+      {searchable || hasFilters || toolbarStart || toolbarEnd ? (
+        <div
+          className={`mb-3 flex flex-wrap items-center gap-2 ${
+            toolbarStart ? 'justify-between' : 'justify-end'
+          }`}
+        >
+          {toolbarStart ? <div>{toolbarStart}</div> : null}
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            {hasFilters
+              ? columns
+                  .filter((column) => column.filter)
+                  .map((column) => (
+                    <label className="min-w-40" key={column.key}>
+                      <span className="sr-only">Filter table column</span>
+                      <select
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        onChange={(event) =>
+                          setFilters((current) => ({
+                            ...current,
+                            [column.key]: event.target.value,
+                          }))
+                        }
+                        value={filters[column.key] ?? ''}
+                      >
+                        <option value="">All {String(column.header)}</option>
+                        {(filterOptions[column.key] ?? []).map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ))
+              : null}
+            {searchable ? (
+              <label className="block min-w-56 sm:w-72">
+                <span className="sr-only">Search table</span>
+                <input
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={searchPlaceholder}
+                  type="search"
+                  value={search}
+                />
+              </label>
+            ) : null}
+            {toolbarEnd}
+          </div>
         </div>
       ) : null}
 

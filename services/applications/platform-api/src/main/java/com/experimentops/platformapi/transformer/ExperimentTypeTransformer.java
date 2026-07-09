@@ -20,6 +20,7 @@ import com.experimentops.utils.ExperimentOpsUtils;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -187,6 +188,7 @@ public class ExperimentTypeTransformer {
                 .name(configModel.getName())
                 .datatype(ExperimentTypeDefaultConfig.Datatype.fromValue(configModel.getDatatype().getValue()))
                 .defaultValue(defaultValue)
+                .regex(getNullableString(configModel.getRegex()))
                 .build();
     }
 
@@ -194,7 +196,15 @@ public class ExperimentTypeTransformer {
         return new ExperimentTypeDefaultConfigModel()
                 .name(configItem.getName())
                 .datatype(ExperimentTypeDefaultConfigModel.DatatypeEnum.fromValue(configItem.getDatatype().getValue()))
-                .defaultValue(configItem.getDefaultValue());
+                .defaultValue(configItem.getDefaultValue())
+                .regex(configItem.getRegex());
+    }
+
+    private String getNullableString(JsonNullable<String> value) {
+        if (value == null || !value.isPresent()) {
+            return null;
+        }
+        return value.get();
     }
 
 }

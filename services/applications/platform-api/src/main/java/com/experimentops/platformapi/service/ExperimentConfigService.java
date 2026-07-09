@@ -39,7 +39,7 @@ public class ExperimentConfigService {
     public ExperimentConfigResponseModel createExperimentConfig(@NonNull String experimentUuid, @NonNull ExperimentConfigRequestModel requestModel, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "creating experiment config with name " + requestModel.getName());
         experimentConfigValidator.validateExperimentConfigRequestModel(requestModel);
-        ExperimentType experimentType = findActiveExperimentType(requestModel.getName());
+        ExperimentType experimentType = findActiveExperimentType(requestModel.getExperimentType());
         experimentConfigValidator.validateExperimentConfigMatchesExperimentTypeConfig(experimentType, requestModel.getConfig());
         experimentConfigRepository
                 .findByNameAndExperimentUuidAndWorkspaceUuidAndStatusAndEnabled(
@@ -91,7 +91,7 @@ public class ExperimentConfigService {
     public ExperimentConfigResponseModel updateExperimentConfig(@NonNull String experimentUuid, @NonNull String uuid, @NonNull ExperimentConfigRequestModel requestModel, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "updating experiment config with uuid " + uuid);
         experimentConfigValidator.validateExperimentConfigRequestModel(requestModel);
-        ExperimentType experimentType = findActiveExperimentType(requestModel.getName());
+        ExperimentType experimentType = findActiveExperimentType(requestModel.getExperimentType());
         experimentConfigValidator.validateExperimentConfigMatchesExperimentTypeConfig(experimentType, requestModel.getConfig());
         ExperimentConfig experimentConfig = findActiveExperimentConfig(experimentUuid, uuid, headers);
         experimentConfigRepository
@@ -125,10 +125,10 @@ public class ExperimentConfigService {
     }
 
     @NonNull
-    private ExperimentType findActiveExperimentType(@NonNull String name) {
+    private ExperimentType findActiveExperimentType(@NonNull String experimentType) {
         return experimentTypeRepository
-                .findByNameAndStatusAndEnabled(name, StatusEnum.ACTIVE, true)
-                .orElseThrow(() -> new EntityNotFoundException("experiment_type not found for " + name));
+                .findByNameAndStatusAndEnabled(experimentType, StatusEnum.ACTIVE, true)
+                .orElseThrow(() -> new EntityNotFoundException("experiment_type not found for " + experimentType));
     }
 
     @NonNull

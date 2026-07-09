@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useParams } from 'react-router-dom'
 
+import { DataTable } from '../../components/DataTable'
 import { useLogin } from '../../context-api/logincontext'
 import { useDocumentTitle } from '../../hooks'
 import {
@@ -72,27 +73,12 @@ export function ProjectExperiments() {
 
   return (
     <ProjectFrame activeTab="experiments" project={projectQuery.data}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="font-heading text-2xl font-semibold text-secondary">
-            Experiments
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Browse all experiments in this project.
-          </p>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <button
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
-            onClick={() => setIsCreateOpen(true)}
-            type="button"
-          >
-            + Add Experiment
-          </button>
-        </div>
+      <div className="mb-2">
+        <h2 className="font-heading text-xl font-semibold text-secondary">
+          Experiments
+        </h2>
       </div>
-
-      <div className="mt-6">
+      <div>
         {!canListExperiments ? (
           <SectionState message="You do not have permission to view experiments." />
         ) : experimentsQuery.isLoading ? (
@@ -118,6 +104,15 @@ export function ProjectExperiments() {
               totalPages,
             }}
             searchPlaceholder="Search experiments..."
+            toolbarEnd={
+              <button
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
+                onClick={() => setIsCreateOpen(true)}
+                type="button"
+              >
+                + Add Experiment
+              </button>
+            }
           />
         )}
       </div>
@@ -154,21 +149,15 @@ function CreateExperimentDialog({
 }: {
   isPending: boolean
   onClose: () => void
-  onSubmit: (input: {
-    description: string
-    experimentType: string
-    name: string
-  }) => void
+  onSubmit: (input: { description: string; name: string }) => void
 }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [experimentType, setExperimentType] = useState('')
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     onSubmit({
       description: description.trim(),
-      experimentType: experimentType.trim(),
       name: name.trim(),
     })
   }
@@ -221,17 +210,6 @@ function CreateExperimentDialog({
               value={description}
             />
           </label>
-          <label className="block text-sm font-medium text-secondary">
-            Experiment type
-            <input
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-              disabled={isPending}
-              onChange={(event) => setExperimentType(event.target.value)}
-              placeholder="Logging Profile Analysis"
-              required
-              value={experimentType}
-            />
-          </label>
           <div className="flex justify-end gap-3 pt-2">
             <button
               className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-secondary hover:bg-slate-50"
@@ -265,4 +243,3 @@ function TableSkeleton() {
     </div>
   )
 }
-import { DataTable } from '../../components/DataTable'

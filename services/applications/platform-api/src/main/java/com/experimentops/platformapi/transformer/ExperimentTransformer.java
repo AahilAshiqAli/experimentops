@@ -29,7 +29,6 @@ public class ExperimentTransformer {
         ExperimentMutationEventPayload payload = ExperimentMutationEventPayload.newBuilder()
                 .setExperimentName(requestModel.getName())
                 .setDescription(requestModel.getDescription())
-                .setExperimentType(requestModel.getExperimentType())
                 .setProjectUuid(projectUuid)
                 .build();
 
@@ -53,7 +52,6 @@ public class ExperimentTransformer {
         ExperimentMutationEventPayload payload = ExperimentMutationEventPayload.newBuilder()
                 .setExperimentName(requestModel.getName())
                 .setDescription(requestModel.getDescription())
-                .setExperimentType(requestModel.getExperimentType())
                 .setProjectUuid(projectUuid)
                 .build();
 
@@ -102,7 +100,6 @@ public class ExperimentTransformer {
         responseModel.setUuid(event.getMetadata().getUuid());
         responseModel.setName(payload.getExperimentName());
         responseModel.setDescription(payload.getDescription());
-        responseModel.setExperimentType(payload.getExperimentType());
         responseModel.setProjectUuid(payload.getProjectUuid());
 
         return responseModel;
@@ -117,7 +114,6 @@ public class ExperimentTransformer {
         responseModel.setUuid(experiment.getUuid());
         responseModel.setName(experiment.getName());
         responseModel.setDescription(experiment.getDescription());
-        responseModel.setExperimentType(experiment.getExperimentType());
         responseModel.setProjectUuid(experiment.getProjectUuid());
 
         return responseModel;
@@ -132,7 +128,6 @@ public class ExperimentTransformer {
         listItem.setExperimentUuid(experiment.getExperimentUuid());
         listItem.setName(experiment.getName());
         listItem.setDescription(experiment.getDescription());
-        listItem.setExperimentType(experiment.getExperimentType());
         listItem.setStatus(experiment.getStatus().name());
         listItem.setConfigCount(experiment.getConfigCount().intValue());
         listItem.setRunCount(experiment.getRunCount().intValue());
@@ -150,7 +145,6 @@ public class ExperimentTransformer {
         Experiment experiment = Experiment.builder()
                 .name(payload.getExperimentName())
                 .description(payload.getDescription())
-                .experimentType(payload.getExperimentType())
                 .projectUuid(payload.getProjectUuid())
                 .workspaceUuid(event.getMetadata().getWorkspaceUuid())
                 .status(StatusEnum.ACTIVE)

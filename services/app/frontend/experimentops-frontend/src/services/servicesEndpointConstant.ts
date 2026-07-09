@@ -1,9 +1,9 @@
 export const ServicesUrlEndpoints = {
   AUTH_LOGIN: '/auth/login/:workspaceName',
   GET_DATASET: '/project/:projectUuid/dataset/:datasetUuid',
-  GET_DATASET_VERSION:
-    '/dataset/:datasetUuid/version/:datasetVersionUuid',
+  GET_DATASET_VERSION: '/dataset/:datasetUuid/version/:datasetVersionUuid',
   GET_EXPERIMENT_CONFIGS: '/experiment/:experimentUuid/experiment-config',
+  CREATE_EXPERIMENT_RUN: '/experiment/:experimentUuid/experiment-run/',
   GET_EXPERIMENT_TYPES: '/experiment-type',
   UPDATE_EXPERIMENT_CONFIG:
     '/experiment/:experimentUuid/experiment-config/:uuid',

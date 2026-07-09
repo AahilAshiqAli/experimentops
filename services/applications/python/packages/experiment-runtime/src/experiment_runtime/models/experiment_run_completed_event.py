@@ -57,6 +57,7 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
         cls,
         event: ExperimentRunRequestedEvent,
         result: Result | None,
+        experiment_type: str | None = None,
     ) -> "ExperimentRunCompletedEvent":
         """Create a completed event from the original run request and result."""
 
@@ -69,7 +70,7 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
             project_uuid=event.project_uuid,
             experiment_uuid=event.experiment_uuid,
             experiment_run_uuid=event.experiment_run_uuid,
-            experiment_type=event.experiment_type,
+            experiment_type=experiment_type or event.experiment_type,
             status=status,
             result=result,
             request_timestamp=event.request_timestamp,

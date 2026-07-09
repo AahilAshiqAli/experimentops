@@ -169,6 +169,10 @@ components:
           type: object
           nullable: true
           example: true
+        regex:
+          type: string
+          nullable: true
+          example: "^[A-Za-z_][A-Za-z0-9_]*$"
     ExperimentTypeStatusChangeRequestModel:
       type: object
       properties:

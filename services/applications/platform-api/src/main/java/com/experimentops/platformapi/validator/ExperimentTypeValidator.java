@@ -9,6 +9,8 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 @Component
 public class ExperimentTypeValidator extends GenericValidator {
@@ -34,10 +36,12 @@ public class ExperimentTypeValidator extends GenericValidator {
         if (datatype == null) {
             throw new ValidationException(ErrorCode.INVALID_INPUTS, "defaultConfig." + configItem.getName() + ".datatype should be a supported datatype");
         }
-        validateDefaultValue(configItem.getName(), datatype, configItem.getDefaultValue());
+        String regex = getNullableString(configItem.getRegex());
+        validateRegex(configItem.getName(), datatype, regex);
+        validateDefaultValue(configItem.getName(), datatype, configItem.getDefaultValue(), regex);
     }
 
-    private void validateDefaultValue(String name, ExperimentTypeDefaultConfigModel.DatatypeEnum datatype, JsonNullable<Object> defaultValue) {
+    private void validateDefaultValue(String name, ExperimentTypeDefaultConfigModel.DatatypeEnum datatype, JsonNullable<Object> defaultValue, String regex) {
         if (defaultValue == null || !defaultValue.isPresent()) {
             return;
         }
@@ -55,6 +59,37 @@ public class ExperimentTypeValidator extends GenericValidator {
         if (!valid) {
             throw new ValidationException(ErrorCode.INVALID_INPUTS, "defaultConfig." + name + ".defaultValue should match datatype " + datatype.getValue());
         }
+        validateValueMatchesRegex("defaultConfig." + name + ".defaultValue", value, datatype, regex);
+    }
+
+    private void validateRegex(String name, ExperimentTypeDefaultConfigModel.DatatypeEnum datatype, String regex) {
+        if (regex == null || regex.isBlank()) {
+            return;
+        }
+        if (datatype != ExperimentTypeDefaultConfigModel.DatatypeEnum.STRING) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "defaultConfig." + name + ".regex is only supported for string datatype");
+        }
+        try {
+            Pattern.compile(regex);
+        } catch (PatternSyntaxException e) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "defaultConfig." + name + ".regex is invalid");
+        }
+    }
+
+    private void validateValueMatchesRegex(String field, Object value, ExperimentTypeDefaultConfigModel.DatatypeEnum datatype, String regex) {
+        if (regex == null || regex.isBlank() || value == null) {
+            return;
+        }
+        if (datatype == ExperimentTypeDefaultConfigModel.DatatypeEnum.STRING && !Pattern.matches(regex, value.toString())) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, field + " should match regex");
+        }
+    }
+
+    private String getNullableString(JsonNullable<String> value) {
+        if (value == null || !value.isPresent()) {
+            return null;
+        }
+        return value.get();
     }
 
 }

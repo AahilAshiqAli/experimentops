@@ -16,6 +16,7 @@ from experiment_runtime.models.experiment_run_progress_event import (
     ExperimentRunProgressEvent,
 )
 from experiment_runtime.models.experiment_run_requested_event import (
+    ExperimentRunExecutionConfig,
     ExperimentRunRequestedEvent,
 )
 
@@ -23,6 +24,7 @@ __all__ = [
     "ExperimentOpsModel",
     "Artifact",
     "ExperimentExecutionContext",
+    "ExperimentRunExecutionConfig",
     "ExperimentRunCompletedEvent",
     "ExperimentRunFailureErrorEntry",
     "ExperimentRunFailureEvent",

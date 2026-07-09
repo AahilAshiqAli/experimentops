@@ -43,6 +43,7 @@ export type DatasetVersionStatus = 'ACTIVE' | 'FAILED'
 
 export type PaginationParams = {
   page?: number
+  scanStatus?: string
   size?: number
 }
 
@@ -220,9 +221,7 @@ export async function uploadDatasetVersionFile(
     headers: ticket.requiredHeaders,
     onUploadProgress: (progressEvent) => {
       if (!onProgress || !progressEvent.total) return
-      onProgress(
-        Math.round((progressEvent.loaded / progressEvent.total) * 100),
-      )
+      onProgress(Math.round((progressEvent.loaded / progressEvent.total) * 100))
     },
   })
 }

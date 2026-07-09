@@ -38,10 +38,7 @@ export function ProjectDatasets() {
   const totalDatasets = search
     ? filteredDatasets.length
     : (datasetsQuery.data?.totalElements ?? 0)
-  const totalPages = Math.max(
-    1,
-    Math.ceil(totalDatasets / DATASETS_PER_PAGE),
-  )
+  const totalPages = Math.max(1, Math.ceil(totalDatasets / DATASETS_PER_PAGE))
   const activePage = Math.min(page, totalPages)
   const visibleDatasets = search
     ? filteredDatasets.slice(
@@ -102,7 +99,7 @@ export function ProjectDatasets() {
         </label>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4">
         {!canListDatasets ? (
           <SectionState message="You do not have permission to view datasets." />
         ) : datasetsQuery.isLoading ? (

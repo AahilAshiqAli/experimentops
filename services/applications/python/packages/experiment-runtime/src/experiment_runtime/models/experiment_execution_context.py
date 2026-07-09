@@ -4,6 +4,7 @@ from typing import Any
 
 from experiment_runtime.base_model import ExperimentOpsModel
 from experiment_runtime.models.experiment_run_requested_event import (
+    ExperimentRunExecutionConfig,
     ExperimentRunRequestedEvent,
 )
 
@@ -23,6 +24,7 @@ class ExperimentExecutionContext(ExperimentOpsModel):
     def from_requested_event(
         cls,
         event: ExperimentRunRequestedEvent,
+        execution_config: ExperimentRunExecutionConfig | None = None,
     ) -> "ExperimentExecutionContext":
         return cls(
             event_uuid=event.event_uuid,
@@ -31,7 +33,15 @@ class ExperimentExecutionContext(ExperimentOpsModel):
             project_uuid=event.project_uuid,
             experiment_uuid=event.experiment_uuid,
             experiment_run_uuid=event.experiment_run_uuid,
-            experiment_type=event.experiment_type,
+            experiment_type=(
+                execution_config.experiment_type
+                if execution_config is not None
+                else event.experiment_type
+            ),
             dataset_uri=event.dataset_uri,
-            config_json=event.config_json,
+            config_json=(
+                execution_config.experiment_config_json
+                if execution_config is not None
+                else event.config_json
+            ),
         )

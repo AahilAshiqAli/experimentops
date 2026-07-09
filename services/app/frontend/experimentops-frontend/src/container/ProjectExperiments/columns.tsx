@@ -25,14 +25,6 @@ export function getExperimentColumns(
     },
     {
       align: 'center',
-      filter: true,
-      header: 'Experiment Type',
-      key: 'type',
-      sort: true,
-      value: (experiment) => experiment.experimentType,
-    },
-    {
-      align: 'center',
       header: 'Runs',
       key: 'runs',
       sort: true,

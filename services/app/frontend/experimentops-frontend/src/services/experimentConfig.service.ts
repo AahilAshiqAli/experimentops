@@ -4,6 +4,7 @@ import { ServicesUrlEndpoints } from './servicesEndpointConstant'
 
 export type ExperimentConfig = {
   config: Record<string, unknown>
+  experimentType: string
   experimentUuid: string
   name: string
   status: string
@@ -13,12 +14,14 @@ export type ExperimentConfig = {
 
 export type CreateExperimentConfigInput = {
   config: Record<string, unknown>
+  experimentType: string
   name: string
 }
 
 export type CreatedExperimentConfig = ExperimentConfig
 
 export type PaginationParams = {
+  experimentType?: string
   page?: number
   size?: number
 }
@@ -34,6 +37,7 @@ function isExperimentConfig(value: unknown): value is ExperimentConfig {
     value !== null &&
     typeof (value as ExperimentConfig).uuid === 'string' &&
     typeof (value as ExperimentConfig).name === 'string' &&
+    typeof (value as ExperimentConfig).experimentType === 'string' &&
     typeof (value as ExperimentConfig).config === 'object' &&
     (value as ExperimentConfig).config !== null &&
     typeof (value as ExperimentConfig).experimentUuid === 'string' &&

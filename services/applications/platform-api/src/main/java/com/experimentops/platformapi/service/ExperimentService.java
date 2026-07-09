@@ -88,7 +88,6 @@ public class ExperimentService {
                         experiment -> {
                             experiment.setName(experimentMutationEvent.getPayload().getExperimentName());
                             experiment.setDescription(experimentMutationEvent.getPayload().getDescription());
-                            experiment.setExperimentType(experimentMutationEvent.getPayload().getExperimentType());
                             experimentRepository.save(experiment);
                         },
                         () -> {

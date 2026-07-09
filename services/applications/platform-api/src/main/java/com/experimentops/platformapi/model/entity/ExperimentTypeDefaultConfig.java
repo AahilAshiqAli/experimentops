@@ -17,6 +17,7 @@ public class ExperimentTypeDefaultConfig {
     private String name;
     private Datatype datatype;
     private Object defaultValue;
+    private String regex;
 
     public enum Datatype {
         BOOLEAN("boolean"),

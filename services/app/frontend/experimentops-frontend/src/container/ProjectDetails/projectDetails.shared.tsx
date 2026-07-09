@@ -6,7 +6,7 @@ import type { Dataset } from '../../services/dataset.service'
 import type { Experiment } from '../../services/experiment.service'
 import type { ProjectSummary } from '../../services/project.service'
 import { Toaster } from '../../services/toaster.service'
-import { formatDate, formatLabel } from './projectDetails.utils'
+import { formatDate } from './projectDetails.utils'
 
 export function ProjectFrame({
   activeTab,
@@ -73,15 +73,15 @@ export function ProjectFrame({
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-surface shadow-card">
-      <header className="border-b border-slate-200 px-6 pt-6 sm:px-8">
-        <div className="pb-5">
-          <h1 className="font-heading text-3xl font-semibold text-secondary">
+    <section>
+      <header className="border-b border-slate-200 pb-0">
+        <div className="pb-2">
+          <h1 className="font-heading text-2xl font-semibold text-secondary">
             {editingField === 'name' ? (
               <input
                 aria-label="Project name"
                 autoFocus
-                className="w-full max-w-2xl rounded-md border border-primary bg-white px-2 py-1 font-heading text-3xl font-semibold text-secondary outline-none ring-2 ring-primary/20"
+                className="w-full max-w-2xl rounded-md border border-primary bg-white px-2 py-1 font-heading text-2xl font-semibold text-secondary outline-none ring-2 ring-primary/20"
                 disabled={updateProjectMutation.isPending}
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={(event) => {
@@ -106,7 +106,7 @@ export function ProjectFrame({
               </button>
             )}
           </h1>
-          <div className="mt-2 max-w-3xl text-slate-600">
+          <div className="mt-1 max-w-3xl text-sm text-slate-600">
             {editingField === 'description' ? (
               <input
                 aria-label="Project description"
@@ -139,7 +139,7 @@ export function ProjectFrame({
         </div>
         <ProjectTabs activeTab={activeTab} projectUuid={project.projectUuid} />
       </header>
-      <div className="p-6 sm:p-8">{children}</div>
+      <div className="py-3 sm:py-4">{children}</div>
     </section>
   )
 }
@@ -169,7 +169,7 @@ function ProjectTabs({
     <nav aria-label="Project navigation" className="flex gap-6 overflow-x-auto">
       {tabs.map((tab) => (
         <NavLink
-          className={`whitespace-nowrap border-b-2 pb-3 text-sm font-semibold transition ${
+          className={`whitespace-nowrap border-b-2 pb-1.5 text-sm font-semibold transition ${
             activeTab === tab.key
               ? 'border-primary text-primary'
               : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-secondary'
@@ -248,40 +248,59 @@ export function ExperimentActions({
 
 export function DatasetFolderCard({
   dataset,
+  onOpen,
   projectUuid,
 }: {
   dataset: Dataset
+  onOpen?: (dataset: Dataset) => void
   projectUuid: string
 }) {
-  return (
-    <Link
-      className="relative block min-w-0 rounded-xl border border-slate-200 bg-white p-4 pt-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
-      state={{ dataset }}
-      to={`/projects/${projectUuid}/datasets/${dataset.datasetUuid}`}
-    >
+  const className =
+    'relative block min-w-0 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary'
+  const content = (
+    <>
       <span
         aria-label={`${dataset.versionCount} versions`}
-        className="absolute right-3 top-3 flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-2 text-xs font-bold text-white"
+        className="absolute right-3 top-3 flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-white"
         title={`${dataset.versionCount} versions`}
       >
         {dataset.versionCount}
       </span>
       <FolderIcon />
-      <h3 className="mt-3 truncate pr-7 font-semibold text-secondary">
+      <h3 className="mt-2 truncate pr-7 text-sm font-semibold text-secondary">
         {dataset.name}
       </h3>
-      <div className="mt-3 flex items-center justify-between gap-2 text-xs text-slate-500">
-        <span className="rounded-full bg-emerald-50 px-2 py-1 font-medium text-emerald-700">
-          {formatLabel(dataset.status)}
-        </span>
+      <div className="mt-2 flex items-center justify-end gap-2 text-xs text-slate-500">
         <span>{formatDate(dataset.updatedAt)}</span>
       </div>
+    </>
+  )
+
+  if (onOpen) {
+    return (
+      <button
+        className={className}
+        onClick={() => onOpen(dataset)}
+        type="button"
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <Link
+      className={className}
+      state={{ dataset }}
+      to={`/projects/${projectUuid}/datasets/${dataset.datasetUuid}`}
+    >
+      {content}
     </Link>
   )
 }
 
 export function FolderIcon({
-  className = 'h-14 w-14',
+  className = 'h-10 w-10',
 }: {
   className?: string
 }) {
@@ -310,15 +329,10 @@ export function PageState({
   title: string
   tone?: 'error' | 'neutral'
 }) {
+  if (tone === 'error') return null
+
   return (
-    <section
-      className={`rounded-2xl border p-8 shadow-card ${
-        tone === 'error'
-          ? 'border-red-200 bg-red-50 text-red-700'
-          : 'border-slate-200 bg-white text-secondary'
-      }`}
-      role={tone === 'error' ? 'alert' : undefined}
-    >
+    <section className="rounded-2xl border border-slate-200 bg-white p-8 text-secondary shadow-card">
       <h1 className="font-heading text-2xl font-semibold">{title}</h1>
       <p className="mt-2 text-sm">{message}</p>
     </section>
@@ -332,15 +346,10 @@ export function SectionState({
   message: string
   tone?: 'error' | 'neutral'
 }) {
+  if (tone === 'error') return null
+
   return (
-    <div
-      className={`rounded-lg border border-dashed px-5 py-10 text-center text-sm ${
-        tone === 'error'
-          ? 'border-red-200 bg-red-50 text-red-700'
-          : 'border-slate-300 bg-white text-slate-600'
-      }`}
-      role={tone === 'error' ? 'alert' : undefined}
-    >
+    <div className="rounded-lg border border-dashed border-slate-300 bg-white px-5 py-10 text-center text-sm text-slate-600">
       {message}
     </div>
   )
