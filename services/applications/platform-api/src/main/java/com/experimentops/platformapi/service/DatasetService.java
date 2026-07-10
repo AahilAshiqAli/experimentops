@@ -253,20 +253,39 @@ public class DatasetService {
     }
 
     @NonNull
-    public DatasetDetailResponseModel getDataset(@NonNull String uuid, @NonNull String projectUuid, Integer page, Integer size, @NonNull ExperimentOpsHeaders headers) {
+    public DatasetDetailResponseModel getDataset(@NonNull String uuid, @NonNull String projectUuid, Integer page, Integer size, String scanStatus, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "getting dataset with uuid " + uuid);
         Dataset dataset = datasetRepository
                 .findByUuidAndProjectUuidAndWorkspaceUuidAndStatusAndEnabled(uuid, projectUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
                 .orElseThrow(() -> new EntityNotFoundException(DATASET_UUID, uuid));
         Pageable pageable = PaginationUtil.createPageRequest(page, size);
-        Page<DatasetVersion> datasetVersionPage = datasetVersionRepository
-                .findAllByDatasetUuidAndWorkspaceUuidAndStatusAndEnabledOrderByCreationDateDesc(
+        DatasetScanStatusEnum datasetScanStatus = getDatasetScanStatus(scanStatus);
+        Page<DatasetVersion> datasetVersionPage = datasetScanStatus == null
+                ? datasetVersionRepository.findAllByDatasetUuidAndWorkspaceUuidAndStatusAndEnabledOrderByCreationDateDesc(
                         dataset.getUuid(),
                         headers.getWorkspaceUuid(),
                         StatusEnum.ACTIVE,
                         true,
+                        pageable)
+                : datasetVersionRepository.findAllByDatasetUuidAndWorkspaceUuidAndStatusAndScanStatusAndEnabledOrderByCreationDateDesc(
+                        dataset.getUuid(),
+                        headers.getWorkspaceUuid(),
+                        StatusEnum.ACTIVE,
+                        datasetScanStatus,
+                        true,
                         pageable);
         return datasetTransformer.transformDatasetDetailResponseModel(dataset, datasetVersionPage.getContent(), datasetVersionPage.getTotalElements(), headers);
+    }
+
+    private DatasetScanStatusEnum getDatasetScanStatus(String scanStatus) {
+        if (StringUtils.isBlank(scanStatus)) {
+            return null;
+        }
+        DatasetScanStatusEnum datasetScanStatus = DatasetScanStatusEnum.of(scanStatus);
+        if (datasetScanStatus == null) {
+            throw new ValidationException(INVALID_INPUTS, "scanStatus");
+        }
+        return datasetScanStatus;
     }
 
     @NonNull

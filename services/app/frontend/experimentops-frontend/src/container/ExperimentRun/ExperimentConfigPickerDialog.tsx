@@ -1,34 +1,27 @@
 import { DataTable } from '../../components/DataTable'
-import { useQueryExperimentConfigs } from '../../queries'
+import { TableSkeleton } from '../../components/TableSkeleton'
 import type { ExperimentConfig } from '../../services/experimentConfig.service'
-import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
-import { getExperimentConfigColumns } from './columns'
+import { getExperimentConfigColumns } from '../ExperimentConfigs/columns'
 import { SectionState } from '../ProjectDetails/projectDetails.shared'
-import { TableSkeleton } from './TableSkeleton'
+import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
 
 export function ExperimentConfigPickerDialog({
+  configs,
+  error,
   experimentType,
-  experimentUuid,
+  isLoading,
   onClose,
   onSelect,
   selectedConfigUuids,
 }: {
+  configs: ExperimentConfig[]
+  error: unknown
   experimentType: string
-  experimentUuid: string
+  isLoading: boolean
   onClose: () => void
   onSelect: (config: ExperimentConfig) => void
   selectedConfigUuids: string[]
 }) {
-  const configsQuery = useQueryExperimentConfigs(
-    experimentUuid,
-    {
-      experimentType,
-      page: 0,
-      size: 100,
-    },
-    { enabled: Boolean(experimentType) },
-  )
-
   return (
     <div
       aria-labelledby="config-picker-title"
@@ -60,12 +53,12 @@ export function ExperimentConfigPickerDialog({
         </div>
 
         <div className="mt-6 overflow-y-auto">
-          {configsQuery.isLoading ? (
+          {isLoading ? (
             <TableSkeleton />
-          ) : configsQuery.error ? (
+          ) : error ? (
             <SectionState
               message={getErrorMessage(
-                configsQuery.error,
+                error,
                 'Unable to load experiment configs. Please try again.',
               )}
               tone="error"
@@ -77,7 +70,7 @@ export function ExperimentConfigPickerDialog({
                 selectable: true,
                 selectedConfigUuids,
               })}
-              data={configsQuery.data?.data ?? []}
+              data={configs}
               emptyMessage="No configs were found for this experiment type."
               getRowKey={(config) => config.uuid}
               onRowClick={onSelect}

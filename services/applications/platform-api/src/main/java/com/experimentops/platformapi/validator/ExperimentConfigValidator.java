@@ -56,18 +56,10 @@ public class ExperimentConfigValidator extends GenericValidator {
 
     private @NonNull Map<String, ExperimentTypeDefaultConfig> getDefaultConfigByName(@NonNull ExperimentType experimentType) {
         List<ExperimentTypeDefaultConfig> defaultConfig = experimentType.getDefaultConfig();
-        if (ExperimentOpsUtils.isEmpty(defaultConfig)) {
-            throw new ValidationException(ErrorCode.INVALID_INPUTS, "experimentType.defaultConfig");
-        }
 
         Map<String, ExperimentTypeDefaultConfig> expectedConfig = new HashMap<>();
         for (ExperimentTypeDefaultConfig defaultConfigItem : defaultConfig) {
-            if (defaultConfigItem == null || defaultConfigItem.getName() == null || defaultConfigItem.getDatatype() == null) {
-                throw new ValidationException(ErrorCode.INVALID_INPUTS, "experimentType.defaultConfig");
-            }
-            if (expectedConfig.put(defaultConfigItem.getName(), defaultConfigItem) != null) {
-                throw new ValidationException(ErrorCode.INVALID_INPUTS, "experimentType.defaultConfig." + defaultConfigItem.getName());
-            }
+            expectedConfig.put(defaultConfigItem.getName(), defaultConfigItem);
         }
         return expectedConfig;
     }

@@ -135,6 +135,13 @@ components:
             - name: "normalizeColumnNames"
               datatype: "boolean"
               defaultValue: true
+        formatMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentTypeFormatMappingModel'
+          example:
+            - inputFormat: "CSV"
+              outputFormat: "CSV"
         status:
           type: string
           example: "ACTIVE"
@@ -151,6 +158,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExperimentTypeDefaultConfigModel'
+        formatMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentTypeFormatMappingModel'
     ExperimentTypeDefaultConfigModel:
       type: object
       properties:
@@ -173,6 +184,23 @@ components:
           type: string
           nullable: true
           example: "^[A-Za-z_][A-Za-z0-9_]*$"
+    ExperimentTypeFormatMappingModel:
+      type: object
+      properties:
+        inputFormat:
+          type: string
+          enum:
+            - CSV
+            - EXCEL
+            - TEXT
+          example: "CSV"
+        outputFormat:
+          type: string
+          enum:
+            - CSV
+            - EXCEL
+            - TEXT
+          example: "CSV"
     ExperimentTypeStatusChangeRequestModel:
       type: object
       properties:

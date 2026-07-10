@@ -1,12 +1,26 @@
 import { useState, type PointerEvent } from 'react'
 
-import type { ExperimentConfig } from '../../services/experimentConfig.service'
-import type {
-  BoardPoint,
-  DraggingCard,
-  DrawingConnection,
-  PipelineConnection,
-} from './experimentRunBuilder.types'
+import type { ExperimentConfig } from '../services/experimentConfig.service'
+
+export type PipelineConnection = {
+  fromUuid: string
+  toUuid: string
+}
+
+type BoardPoint = {
+  x: number
+  y: number
+}
+
+type DrawingConnection = {
+  fromUuid: string
+  pointer: BoardPoint
+}
+
+type DraggingCard = {
+  offset: BoardPoint
+  uuid: string
+}
 
 const BOARD_NODE_HEIGHT = 96
 const BOARD_NODE_WIDTH_PERCENT = 18
@@ -317,7 +331,8 @@ export function PipelineBoard({
         </>
       ) : (
         <div className="flex h-full min-h-[36rem] items-center justify-center px-6 text-center text-sm text-slate-500">
-          Move configs from Available configs to begin sketching the workflow. Drag card to move. Drag corner dot to connect.
+          Move configs from Available configs to begin sketching the workflow.
+          Drag card to move. Drag corner dot to connect.
         </div>
       )}
     </div>

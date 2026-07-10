@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { DataTable } from '../../components/DataTable'
+import { TableSkeleton } from '../../components/TableSkeleton'
 import { useLogin } from '../../context-api/logincontext'
 import { useDocumentTitle } from '../../hooks'
 import {
@@ -229,17 +230,6 @@ function CreateExperimentDialog({
           </div>
         </form>
       </div>
-    </div>
-  )
-}
-
-function TableSkeleton() {
-  return (
-    <div className="space-y-2" role="status">
-      <div className="h-12 animate-pulse rounded bg-slate-100" />
-      <div className="h-20 animate-pulse rounded bg-slate-100" />
-      <div className="h-20 animate-pulse rounded bg-slate-100" />
-      <span className="sr-only">Loading experiments</span>
     </div>
   )
 }

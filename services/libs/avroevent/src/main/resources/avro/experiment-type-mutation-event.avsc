@@ -13,6 +13,7 @@
           "fields": [
             { "name": "name", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "defaultConfig", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "formatMappings", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "status", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
           ]
         }

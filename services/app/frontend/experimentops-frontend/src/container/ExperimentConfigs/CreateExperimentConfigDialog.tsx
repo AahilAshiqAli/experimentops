@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 
 import { JsonEditor } from '../../components/JsonViewer'
 import type { ExperimentType } from '../../services/experimentType.service'
+import { getExperimentConfigValidationErrors } from './configValidation'
 
 function buildDefaultConfig(experimentType: ExperimentType) {
   return Object.fromEntries(
@@ -37,6 +38,14 @@ export function CreateExperimentConfigDialog({
   > | null>(null)
   const selectedType =
     experimentTypes.find((type) => type.uuid === selectedTypeUuid) ?? null
+  const regexValidationErrors = useMemo(
+    () =>
+      configDraft
+        ? getExperimentConfigValidationErrors(configDraft, selectedType)
+        : [],
+    [configDraft, selectedType],
+  )
+  const hasValidationErrors = regexValidationErrors.length > 0
 
   const handleSelectType = (uuid: string) => {
     setSelectedTypeUuid(uuid)
@@ -46,7 +55,7 @@ export function CreateExperimentConfigDialog({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!selectedType || !configDraft) return
+    if (!selectedType || !configDraft || hasValidationErrors) return
 
     onSubmit({
       config: configDraft,
@@ -116,6 +125,32 @@ export function CreateExperimentConfigDialog({
             </select>
           </label>
 
+          {selectedType ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <span className="block text-sm font-semibold text-secondary">
+                Supported formats
+              </span>
+              {selectedType.formatMappings.length ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selectedType.formatMappings.map((mapping) => (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-white px-2.5 py-1 text-xs font-semibold text-secondary"
+                      key={`${mapping.inputFormat}-${mapping.outputFormat}`}
+                    >
+                      <span>{mapping.inputFormat}</span>
+                      <span className="text-slate-400">→</span>
+                      <span>{mapping.outputFormat}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 text-sm text-slate-500">
+                  No format restrictions configured.
+                </p>
+              )}
+            </div>
+          ) : null}
+
           {configDraft ? (
             <div>
               <span className="block text-sm font-medium text-secondary">
@@ -129,6 +164,18 @@ export function CreateExperimentConfigDialog({
                   value={configDraft}
                 />
               </div>
+              {hasValidationErrors ? (
+                <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  <p className="font-semibold">
+                    Fix config validation before creating this config.
+                  </p>
+                  <ul className="mt-1 list-disc space-y-1 pl-5">
+                    {regexValidationErrors.map((error) => (
+                      <li key={error}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -143,7 +190,9 @@ export function CreateExperimentConfigDialog({
             </button>
             <button
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isPending || !configDraft || !name.trim()}
+              disabled={
+                isPending || !configDraft || !name.trim() || hasValidationErrors
+              }
               type="submit"
             >
               {isPending ? 'Creating…' : 'Create config'}

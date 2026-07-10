@@ -12,10 +12,12 @@ import com.experimentops.platformapi.model.entity.ExperimentConfig;
 import com.experimentops.platformapi.model.entity.ExperimentType;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.ExperimentConfigTransformer;
+import com.experimentops.platformapi.transformer.ExperimentTypeTransformer;
 import com.experimentops.platformapi.validator.ExperimentConfigValidator;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +35,7 @@ public class ExperimentConfigService {
     private final ExperimentConfigValidator experimentConfigValidator;
     private final ExperimentConfigRepository experimentConfigRepository;
     private final ExperimentConfigTransformer experimentConfigTransformer;
+    private final ExperimentTypeTransformer experimentTypeTransformer;
     private final ExperimentTypeRepository experimentTypeRepository;
 
     @NonNull
@@ -65,13 +68,20 @@ public class ExperimentConfigService {
     }
 
     @NonNull
-    public ExperimentConfigListResponseModel getExperimentConfigList(@NonNull String experimentUuid, Integer page, Integer size, @NonNull ExperimentOpsHeaders headers) {
+    public ExperimentConfigListResponseModel getExperimentConfigList(@NonNull String experimentUuid, Integer page, Integer size, String experimentType, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "getting experiment config list for experiment uuid " + experimentUuid);
         Pageable pageable = PaginationUtil.createPageRequest(page, size);
-        Page<ExperimentConfig> experimentConfigPage = experimentConfigRepository
-                .findAllByExperimentUuidAndWorkspaceUuidAndStatusAndEnabledOrderByLastUpdatedDesc(
+        Page<ExperimentConfig> experimentConfigPage = StringUtils.isBlank(experimentType)
+                ? experimentConfigRepository.findAllByExperimentUuidAndWorkspaceUuidAndStatusAndEnabledOrderByLastUpdatedDesc(
                         experimentUuid,
                         headers.getWorkspaceUuid(),
+                        StatusEnum.ACTIVE,
+                        true,
+                        pageable)
+                : experimentConfigRepository.findAllByExperimentUuidAndWorkspaceUuidAndExperimentTypeAndStatusAndEnabledOrderByLastUpdatedDesc(
+                        experimentUuid,
+                        headers.getWorkspaceUuid(),
+                        experimentTypeTransformer.normalizeExperimentTypeName(experimentType),
                         StatusEnum.ACTIVE,
                         true,
                         pageable);

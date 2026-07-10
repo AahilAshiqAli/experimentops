@@ -1,7 +1,5 @@
-import { useState } from 'react'
-
 import { DataTable } from '../../components/DataTable'
-import { useQueryDataset, useQueryProjectDatasets } from '../../queries'
+import { TableSkeleton } from '../../components/TableSkeleton'
 import type { Dataset, DatasetVersion } from '../../services/dataset.service'
 import { getDatasetVersionColumns } from '../DatasetDetails/columns'
 import {
@@ -11,46 +9,46 @@ import {
   SectionState,
 } from '../ProjectDetails/projectDetails.shared'
 import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
-import { TableSkeleton } from './TableSkeleton'
 
 export function DatasetVersionPickerDialog({
+  datasetPickerPage,
+  datasetPickerSearch,
+  datasetPickerTotalPages,
+  datasetVersions,
+  datasetVersionsError,
+  isDatasetVersionsLoading,
+  isDatasetsLoading,
+  datasetsError,
+  filteredDatasets,
+  openedDataset,
   onClose,
+  onDatasetPickerPageChange,
+  onDatasetPickerSearchChange,
+  onOpenDataset,
   onSelect,
   projectUuid,
   selectedVersionUuid,
+  totalDatasetVersions,
 }: {
+  datasetPickerPage: number
+  datasetPickerSearch: string
+  datasetPickerTotalPages: number
+  datasetVersions: DatasetVersion[]
+  datasetVersionsError: unknown
+  isDatasetVersionsLoading: boolean
+  isDatasetsLoading: boolean
+  datasetsError: unknown
+  filteredDatasets: Dataset[]
+  openedDataset: Dataset | null
   onClose: () => void
+  onDatasetPickerPageChange: (page: number) => void
+  onDatasetPickerSearchChange: (search: string) => void
+  onOpenDataset: (dataset: Dataset | null) => void
   onSelect: (dataset: Dataset, version: DatasetVersion) => void
   projectUuid: string
   selectedVersionUuid?: string
+  totalDatasetVersions: number
 }) {
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [openedDataset, setOpenedDataset] = useState<Dataset | null>(null)
-  const datasetsQuery = useQueryProjectDatasets(projectUuid, {
-    page: page - 1,
-    size: 9,
-  })
-  const datasetQuery = useQueryDataset(
-    projectUuid,
-    openedDataset?.datasetUuid,
-    {
-      page: 0,
-      scanStatus: 'COMPLETED',
-      size: 100,
-    },
-  )
-  const datasets = datasetsQuery.data?.data ?? []
-  const filteredDatasets = search.trim()
-    ? datasets.filter((dataset) =>
-        dataset.name.toLowerCase().includes(search.trim().toLowerCase()),
-      )
-    : datasets
-  const totalDatasets = search
-    ? filteredDatasets.length
-    : (datasetsQuery.data?.totalElements ?? 0)
-  const totalPages = Math.max(1, Math.ceil(totalDatasets / 9))
-
   return (
     <div
       aria-labelledby="dataset-picker-title"
@@ -87,7 +85,7 @@ export function DatasetVersionPickerDialog({
             <>
               <button
                 className="text-sm font-semibold text-primary hover:underline"
-                onClick={() => setOpenedDataset(null)}
+                onClick={() => onOpenDataset(null)}
                 type="button"
               >
                 ← Dataset folders
@@ -105,12 +103,12 @@ export function DatasetVersionPickerDialog({
               </div>
 
               <div className="mt-6">
-                {datasetQuery.isLoading ? (
+                {isDatasetVersionsLoading ? (
                   <TableSkeleton />
-                ) : datasetQuery.error ? (
+                ) : datasetVersionsError ? (
                   <SectionState
                     message={getErrorMessage(
-                      datasetQuery.error,
+                      datasetVersionsError,
                       'Unable to load dataset versions. Please try again.',
                     )}
                     tone="error"
@@ -123,9 +121,9 @@ export function DatasetVersionPickerDialog({
                       pendingUuid: null,
                       selectable: true,
                       selectedVersionUuid,
-                      totalElements: datasetQuery.data?.totalElements ?? 0,
+                      totalElements: totalDatasetVersions,
                     })}
-                    data={datasetQuery.data?.versions ?? []}
+                    data={datasetVersions}
                     emptyMessage="No completed versions are available in this dataset folder."
                     getRowKey={(version) => version.datasetVersionUuid}
                     onRowClick={(version) => onSelect(openedDataset, version)}
@@ -149,19 +147,18 @@ export function DatasetVersionPickerDialog({
                   <span className="sr-only">Search dataset folders</span>
                   <input
                     className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    onChange={(event) => {
-                      setSearch(event.target.value)
-                      setPage(1)
-                    }}
+                    onChange={(event) =>
+                      onDatasetPickerSearchChange(event.target.value)
+                    }
                     placeholder="Search dataset folders..."
                     type="search"
-                    value={search}
+                    value={datasetPickerSearch}
                   />
                 </label>
               </div>
 
               <div className="mt-6">
-                {datasetsQuery.isLoading ? (
+                {isDatasetsLoading ? (
                   <div
                     className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
                     role="status"
@@ -174,10 +171,10 @@ export function DatasetVersionPickerDialog({
                     ))}
                     <span className="sr-only">Loading dataset folders</span>
                   </div>
-                ) : datasetsQuery.error ? (
+                ) : datasetsError ? (
                   <SectionState
                     message={getErrorMessage(
-                      datasetsQuery.error,
+                      datasetsError,
                       'Unable to load dataset folders. Please try again.',
                     )}
                     tone="error"
@@ -189,23 +186,26 @@ export function DatasetVersionPickerDialog({
                         <DatasetFolderCard
                           dataset={dataset}
                           key={dataset.datasetUuid}
-                          onOpen={setOpenedDataset}
+                          onOpen={onOpenDataset}
                           projectUuid={projectUuid}
                         />
                       ))}
                     </div>
                     <div className="mt-6">
                       <Pagination
-                        onPageChange={setPage}
-                        page={Math.min(page, totalPages)}
-                        totalPages={totalPages}
+                        onPageChange={onDatasetPickerPageChange}
+                        page={Math.min(
+                          datasetPickerPage,
+                          datasetPickerTotalPages,
+                        )}
+                        totalPages={datasetPickerTotalPages}
                       />
                     </div>
                   </>
                 ) : (
                   <SectionState
                     message={
-                      search
+                      datasetPickerSearch
                         ? 'No dataset folders match your search.'
                         : 'No dataset folders have been created yet.'
                     }

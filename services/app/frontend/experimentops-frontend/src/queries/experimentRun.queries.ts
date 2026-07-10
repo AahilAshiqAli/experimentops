@@ -4,6 +4,8 @@ import { useLogin } from '../context-api/logincontext'
 import {
   createExperimentRun,
   type CreateExperimentRunInput,
+  validateExperimentRun,
+  type ValidateExperimentRunInput,
 } from '../services/experimentRun.service'
 
 export function useMutationCreateExperimentRun(experimentUuid: string) {
@@ -18,5 +20,14 @@ export function useMutationCreateExperimentRun(experimentUuid: string) {
         queryKey: ['experiments', experimentUuid, 'runs'],
       })
     },
+  })
+}
+
+export function useMutationValidateExperimentRun(experimentUuid: string) {
+  const { accessToken } = useLogin()
+
+  return useMutation({
+    mutationFn: (input: ValidateExperimentRunInput) =>
+      validateExperimentRun(accessToken as string, experimentUuid, input),
   })
 }

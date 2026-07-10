@@ -3,6 +3,7 @@ package com.experimentops.platformapi.validator;
 import com.experimentops.common.exceptions.constant.ErrorCode;
 import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.experiment.type.model.v1.ExperimentTypeDefaultConfigModel;
+import com.experimentops.experiment.type.model.v1.ExperimentTypeFormatMappingModel;
 import com.experimentops.experiment.type.model.v1.ExperimentTypeRequestModel;
 import org.openapitools.jackson.nullable.JsonNullable;
 import org.jspecify.annotations.NonNull;
@@ -18,6 +19,7 @@ public class ExperimentTypeValidator extends GenericValidator {
     public void validateExperimentTypeRequestModel(@NonNull ExperimentTypeRequestModel requestModel) {
         validateInputString("name", requestModel.getName());
         validateDefaultConfig(requestModel.getDefaultConfig());
+        validateFormatMappings(requestModel.getFormatMappings());
     }
 
     private void validateDefaultConfig(List<ExperimentTypeDefaultConfigModel> defaultConfig) {
@@ -25,6 +27,25 @@ public class ExperimentTypeValidator extends GenericValidator {
             throw new ValidationException(ErrorCode.REQUIRED_FIELD_MISSING, "defaultConfig");
         }
         defaultConfig.forEach(this::validateDefaultConfigItem);
+    }
+
+    private void validateFormatMappings(List<ExperimentTypeFormatMappingModel> formatMappings) {
+        if (formatMappings == null || formatMappings.isEmpty()) {
+            throw new ValidationException(ErrorCode.REQUIRED_FIELD_MISSING, "formatMappings");
+        }
+        formatMappings.forEach(this::validateFormatMappingItem);
+    }
+
+    private void validateFormatMappingItem(ExperimentTypeFormatMappingModel formatMapping) {
+        if (formatMapping == null) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "formatMappings item");
+        }
+        if (formatMapping.getInputFormat() == null) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "formatMappings.inputFormat");
+        }
+        if (formatMapping.getOutputFormat() == null) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "formatMappings.outputFormat");
+        }
     }
 
     private void validateDefaultConfigItem(ExperimentTypeDefaultConfigModel configItem) {

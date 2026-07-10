@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import { PipelineBoard } from '../../components/PipelineBoard'
 import { useDocumentTitle } from '../../hooks'
 import {
   PageSkeleton,
@@ -9,11 +10,10 @@ import {
 import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
 import { DatasetVersionPickerDialog } from './DatasetVersionPickerDialog'
 import { ExperimentConfigPickerDialog } from './ExperimentConfigPickerDialog'
-import { PipelineBoard } from './PipelineBoard'
-import { useCreateExperimentRunContainer } from './useCreateExperimentRunContainer'
+import { useExperimentRunContainer } from './useExperimentRunContainer'
 
 export function CreateExperimentRun() {
-  const container = useCreateExperimentRunContainer()
+  const container = useExperimentRunContainer()
 
   useDocumentTitle('Create experiment run')
 
@@ -207,6 +207,8 @@ export function CreateExperimentRun() {
             className="mt-6 w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={
               container.createRunMutation.isPending ||
+              container.validateRunMutation.isPending ||
+              Boolean(container.validateRunMutation.error) ||
               !container.selectedDatasetVersion ||
               !container.isPipelineReady
             }
@@ -222,7 +224,6 @@ export function CreateExperimentRun() {
           aria-label="Pipeline builder board"
           className="flex min-h-[calc(100vh-12rem)] flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
         >
-
           <PipelineBoard
             configs={container.boardConfigs}
             connections={container.connections}
@@ -237,23 +238,61 @@ export function CreateExperimentRun() {
               Connect every board config into one chain before creating the run.
             </p>
           ) : null}
+          {container.isPipelineReady && container.selectedDatasetVersion ? (
+            container.validateRunMutation.isPending ? (
+              <p className="mt-4 rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-800">
+                Validating this pipeline with the selected dataset…
+              </p>
+            ) : container.validateRunMutation.error ? (
+              <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+                {getErrorMessage(
+                  container.validateRunMutation.error,
+                  'This pipeline is not valid for the selected dataset.',
+                )}
+              </p>
+            ) : container.validateRunMutation.isSuccess ? (
+              <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                Pipeline validation passed.
+              </p>
+            ) : null
+          ) : null}
         </main>
       </form>
 
       {container.isDatasetPickerOpen ? (
         <DatasetVersionPickerDialog
+          datasetPickerPage={container.datasetPickerPage}
+          datasetPickerSearch={container.datasetPickerSearch}
+          datasetPickerTotalPages={container.datasetPickerTotalPages}
+          datasetVersions={container.datasetVersionsQuery.data?.versions ?? []}
+          datasetVersionsError={container.datasetVersionsQuery.error}
+          datasetsError={container.datasetsQuery.error}
+          filteredDatasets={container.filteredDatasets}
+          isDatasetVersionsLoading={container.datasetVersionsQuery.isLoading}
+          isDatasetsLoading={container.datasetsQuery.isLoading}
+          openedDataset={container.openedDataset}
           onClose={() => container.setIsDatasetPickerOpen(false)}
+          onDatasetPickerPageChange={container.setDatasetPickerPage}
+          onDatasetPickerSearchChange={
+            container.handleDatasetPickerSearchChange
+          }
+          onOpenDataset={container.setOpenedDataset}
           onSelect={container.handleSelectDatasetVersion}
           projectUuid={container.projectUuid ?? ''}
           selectedVersionUuid={
             container.selectedDatasetVersion?.datasetVersionUuid
           }
+          totalDatasetVersions={
+            container.datasetVersionsQuery.data?.totalElements ?? 0
+          }
         />
       ) : null}
       {container.isConfigPickerOpen ? (
         <ExperimentConfigPickerDialog
+          configs={container.configPickerQuery.data?.data ?? []}
+          error={container.configPickerQuery.error}
           experimentType={container.selectedExperimentType}
-          experimentUuid={container.experimentUuid ?? ''}
+          isLoading={container.configPickerQuery.isLoading}
           onClose={() => container.setIsConfigPickerOpen(false)}
           onSelect={(config) => {
             container.handleSelectConfig(config)

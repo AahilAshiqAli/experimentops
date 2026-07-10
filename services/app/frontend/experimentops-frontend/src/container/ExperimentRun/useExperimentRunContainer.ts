@@ -1,15 +1,19 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import type { PipelineConnection } from '../../components/PipelineBoard'
 import {
   useMutationCreateExperimentRun,
+  useMutationValidateExperimentRun,
   useQueryExperimentTypes,
   useQueryProject,
+  useQueryExperimentConfigs,
+  useQueryDataset,
+  useQueryProjectDatasets,
 } from '../../queries'
 import type { Dataset, DatasetVersion } from '../../services/dataset.service'
 import type { ExperimentConfig } from '../../services/experimentConfig.service'
 import { Toaster } from '../../services/toaster.service'
-import type { PipelineConnection } from './experimentRunBuilder.types'
 
 function getPipelineOrder(
   configs: ExperimentConfig[],
@@ -48,7 +52,7 @@ function getPipelineOrder(
   return order.length === configs.length ? order : []
 }
 
-export function useCreateExperimentRunContainer() {
+export function useExperimentRunContainer() {
   const { experimentUuid, projectUuid } = useParams<{
     experimentUuid: string
     projectUuid: string
@@ -57,6 +61,9 @@ export function useCreateExperimentRunContainer() {
   const projectQuery = useQueryProject(projectUuid)
   const experimentTypesQuery = useQueryExperimentTypes()
   const createRunMutation = useMutationCreateExperimentRun(experimentUuid ?? '')
+  const validateRunMutation = useMutationValidateExperimentRun(
+    experimentUuid ?? '',
+  )
   const [isDatasetPickerOpen, setIsDatasetPickerOpen] = useState(false)
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null)
   const [selectedDatasetVersion, setSelectedDatasetVersion] =
@@ -66,19 +73,89 @@ export function useCreateExperimentRunContainer() {
   const [selectedConfigs, setSelectedConfigs] = useState<ExperimentConfig[]>([])
   const [boardConfigUuids, setBoardConfigUuids] = useState<string[]>([])
   const [connections, setConnections] = useState<PipelineConnection[]>([])
-
-  const boardConfigs = boardConfigUuids
-    .map((uuid) => selectedConfigs.find((config) => config.uuid === uuid))
-    .filter((config): config is ExperimentConfig => Boolean(config))
-  const availableConfigs = selectedConfigs.filter(
-    (config) => !boardConfigUuids.includes(config.uuid),
+  const [datasetPickerPage, setDatasetPickerPage] = useState(1)
+  const [datasetPickerSearch, setDatasetPickerSearch] = useState('')
+  const [openedDataset, setOpenedDataset] = useState<Dataset | null>(null)
+  const datasetsQuery = useQueryProjectDatasets(projectUuid, {
+    page: datasetPickerPage - 1,
+    size: 9,
+  })
+  const datasetVersionsQuery = useQueryDataset(
+    projectUuid,
+    openedDataset?.datasetUuid,
+    {
+      page: 0,
+      scanStatus: 'COMPLETED',
+      size: 100,
+    },
   )
-  const pipelineOrder = getPipelineOrder(boardConfigs, connections)
+  const configPickerQuery = useQueryExperimentConfigs(
+    experimentUuid,
+    {
+      experimentType: selectedExperimentType,
+      page: 0,
+      size: 100,
+    },
+    { enabled: Boolean(isConfigPickerOpen && selectedExperimentType) },
+  )
+
+  const boardConfigs = useMemo(
+    () =>
+      boardConfigUuids
+        .map((uuid) => selectedConfigs.find((config) => config.uuid === uuid))
+        .filter((config): config is ExperimentConfig => Boolean(config)),
+    [boardConfigUuids, selectedConfigs],
+  )
+  const availableConfigs = useMemo(
+    () =>
+      selectedConfigs.filter(
+        (config) => !boardConfigUuids.includes(config.uuid),
+      ),
+    [boardConfigUuids, selectedConfigs],
+  )
+  const pipelineOrder = useMemo(
+    () => getPipelineOrder(boardConfigs, connections),
+    [boardConfigs, connections],
+  )
+  const datasets = datasetsQuery.data?.data ?? []
+  const filteredDatasets = datasetPickerSearch.trim()
+    ? datasets.filter((dataset) =>
+        dataset.name
+          .toLowerCase()
+          .includes(datasetPickerSearch.trim().toLowerCase()),
+      )
+    : datasets
+  const totalDatasets = datasetPickerSearch
+    ? filteredDatasets.length
+    : (datasetsQuery.data?.totalElements ?? 0)
+  const datasetPickerTotalPages = Math.max(1, Math.ceil(totalDatasets / 9))
   const isPipelineReady =
     boardConfigs.length > 0 &&
     pipelineOrder.length === boardConfigs.length &&
     (boardConfigs.length === 1 ||
       connections.length === boardConfigs.length - 1)
+  const validateRunInput = useMemo(() => {
+    if (!selectedDatasetVersion || !isPipelineReady) return null
+
+    return {
+      datasetVersionUuid: selectedDatasetVersion.datasetVersionUuid,
+      executionMode: pipelineOrder.map((config, index) => ({
+        experimentConfigUuid: config.uuid,
+        stepCount: index + 1,
+      })),
+    }
+  }, [isPipelineReady, pipelineOrder, selectedDatasetVersion])
+  const validateRun = validateRunMutation.mutate
+  const resetRunValidation = validateRunMutation.reset
+
+  useEffect(() => {
+    if (!validateRunInput) {
+      resetRunValidation()
+      return
+    }
+
+    validateRun(validateRunInput)
+  }, [resetRunValidation, validateRun, validateRunInput])
 
   const handleSelectConfig = (config: ExperimentConfig) => {
     setSelectedConfigs((current) =>
@@ -155,9 +232,21 @@ export function useCreateExperimentRunContainer() {
     setIsDatasetPickerOpen(false)
   }
 
+  const handleDatasetPickerSearchChange = (search: string) => {
+    setDatasetPickerSearch(search)
+    setDatasetPickerPage(1)
+  }
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!selectedDatasetVersion || !isPipelineReady) return
+    if (
+      !selectedDatasetVersion ||
+      !isPipelineReady ||
+      validateRunMutation.isPending ||
+      validateRunMutation.error
+    ) {
+      return
+    }
 
     createRunMutation.mutate(
       {
@@ -188,11 +277,19 @@ export function useCreateExperimentRunContainer() {
   return {
     availableConfigs,
     boardConfigs,
+    configPickerQuery,
     connections,
     createRunMutation,
+    datasetPickerPage,
+    datasetPickerSearch,
+    datasetPickerTotalPages,
+    datasetVersionsQuery,
+    datasetsQuery,
     experimentTypesQuery,
     experimentUuid,
+    filteredDatasets,
     handleConnect,
+    handleDatasetPickerSearchChange,
     handleMoveConfigToBoard,
     handleRemoveConfig,
     handleRemoveConnection,
@@ -203,6 +300,7 @@ export function useCreateExperimentRunContainer() {
     isConfigPickerOpen,
     isDatasetPickerOpen,
     isPipelineReady,
+    openedDataset,
     pipelineOrder,
     projectQuery,
     projectUuid,
@@ -210,8 +308,11 @@ export function useCreateExperimentRunContainer() {
     selectedDataset,
     selectedDatasetVersion,
     selectedExperimentType,
+    setDatasetPickerPage,
     setIsConfigPickerOpen,
     setIsDatasetPickerOpen,
+    setOpenedDataset,
     setSelectedExperimentType,
+    validateRunMutation,
   }
 }

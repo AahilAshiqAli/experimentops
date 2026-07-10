@@ -5,22 +5,29 @@ import com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent;
 import com.experimentops.common.kafka.utils.ExperimentOpsMetadataUtil;
 import com.experimentops.experiment.run.event.ExperimentRunEvent;
 import com.experimentops.experiment.run.event.ExperimentRunEventPayload;
+import com.experimentops.experiment.run.model.v1.ExperimentRunExecutionModeModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunResponseModel;
+import com.experimentops.platformapi.dal.repository.ExperimentConfigWithTypeProjection;
+import com.experimentops.platformapi.model.ExperimentRunConfigContext;
 import com.experimentops.platformapi.model.ExperimentRunExecutionConfig;
 import com.experimentops.platformapi.model.entity.DatasetVersion;
 import com.experimentops.platformapi.model.entity.ExecutionMode;
 import com.experimentops.platformapi.model.entity.Experiment;
 import com.experimentops.platformapi.model.entity.ExperimentRun;
+import com.experimentops.platformapi.model.entity.ExperimentTypeFormatMapping;
 import com.experimentops.platformapi.model.entity.RunDataset;
 import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.ExperimentOpsUtils;
 import com.experimentops.utils.JSONUtil;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class ExperimentRunTransformer {
@@ -77,6 +84,54 @@ public class ExperimentRunTransformer {
         experimentRun.setUuid(ExperimentOpsUtils.uuid());
 
         return experimentRun;
+    }
+
+    @NonNull
+    public List<ExecutionMode> transformExecutionMode(@NonNull List<ExperimentRunExecutionModeModel> executionMode) {
+        return executionMode
+                .stream()
+                .map(executionModeItem -> ExecutionMode
+                        .builder()
+                        .stepCount(executionModeItem.getStepCount())
+                        .experimentConfigUuid(executionModeItem.getExperimentConfigUuid())
+                        .build())
+                .toList();
+    }
+
+    @NonNull
+    public List<ExperimentRunExecutionConfig> transformExperimentRunExecutionConfigs(
+            @NonNull List<ExperimentRunExecutionModeModel> executionMode,
+            @NonNull Map<String, ExperimentRunConfigContext> experimentConfigsByUuid) {
+
+        return executionMode
+                .stream()
+                .map(executionModeItem -> {
+                    ExperimentRunConfigContext experimentConfig = experimentConfigsByUuid.get(executionModeItem.getExperimentConfigUuid());
+                    return ExperimentRunExecutionConfig
+                            .builder()
+                            .stepCount(executionModeItem.getStepCount())
+                            .experimentType(experimentConfig.getExperimentType())
+                            .experimentConfigJson(experimentConfig.getExperimentConfigJson())
+                            .build();
+                })
+                .toList();
+    }
+
+    @NonNull
+    public ExperimentRunConfigContext transformExperimentRunConfigContext(@NonNull ExperimentConfigWithTypeProjection projection) {
+        JsonNode experimentConfigJson = StringUtils.isBlank(projection.getConfig())
+                ? null
+                : JSONUtil.toObjectFromTypedJson(projection.getConfig(), JsonNode.class);
+        List<ExperimentTypeFormatMapping> formatMappings = StringUtils.isBlank(projection.getFormatMappings())
+                ? List.of()
+                : JSONUtil.toListFromTypedJson(projection.getFormatMappings(), ExperimentTypeFormatMapping.class);
+        return ExperimentRunConfigContext
+                .builder()
+                .experimentConfigUuid(projection.getExperimentConfigUuid())
+                .experimentType(projection.getExperimentType())
+                .experimentConfigJson(experimentConfigJson)
+                .formatMappings(formatMappings)
+                .build();
     }
 
     @NonNull

@@ -13,9 +13,11 @@ import com.experimentops.platformapi.dal.repository.ExperimentConfigRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentRunRepository;
 import com.experimentops.platformapi.dal.repository.RunDatasetRepository;
+import com.experimentops.platformapi.model.ExperimentRunConfigContext;
 import com.experimentops.platformapi.model.ExperimentRunExecutionConfig;
 import com.experimentops.platformapi.model.entity.*;
 import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
+import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.ExperimentRunTransformer;
 import com.experimentops.platformapi.validator.ExperimentRunValidator;
 import com.experimentops.utils.ExperimentOpsLogger;
@@ -29,7 +31,6 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,17 +61,6 @@ public class ExperimentRunService {
                 .stream()
                 .sorted(Comparator.comparing(ExperimentRunExecutionModeModel::getStepCount))
                 .toList();
-        Map<String, ExperimentConfig> experimentConfigsByUuid = getExperimentConfigsByUuid(
-                experimentUuid,
-                requestedExecutionMode,
-                headers
-        );
-        List<ExecutionMode> executionMode = transformExecutionMode(requestedExecutionMode);
-        List<ExperimentRunExecutionConfig> executionConfigs = transformExperimentRunExecutionConfigs(
-                requestedExecutionMode,
-                experimentConfigsByUuid
-        );
-        ExperimentRun experimentRun = experimentRunTransformer.transformExperimentRunEntity(experimentUuid, executionMode, headers);
         DatasetVersion datasetVersion = datasetVersionRepository
                 .findByUuidAndWorkspaceUuidAndEnabled(
                         experimentRunRequestModel.getDatasetVersionUuid(),
@@ -81,7 +71,26 @@ public class ExperimentRunService {
                         "dataset version",
                         experimentRunRequestModel.getDatasetVersionUuid()
                 ));
+
+        Map<String, ExperimentRunConfigContext> experimentConfigsByUuid = getExperimentConfigsByUuid(
+                experimentUuid,
+                requestedExecutionMode,
+                headers
+        );
+        experimentRunValidator.validateInputOutputForExecutionMode(
+                requestedExecutionMode,
+                datasetVersion.getFormat(),
+                experimentConfigsByUuid
+        );
+        List<ExecutionMode> executionMode = experimentRunTransformer.transformExecutionMode(requestedExecutionMode);
+        List<ExperimentRunExecutionConfig> executionConfigs = experimentRunTransformer.transformExperimentRunExecutionConfigs(
+                requestedExecutionMode,
+                experimentConfigsByUuid
+        );
+
         String datasetUri = datasetVersion.getStorageUri();
+
+        ExperimentRun experimentRun = experimentRunTransformer.transformExperimentRunEntity(experimentUuid, executionMode, headers);
 
         log.info(headers, "saving experiment run object");
         experimentRunRepository.save(experimentRun);
@@ -102,7 +111,38 @@ public class ExperimentRunService {
         return experimentRunTransformer.transformExperimentRunResponseModelFromEntity(experimentRun, runDataset.getUuid(), headers);
     }
 
-    private Map<String, ExperimentConfig> getExperimentConfigsByUuid(
+    public void validateExperimentRunRequest(@NonNull String experimentUuid, @NonNull ExperimentRunRequestModel experimentRunRequestModel, @NonNull ExperimentOpsHeaders headers) {
+        experimentRunValidator.validateExperimentRunRequestModel(experimentUuid, experimentRunRequestModel);
+        experimentRepository
+                .findByUuidAndWorkspaceUuidAndEnabled(experimentUuid, headers.getWorkspaceUuid(), true)
+                .orElseThrow(() -> new EntityNotFoundException("experiment", experimentUuid));
+        List<ExperimentRunExecutionModeModel> requestedExecutionMode = experimentRunRequestModel.getExecutionMode()
+                .stream()
+                .sorted(Comparator.comparing(ExperimentRunExecutionModeModel::getStepCount))
+                .toList();
+        DatasetVersion datasetVersion = datasetVersionRepository
+                .findByUuidAndWorkspaceUuidAndEnabled(
+                        experimentRunRequestModel.getDatasetVersionUuid(),
+                        headers.getWorkspaceUuid(),
+                        true
+                )
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "dataset version",
+                        experimentRunRequestModel.getDatasetVersionUuid()
+                ));
+        Map<String, ExperimentRunConfigContext> experimentConfigsByUuid = getExperimentConfigsByUuid(
+                experimentUuid,
+                requestedExecutionMode,
+                headers
+        );
+        experimentRunValidator.validateInputOutputForExecutionMode(
+                requestedExecutionMode,
+                datasetVersion.getFormat(),
+                experimentConfigsByUuid
+        );
+    }
+
+    private Map<String, ExperimentRunConfigContext> getExperimentConfigsByUuid(
             @NonNull String experimentUuid,
             @NonNull List<ExperimentRunExecutionModeModel> executionMode,
             @NonNull ExperimentOpsHeaders headers) {
@@ -112,15 +152,16 @@ public class ExperimentRunService {
                 .map(ExperimentRunExecutionModeModel::getExperimentConfigUuid)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        Map<String, ExperimentConfig> experimentConfigsByUuid = experimentConfigRepository
-                .findAllByUuidInAndExperimentUuidAndWorkspaceUuidAndEnabled(
+        Map<String, ExperimentRunConfigContext> experimentConfigsByUuid = experimentConfigRepository
+                .findAllWithExperimentTypesByUuidIn(
                         experimentConfigUuids,
                         experimentUuid,
                         headers.getWorkspaceUuid(),
-                        true
+                        StatusEnum.ACTIVE.getCode()
                 )
                 .stream()
-                .collect(Collectors.toMap(ExperimentConfig::getUuid, Function.identity()));
+                .map(experimentRunTransformer::transformExperimentRunConfigContext)
+                .collect(Collectors.toMap(ExperimentRunConfigContext::getExperimentConfigUuid, experimentConfig -> experimentConfig));
 
         List<String> missingExperimentConfigUuids = experimentConfigUuids
                 .stream()
@@ -135,35 +176,6 @@ public class ExperimentRunService {
         }
 
         return experimentConfigsByUuid;
-    }
-
-    private List<ExecutionMode> transformExecutionMode(@NonNull List<ExperimentRunExecutionModeModel> executionMode) {
-        return executionMode
-                .stream()
-                .map(executionModeItem -> ExecutionMode
-                        .builder()
-                        .stepCount(executionModeItem.getStepCount())
-                        .experimentConfigUuid(executionModeItem.getExperimentConfigUuid())
-                        .build())
-                .toList();
-    }
-
-    private List<ExperimentRunExecutionConfig> transformExperimentRunExecutionConfigs(
-            @NonNull List<ExperimentRunExecutionModeModel> executionMode,
-            @NonNull Map<String, ExperimentConfig> experimentConfigsByUuid) {
-
-        return executionMode
-                .stream()
-                .map(executionModeItem -> {
-                    ExperimentConfig experimentConfig = experimentConfigsByUuid.get(executionModeItem.getExperimentConfigUuid());
-                    return ExperimentRunExecutionConfig
-                            .builder()
-                            .stepCount(executionModeItem.getStepCount())
-                            .experimentType(experimentConfig.getExperimentType())
-                            .experimentConfigJson(experimentConfig.getConfig())
-                            .build();
-                })
-                .toList();
     }
 
     public void processExperimentRunCompleted(@NonNull ExperimentRunCompletedEvent event, @NonNull ExperimentOpsHeaders headers) {

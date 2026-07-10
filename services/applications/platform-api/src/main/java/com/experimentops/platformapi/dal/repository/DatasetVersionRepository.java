@@ -1,6 +1,7 @@
 package com.experimentops.platformapi.dal.repository;
 
 import com.experimentops.platformapi.model.entity.DatasetVersion;
+import com.experimentops.platformapi.model.type.DatasetScanStatusEnum;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,5 +22,14 @@ public interface DatasetVersionRepository extends JpaRepository<DatasetVersion, 
     Optional<DatasetVersion> findByUuidAndDatasetUuidAndWorkspaceUuidAndStatusAndEnabled(String uuid, String datasetUuid, String workspaceUuid, StatusEnum status, boolean enabled);
 
     Page<DatasetVersion> findAllByDatasetUuidAndWorkspaceUuidAndStatusAndEnabledOrderByCreationDateDesc(String datasetUuid, String workspaceUuid, StatusEnum status, boolean enabled, Pageable pageable);
+
+    Page<DatasetVersion> findAllByDatasetUuidAndWorkspaceUuidAndStatusAndScanStatusAndEnabledOrderByCreationDateDesc(
+            String datasetUuid,
+            String workspaceUuid,
+            StatusEnum status,
+            DatasetScanStatusEnum scanStatus,
+            boolean enabled,
+            Pageable pageable
+    );
 
 }

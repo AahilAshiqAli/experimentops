@@ -31,4 +31,12 @@ public class ExperimentRunController implements ExperimentRunApi {
         ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(experimentRunService.publishExperimentRunRequest(experimentUuid, experimentRunRequestModel, experimentOpsHeaders));
     }
+
+    @PreAuthorize("hasAuthority('" + PermissionConstants.RUN_EXPERIMENT + "')")
+    @Override
+    public ResponseEntity<Void> validateExperimentRun(String experimentUuid, ExperimentRunRequestModel experimentRunRequestModel) {
+        ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
+        experimentRunService.validateExperimentRunRequest(experimentUuid, experimentRunRequestModel, experimentOpsHeaders);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 }
