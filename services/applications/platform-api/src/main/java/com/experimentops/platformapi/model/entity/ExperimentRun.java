@@ -25,6 +25,9 @@ public class ExperimentRun extends ExperimentOpsEntity {
     @Column(name = "id")
     private long id;
 
+    @Column(name = "name")
+    private String name;
+
     @Column(name = "experiment_uuid")
     private String experimentUuid;
 

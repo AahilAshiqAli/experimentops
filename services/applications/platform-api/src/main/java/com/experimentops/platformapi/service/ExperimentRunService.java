@@ -5,9 +5,7 @@ import com.experimentops.common.exceptions.runtime.EntityNotFoundException;
 import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.common.kafka.KafkaProducer;
 import com.experimentops.experiment.run.event.*;
-import com.experimentops.experiment.run.model.v1.ExperimentRunExecutionModeModel;
-import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
-import com.experimentops.experiment.run.model.v1.ExperimentRunResponseModel;
+import com.experimentops.experiment.run.model.v1.*;
 import com.experimentops.platformapi.dal.repository.DatasetVersionRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentConfigRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentRepository;
@@ -15,22 +13,30 @@ import com.experimentops.platformapi.dal.repository.ExperimentRunRepository;
 import com.experimentops.platformapi.dal.repository.RunDatasetRepository;
 import com.experimentops.platformapi.model.ExperimentRunConfigContext;
 import com.experimentops.platformapi.model.ExperimentRunExecutionConfig;
+import com.experimentops.platformapi.model.ExperimentRunListItemProjection;
+import com.experimentops.platformapi.model.ExperimentRunSearchCriteria;
 import com.experimentops.platformapi.model.entity.*;
 import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.ExperimentRunTransformer;
 import com.experimentops.platformapi.validator.ExperimentRunValidator;
 import com.experimentops.utils.ExperimentOpsLogger;
+import com.experimentops.utils.ExperimentOpsUtils;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.springframework.data.domain.Page;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,9 +60,7 @@ public class ExperimentRunService {
     @NonNull
     public ExperimentRunResponseModel publishExperimentRunRequest(@NonNull String experimentUuid, @NonNull ExperimentRunRequestModel experimentRunRequestModel, @NonNull ExperimentOpsHeaders headers){
         experimentRunValidator.validateExperimentRunRequestModel(experimentUuid, experimentRunRequestModel);
-        Experiment experiment = experimentRepository
-                .findByUuidAndWorkspaceUuidAndEnabled(experimentUuid, headers.getWorkspaceUuid(), true)
-                .orElseThrow(() -> new EntityNotFoundException("experiment", experimentUuid));
+        Experiment experiment = getExperiment(experimentUuid, headers);
         List<ExperimentRunExecutionModeModel> requestedExecutionMode = experimentRunRequestModel.getExecutionMode()
                 .stream()
                 .sorted(Comparator.comparing(ExperimentRunExecutionModeModel::getStepCount))
@@ -90,7 +94,12 @@ public class ExperimentRunService {
 
         String datasetUri = datasetVersion.getStorageUri();
 
-        ExperimentRun experimentRun = experimentRunTransformer.transformExperimentRunEntity(experimentUuid, executionMode, headers);
+        ExperimentRun experimentRun = experimentRunTransformer.transformExperimentRunEntity(
+                experimentUuid,
+                experimentRunRequestModel.getName(),
+                executionMode,
+                headers
+        );
 
         log.info(headers, "saving experiment run object");
         experimentRunRepository.save(experimentRun);
@@ -215,5 +224,59 @@ public class ExperimentRunService {
                             throw new EntityNotFoundException("Experiment Run uuid", experimentRunUuid);
                         }
                 );
+    }
+
+    public ExperimentRunListResponseModel getExperimentRunList(@NonNull String experimentUuid, @Nullable String name, @Nullable String status, @Nullable Integer page, @Nullable Integer size, @NonNull ExperimentOpsHeaders headers) {
+        log.info(headers, "getting experiment run list for experiment uuid " + experimentUuid);
+        getExperiment(experimentUuid, headers);
+        Pageable pageable = PaginationUtil.createPageRequest(page, size);
+        List<ExperimentStatusEnum> experimentStatuses = experimentRunValidator.getExperimentStatuses(status);
+
+        ExperimentRunSearchCriteria criteria = new ExperimentRunSearchCriteria(
+                experimentUuid,
+                name,
+                experimentStatuses,
+                headers.getWorkspaceUuid(),
+                headers.getUserUuid()
+        );
+        Page<ExperimentRunListItemProjection> experimentRunPage = experimentRunRepository
+                .searchExperimentRuns(criteria, pageable);
+
+        return experimentRunTransformer.transformExperimentRunListResponseModel(experimentRunPage, headers);
+    }
+
+    public List<ExperimentRunStatusResponseModel> getExperimentRunStatus(
+            @NonNull ExperimentRunStatusRequestModel requestModel,
+            @NonNull ExperimentOpsHeaders headers) {
+
+        log.info(headers, "getting experiment run status for requested uuids");
+        List<String> experimentRunUuids = experimentRunValidator.validateExperimentRunStatusRequestModel(requestModel);
+
+        Map<String, ExperimentRun> experimentRunsByUuid = experimentRunRepository
+                .findAllByUuidInAndWorkspaceUuidAndEnabled(experimentRunUuids, headers.getWorkspaceUuid(), true)
+                .stream()
+                .collect(Collectors.toMap(ExperimentRun::getUuid, Function.identity()));
+
+        List<String> missingExperimentRunUuids = experimentRunUuids
+                .stream()
+                .filter(experimentRunUuid -> !experimentRunsByUuid.containsKey(experimentRunUuid))
+                .toList();
+
+        if (!missingExperimentRunUuids.isEmpty()) {
+            throw new EntityNotFoundException("experiment run uuid", String.join(", ", missingExperimentRunUuids));
+        }
+
+        return experimentRunUuids
+                .stream()
+                .map(experimentRunUuid -> experimentRunTransformer.transformExperimentRunStatusResponseModel(
+                        experimentRunsByUuid.get(experimentRunUuid)
+                ))
+                .toList();
+    }
+
+    public Experiment getExperiment(String experimentUuid, ExperimentOpsHeaders headers){
+        return experimentRepository
+                .findByUuidAndWorkspaceUuidAndEnabled(experimentUuid, headers.getWorkspaceUuid(), true)
+                .orElseThrow(() -> new EntityNotFoundException("experiment", experimentUuid));
     }
 }

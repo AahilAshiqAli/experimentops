@@ -15,3 +15,21 @@ SET @query = IF(
 PREPARE stmt FROM @query;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
+
+SELECT COUNT(*) INTO @exist
+FROM information_schema.columns
+WHERE COLUMN_NAME = 'name'
+  AND TABLE_NAME = 'tbl_experiment_runs'
+  AND TABLE_SCHEMA = DATABASE()
+    LIMIT 1;
+
+SET @query = IF(
+    @exist = 0,
+    'ALTER TABLE tbl_experiment_runs
+     ADD COLUMN name VARCHAR(40) NOT NULL',
+    'SELECT ''Column already updated'' name'
+);
+
+PREPARE stmt FROM @query;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

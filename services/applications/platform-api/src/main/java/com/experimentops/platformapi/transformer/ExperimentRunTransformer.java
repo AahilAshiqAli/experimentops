@@ -5,11 +5,11 @@ import com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent;
 import com.experimentops.common.kafka.utils.ExperimentOpsMetadataUtil;
 import com.experimentops.experiment.run.event.ExperimentRunEvent;
 import com.experimentops.experiment.run.event.ExperimentRunEventPayload;
-import com.experimentops.experiment.run.model.v1.ExperimentRunExecutionModeModel;
-import com.experimentops.experiment.run.model.v1.ExperimentRunResponseModel;
+import com.experimentops.experiment.run.model.v1.*;
 import com.experimentops.platformapi.dal.repository.ExperimentConfigWithTypeProjection;
 import com.experimentops.platformapi.model.ExperimentRunConfigContext;
 import com.experimentops.platformapi.model.ExperimentRunExecutionConfig;
+import com.experimentops.platformapi.model.ExperimentRunListItemProjection;
 import com.experimentops.platformapi.model.entity.DatasetVersion;
 import com.experimentops.platformapi.model.entity.ExecutionMode;
 import com.experimentops.platformapi.model.entity.Experiment;
@@ -24,10 +24,13 @@ import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+import java.time.Duration;
 
 @Component
 public class ExperimentRunTransformer {
@@ -69,12 +72,14 @@ public class ExperimentRunTransformer {
     @NonNull
     public ExperimentRun transformExperimentRunEntity(
             @NonNull String experimentUuid,
+            String name,
             @NonNull List<ExecutionMode> executionMode,
             @NonNull ExperimentOpsHeaders headers) {
 
         log.info(headers, "transforming the payload to Experiment Run Entity");
 
         ExperimentRun experimentRun = ExperimentRun.builder()
+                .name(name)
                 .experimentUuid(experimentUuid)
                 .executionMode(executionMode)
                 .workspaceUuid(headers.getWorkspaceUuid())
@@ -167,5 +172,70 @@ public class ExperimentRunTransformer {
         responseModel.setStatus(experimentRun.getExperimentStatus().name());
 
         return responseModel;
+    }
+
+    @NonNull
+    public ExperimentRunResponse transformExperimentRunResponseFromProjection(
+            @NonNull ExperimentRunListItemProjection experimentRun,
+            @NonNull ExperimentOpsHeaders headers) {
+
+        log.info(headers, "transforming the Experiment Run projection to Experiment Run list item");
+
+        ExperimentRunResponse response = new ExperimentRunResponse();
+        response.setUuid(experimentRun.getUuid());
+        response.setName(experimentRun.getName());
+        response.setProgress(experimentRun.getProgress());
+        response.setDatasetCount(experimentRun.getDatasetCount().intValue());
+        response.setStatus(experimentRun.getExperimentStatus().name());
+        response.setDuration(formatDuration(experimentRun.getCreationDate(), experimentRun.getLastUpdated()));
+        response.setExecutionMode(transformExecutionModeModel(experimentRun.getExecutionMode()));
+
+        return response;
+    }
+
+    @NonNull
+    public ExperimentRunStatusResponseModel transformExperimentRunStatusResponseModel(@NonNull ExperimentRun experimentRun) {
+        ExperimentRunStatusResponseModel responseModel = new ExperimentRunStatusResponseModel();
+        responseModel.setExperimentRunUuid(experimentRun.getUuid());
+        responseModel.setStatus(experimentRun.getExperimentStatus().name());
+        responseModel.setProgress(experimentRun.getProgress());
+        return responseModel;
+    }
+
+    @NonNull
+    private List<ExperimentRunExecutionModeModel> transformExecutionModeModel(List<ExecutionMode> executionMode) {
+        if (executionMode == null) {
+            return List.of();
+        }
+        return executionMode
+                .stream()
+                .map(executionModeItem -> new ExperimentRunExecutionModeModel()
+                        .stepCount(executionModeItem.getStepCount())
+                        .experimentConfigUuid(executionModeItem.getExperimentConfigUuid()))
+                .toList();
+    }
+
+
+    @NonNull
+    private String formatDuration(Timestamp creationDate, Timestamp lastUpdated) {
+
+        Duration duration = Duration.between(creationDate.toInstant(), lastUpdated.toInstant());
+        long seconds = Math.max(0, duration.getSeconds());
+        return String.format("%02d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+    }
+
+    public ExperimentRunListResponseModel transformExperimentRunListResponseModel(@NonNull Page<ExperimentRunListItemProjection> experimentRunPage, @NonNull ExperimentOpsHeaders headers) {
+
+        List<ExperimentRunResponse> experimentRunResponses = experimentRunPage
+                .getContent()
+                .stream()
+                .map(experimentRun -> transformExperimentRunResponseFromProjection(experimentRun, headers))
+                .toList();
+
+        ExperimentRunListResponseModel experimentRunListResponseModel = new ExperimentRunListResponseModel();
+        experimentRunListResponseModel.setData(experimentRunResponses);
+        experimentRunListResponseModel.setTotalElements(experimentRunPage.getTotalElements());
+
+        return experimentRunListResponseModel;
     }
 }

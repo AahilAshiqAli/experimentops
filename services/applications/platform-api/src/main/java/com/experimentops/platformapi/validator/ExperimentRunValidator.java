@@ -4,14 +4,19 @@ import com.experimentops.common.exceptions.constant.ErrorCode;
 import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.experiment.run.model.v1.ExperimentRunExecutionModeModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
+import com.experimentops.experiment.run.model.v1.ExperimentRunStatusRequestModel;
 import com.experimentops.platformapi.model.ExperimentRunConfigContext;
 import com.experimentops.platformapi.model.entity.ExperimentTypeFormatMapping;
+import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
+import com.experimentops.utils.ExperimentOpsUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +32,47 @@ public class ExperimentRunValidator extends GenericValidator {
     public void validateExperimentRunRequestModel(@NonNull String experimentUuid, @NonNull ExperimentRunRequestModel requestModel) {
         validateInputString("experimentUuid", experimentUuid);
         validateExperimentRunRequestModel(requestModel);
+    }
+
+    @NonNull
+    public List<String> validateExperimentRunStatusRequestModel(@NonNull ExperimentRunStatusRequestModel requestModel) {
+        List<String> experimentRunUuids = requestModel.getExperimentRunUuids();
+        if (ExperimentOpsUtils.isEmpty(experimentRunUuids)) {
+            throw new ValidationException(ErrorCode.REQUIRED_FIELD_MISSING, "experimentRunUuids");
+        }
+
+        LinkedHashSet<String> uniqueExperimentRunUuids = new LinkedHashSet<>();
+        for (String experimentRunUuid : experimentRunUuids) {
+            validateInputString("experimentRunUuids", experimentRunUuid);
+            uniqueExperimentRunUuids.add(experimentRunUuid);
+        }
+
+        return List.copyOf(uniqueExperimentRunUuids);
+    }
+
+    @Nullable
+    public List<ExperimentStatusEnum> getExperimentStatuses(@Nullable String status) {
+        if (StringUtils.isBlank(status)) {
+            return null;
+        }
+
+        LinkedHashSet<ExperimentStatusEnum> experimentStatuses = new LinkedHashSet<>();
+        for (String statusItem : status.split(",")) {
+            if (StringUtils.isBlank(statusItem)) {
+                continue;
+            }
+
+            ExperimentStatusEnum experimentStatus = ExperimentStatusEnum.of(statusItem.trim());
+            if (experimentStatus == null) {
+                throw new ValidationException(ErrorCode.INVALID_INPUTS, "status");
+            }
+            experimentStatuses.add(experimentStatus);
+        }
+
+        if (ExperimentOpsUtils.isEmpty(experimentStatuses)) {
+            return null;
+        }
+        return List.copyOf(experimentStatuses);
     }
 
     @NonNull
@@ -63,7 +109,7 @@ public class ExperimentRunValidator extends GenericValidator {
     }
 
     private void validateExecutionMode(List<ExperimentRunExecutionModeModel> executionMode) {
-        if (executionMode == null || executionMode.isEmpty()) {
+        if (ExperimentOpsUtils.isEmpty(executionMode)) {
             throw new ValidationException(ErrorCode.REQUIRED_FIELD_MISSING, "executionMode");
         }
 
@@ -95,7 +141,7 @@ public class ExperimentRunValidator extends GenericValidator {
             Integer stepCount) {
 
         List<ExperimentTypeFormatMapping> formatMappings = experimentConfig.getFormatMappings();
-        if (formatMappings == null || formatMappings.isEmpty()) {
+        if (ExperimentOpsUtils.isEmpty(formatMappings)) {
             throw new ValidationException(
                     ErrorCode.INVALID_INPUTS,
                     "experimentType.formatMappings"

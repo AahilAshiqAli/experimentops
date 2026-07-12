@@ -4,11 +4,13 @@ import { Outlet } from 'react-router-dom'
 import { AppHeader } from '../../components/layout/AppHeader'
 import { AppSidebar } from '../../components/layout/AppSidebar'
 import { useLogin } from '../../context-api/logincontext'
+import { useExperimentRunStatusMonitor } from '../ExperimentRun/hooks/useExperimentRunStatusMonitor'
 
 // AdminLayout is the shared frame for authenticated pages. It contains the parts that should remain visible while a user moves between screens—header, sidebar, user controls—and its <Outlet /> is the changing page area.
 
 export function AdminLayout() {
   const { user, role, logout } = useLogin()
+  useExperimentRunStatusMonitor()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   return (

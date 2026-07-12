@@ -10,12 +10,9 @@ import org.jspecify.annotations.Nullable;
 @RequiredArgsConstructor
 public enum ExperimentStatusEnum implements ExperimentOpsEnum {
     PENDING(0),
-    VALIDATING(1),
-    QUEUED(2),
-    RUNNING(3),
-    SUCCEEDED(4),
-    FAILED(5),
-    CANCELLED(6);
+    RUNNING(1),
+    SUCCEEDED(2),
+    FAILED(3);
 
     private final int code;
 

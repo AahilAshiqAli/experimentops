@@ -6,6 +6,9 @@ const PERMISSIONS_KEYS = {
   EXPERIMENT: {
     GET_EXPERIMENT: ':experiment:get',
   },
+  EXPERIMENT_RUN: {
+    GET_EXPERIMENT_RUNS: ':experiment:run:get',
+  },
   EXPERIMENT_CONFIG: {
     ADD_EXPERIMENT_CONFIG: ':experiment-config:add',
     GET_EXPERIMENT_CONFIG: ':experiment-config:get',

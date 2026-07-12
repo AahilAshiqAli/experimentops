@@ -1,8 +1,7 @@
 package com.experimentops.platformapi.interfaces.ctrl;
 
 import com.experimentops.experiment.run.api.v1.ExperimentRunApi;
-import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
-import com.experimentops.experiment.run.model.v1.ExperimentRunResponseModel;
+import com.experimentops.experiment.run.model.v1.*;
 import com.experimentops.platformapi.service.ExperimentRunService;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.HeaderUtil;
@@ -15,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -38,5 +39,19 @@ public class ExperimentRunController implements ExperimentRunApi {
         ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
         experimentRunService.validateExperimentRunRequest(experimentUuid, experimentRunRequestModel, experimentOpsHeaders);
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @PreAuthorize("hasAuthority('" + PermissionConstants.GET_EXPERIMENT_RUNS + "')")
+    @Override
+    public ResponseEntity<ExperimentRunListResponseModel> getExperimentRunList(String experimentUuid, String name, String status, Integer page, Integer size) {
+        ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
+        return ResponseEntity.status(HttpStatus.OK).body(experimentRunService.getExperimentRunList(experimentUuid, name, status, page, size, experimentOpsHeaders));
+    }
+
+    @PreAuthorize("hasAuthority('" + PermissionConstants.GET_EXPERIMENT_RUNS + "')")
+    @Override
+    public ResponseEntity<List<ExperimentRunStatusResponseModel>> getExperimentRunStatus(ExperimentRunStatusRequestModel experimentRunStatusRequestModel) {
+        ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
+        return ResponseEntity.status(HttpStatus.OK).body(experimentRunService.getExperimentRunStatus(experimentRunStatusRequestModel, experimentOpsHeaders));
     }
 }

@@ -30,6 +30,7 @@ These rules guide future Codex work in this frontend project.
 ## Component structure
 
 - Keep large feature components split into focused files.
+- Always place custom React hooks in a `hooks` folder; do not define them alongside components or container files.
 - Prefer separate files for:
   - page components
   - dialogs
