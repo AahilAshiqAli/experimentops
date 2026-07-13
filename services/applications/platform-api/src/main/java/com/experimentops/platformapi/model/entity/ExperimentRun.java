@@ -2,10 +2,13 @@ package com.experimentops.platformapi.model.entity;
 
 import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
 import com.experimentops.platformapi.model.type.converter.ExperimentStatusEnumConverter;
+import com.experimentops.utils.ExperimentOpsJsonType;
 import com.experimentops.utils.model.entity.ExperimentOpsEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Type;
 
+import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -22,11 +25,15 @@ public class ExperimentRun extends ExperimentOpsEntity {
     @Column(name = "id")
     private long id;
 
+    @Column(name = "name")
+    private String name;
+
     @Column(name = "experiment_uuid")
     private String experimentUuid;
 
-    @Column(name = "experiment_config_uuid")
-    private String experimentConfigUuid;
+    @Type(ExperimentOpsJsonType.class)
+    @Column(columnDefinition = "json", name = "execution_mode")
+    private List<ExecutionMode> executionMode;
 
     @Column(name = "workspace_uuid")
     private String workspaceUuid;

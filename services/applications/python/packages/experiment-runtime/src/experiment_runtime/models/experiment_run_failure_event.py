@@ -55,6 +55,7 @@ class ExperimentRunFailureEvent(ExperimentOpsModel):
         cls,
         event: ExperimentRunRequestedEvent,
         exception: BaseException,
+        experiment_type: str | None = None,
     ) -> "ExperimentRunFailureEvent":
         return cls(
             request_uuid=event.request_uuid,
@@ -63,7 +64,7 @@ class ExperimentRunFailureEvent(ExperimentOpsModel):
             project_uuid=event.project_uuid,
             experiment_uuid=event.experiment_uuid,
             experiment_run_uuid=event.experiment_run_uuid,
-            experiment_type=event.experiment_type,
+            experiment_type=experiment_type or event.experiment_type,
             errors=(ExperimentRunFailureErrorEntry.from_exception(exception),),
             request_timestamp=event.request_timestamp,
             user_role=event.user_role,

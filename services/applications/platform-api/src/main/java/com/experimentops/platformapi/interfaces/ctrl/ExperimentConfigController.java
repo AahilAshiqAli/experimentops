@@ -43,9 +43,9 @@ public class ExperimentConfigController implements ExperimentConfigApi {
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_EXPERIMENT_CONFIG + "')")
     @Override
-    public ResponseEntity<ExperimentConfigListResponseModel> getExperimentConfigList(String experimentUuid, Integer page, Integer size) {
+    public ResponseEntity<ExperimentConfigListResponseModel> getExperimentConfigList(String experimentUuid, Integer page, Integer size, String experimentType) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
-        return ResponseEntity.status(HttpStatus.OK).body(experimentConfigService.getExperimentConfigList(experimentUuid, page, size, headers));
+        return ResponseEntity.status(HttpStatus.OK).body(experimentConfigService.getExperimentConfigList(experimentUuid, page, size, experimentType, headers));
     }
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.EDIT_EXPERIMENT_CONFIG + "')")

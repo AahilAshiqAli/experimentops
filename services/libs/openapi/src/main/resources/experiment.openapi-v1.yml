@@ -235,6 +235,12 @@ paths:
             format: int32
             minimum: 1
             default: 20
+        - name: experimentType
+          in: query
+          description: Experiment type name filter
+          required: false
+          schema:
+            type: string
       responses:
         200:
           description: successful operation
@@ -360,9 +366,6 @@ components:
         description:
           type: string
           example: "Experiment about Model Training"
-        experimentType:
-          type: string
-          example: "A_B_TEST"
         projectUuid:
           type: string
           example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
@@ -375,9 +378,6 @@ components:
         description:
           type: string
           example: "Experiment about Model Training"
-        experimentType:
-          type: string
-          example: "A_B_TEST"
     ExperimentListItemModel:
       type: object
       properties:
@@ -393,9 +393,6 @@ components:
         status:
           type: string
           example: "ACTIVE"
-        experimentType:
-          type: string
-          example: CSV_PROFILE_ANALYSIS
         configCount:
           type: integer
           example: 3
@@ -431,6 +428,9 @@ components:
         name:
           type: string
           example: "baseline-config"
+        experimentType:
+          type: string
+          example: "CSV_PROFILE_ANALYSIS"
         config:
           type: object
           additionalProperties: true
@@ -449,6 +449,9 @@ components:
         name:
           type: string
           example: "baseline-config"
+        experimentType:
+          type: string
+          example: "CSV_PROFILE_ANALYSIS"
         config:
           type: object
           additionalProperties: true

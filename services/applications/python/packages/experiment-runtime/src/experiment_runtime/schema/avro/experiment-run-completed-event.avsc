@@ -34,7 +34,23 @@
                             { "name": "format", "type": "string", "avro.java.string": "String" },
                             { "name": "type",   "type": "string", "avro.java.string": "String" },
                             { "name": "uri",    "type": "string", "avro.java.string": "String" },
-                            { "name": "size",   "type": "long" }
+                            { "name": "size",   "type": "long" },
+                            { "name": "experimentType", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+                          ]
+                        }
+                      },
+                      "default": []
+                    },
+                    {
+                      "name": "metrics",
+                      "type": {
+                        "type": "array",
+                        "items": {
+                          "type": "record",
+                          "name": "ExperimentRunCompletedMetric",
+                          "fields": [
+                            { "name": "experimentType", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+                            { "name": "metricsJson", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
                           ]
                         }
                       },

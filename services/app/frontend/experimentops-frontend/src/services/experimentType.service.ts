@@ -6,10 +6,17 @@ export type ExperimentTypeDefaultConfig = {
   datatype: 'boolean' | 'list' | 'number' | 'string'
   defaultValue: unknown
   name: string
+  regex: string | null
+}
+
+export type ExperimentTypeFormatMapping = {
+  inputFormat: string
+  outputFormat: string
 }
 
 export type ExperimentType = {
   defaultConfig: ExperimentTypeDefaultConfig[]
+  formatMappings: ExperimentTypeFormatMapping[]
   name: string
   status: string
   updatedAt: string
@@ -28,7 +35,20 @@ function isExperimentTypeDefaultConfig(
     typeof value === 'object' &&
     value !== null &&
     typeof (value as ExperimentTypeDefaultConfig).name === 'string' &&
-    typeof (value as ExperimentTypeDefaultConfig).datatype === 'string'
+    typeof (value as ExperimentTypeDefaultConfig).datatype === 'string' &&
+    ((value as ExperimentTypeDefaultConfig).regex === null ||
+      typeof (value as ExperimentTypeDefaultConfig).regex === 'string')
+  )
+}
+
+function isExperimentTypeFormatMapping(
+  value: unknown,
+): value is ExperimentTypeFormatMapping {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as ExperimentTypeFormatMapping).inputFormat === 'string' &&
+    typeof (value as ExperimentTypeFormatMapping).outputFormat === 'string'
   )
 }
 
@@ -39,7 +59,13 @@ function isExperimentType(value: unknown): value is ExperimentType {
     typeof (value as ExperimentType).uuid === 'string' &&
     typeof (value as ExperimentType).name === 'string' &&
     Array.isArray((value as ExperimentType).defaultConfig) &&
-    (value as ExperimentType).defaultConfig.every(isExperimentTypeDefaultConfig) &&
+    (value as ExperimentType).defaultConfig.every(
+      isExperimentTypeDefaultConfig,
+    ) &&
+    Array.isArray((value as ExperimentType).formatMappings) &&
+    (value as ExperimentType).formatMappings.every(
+      isExperimentTypeFormatMapping,
+    ) &&
     typeof (value as ExperimentType).status === 'string' &&
     typeof (value as ExperimentType).updatedAt === 'string'
   )

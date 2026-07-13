@@ -17,6 +17,29 @@ tags:
     description: Everything about experiment runs
 
 paths:
+  /experiment-runs/status:
+    post:
+      summary: Get Experiment Run status
+      description: Lightweight API to fetch status and progress for experiment runs.
+      tags:
+        - Experiment run
+      operationId: getExperimentRunStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentRunStatusRequestModel'
+      responses:
+        200:
+          description: Experiment run statuses fetched successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExperimentRunStatusResponseModel'
+
   /experiment/{experimentUuid}/experiment-run/:
     post:
       summary: Create Experiment Run
@@ -45,8 +68,146 @@ paths:
               schema:
                 $ref: '#/components/schemas/ExperimentRunResponseModel'
 
+    get:
+      summary: Get Experiment Run list
+      tags:
+        - Experiment run
+      operationId: getExperimentRunList
+      parameters:
+        - name: experimentUuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Comma-separated experiment run statuses to include, for example PENDING,RUNNING
+          required: false
+          schema:
+            type: string
+            example: "PENDING,RUNNING"
+        - name: page
+          in: query
+          description: Zero-based page index
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of entries to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 20
+      responses:
+        200:
+          description: Experiment create event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRunListResponseModel'
+
+  /experiment/{experimentUuid}/experiment-run/validate:
+    post:
+      summary: Validate Experiment Run
+      description: This API will validate experiment run execution mode format compatibility.
+      tags:
+        - Experiment run
+      operationId: validateExperimentRun
+      parameters:
+        - name: experimentUuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentRunRequestModel'
+      responses:
+        200:
+          description: Experiment run request is valid
+
 components:
   schemas:
+    ExperimentRunListResponseModel:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRunResponse'
+        totalElements:
+          type: integer
+          format: int64
+          example: 123
+    ExperimentRunStatusRequestModel:
+      type: object
+      required:
+        - experimentRunUuids
+      properties:
+        experimentRunUuids:
+          type: array
+          items:
+            type: string
+          example: ["run-1", "run-2", "run-3"]
+    ExperimentRunStatusResponseModel:
+      type: object
+      properties:
+        experimentRunUuid:
+          type: string
+          example: "run-1"
+        status:
+          type: string
+          example: "RUNNING"
+        progress:
+          type: integer
+          format: int32
+          example: 65
+        duration:
+          type: string
+          example: "12:39:40"
+    ExperimentRunResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        name:
+          type: string
+          example: "CSV Run 2"
+        progress:
+          type: integer
+          format: int32
+          example: 1
+        datasetCount:
+          type: integer
+          format: int32
+          example: 1
+        status:
+          type: string
+          example: "PENDING"
+        duration:
+          type: string
+          example: "12:39:40"
+        executionMode:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRunExecutionModeModel'
     ExperimentRunResponseModel:
       type: object
       properties:
@@ -62,9 +223,23 @@ components:
     ExperimentRunRequestModel:
       type: object
       properties:
+        name:
+          type: string
+          example: "CSV Run 2"
         datasetVersionUuid:
           type: string
           example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
-        config_json:
-          type: object
-          additionalProperties: true
+        executionMode:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRunExecutionModeModel'
+    ExperimentRunExecutionModeModel:
+      type: object
+      properties:
+        stepCount:
+          type: integer
+          format: int32
+          example: 1
+        experimentConfigUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"

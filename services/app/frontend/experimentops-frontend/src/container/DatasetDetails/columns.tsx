@@ -7,20 +7,29 @@ import {
 
 export function getDatasetVersionColumns({
   onPreview,
+  onSelect,
   pendingUuid,
+  selectable = false,
+  selectedVersionUuid,
   totalElements,
 }: {
   onPreview: (version: DatasetVersion) => void
+  onSelect?: (version: DatasetVersion) => void
   pendingUuid: string | null
+  selectable?: boolean
+  selectedVersionUuid?: string
   totalElements: number
 }): DataTableColumn<DatasetVersion>[] {
-  return [
+  const columns: DataTableColumn<DatasetVersion>[] = [
     {
       cell: (version) => (
         <button
           className="text-left font-semibold text-secondary hover:text-primary hover:underline disabled:cursor-wait disabled:opacity-60"
           disabled={pendingUuid !== null}
-          onClick={() => onPreview(version)}
+          onClick={(event) => {
+            event.stopPropagation()
+            onPreview(version)
+          }}
           type="button"
         >
           {pendingUuid === version.datasetVersionUuid
@@ -74,5 +83,35 @@ export function getDatasetVersionColumns({
       key: 'scanMessage',
       value: (version) => version.scanMessage,
     },
+  ]
+
+  if (!selectable) return columns
+
+  return [
+    {
+      cell: (version) => {
+        const isSelected = selectedVersionUuid === version.datasetVersionUuid
+
+        return (
+          <button
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+              isSelected
+                ? 'bg-primary/10 text-primary'
+                : 'border border-slate-300 text-secondary hover:border-primary hover:text-primary'
+            }`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onSelect?.(version)
+            }}
+            type="button"
+          >
+            {isSelected ? 'Selected' : 'Select'}
+          </button>
+        )
+      },
+      header: 'Select',
+      key: 'select',
+    },
+    ...columns,
   ]
 }

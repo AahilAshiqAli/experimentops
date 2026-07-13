@@ -35,6 +35,7 @@ public final class PermissionConstants {
     public static final String ADD_EXPERIMENT_TYPE = EXPERIMENT_TYPE + ADD;
     public static final String EDIT_EXPERIMENT_TYPE = EXPERIMENT_TYPE + EDIT;
     public static final String GET_EXPERIMENT_TYPE = EXPERIMENT_TYPE + GET;
+    public static final String GET_EXPERIMENT_RUNS = EXPERIMENT + RUN + GET;
 
 
 }

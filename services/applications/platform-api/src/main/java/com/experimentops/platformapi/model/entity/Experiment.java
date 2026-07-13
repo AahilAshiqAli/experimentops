@@ -28,9 +28,6 @@ public class Experiment extends ExperimentOpsEntity {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "experiment_type")
-    private String experimentType;
-
     @Column(name = "project_uuid")
     private String projectUuid;
 
@@ -56,5 +53,4 @@ public class Experiment extends ExperimentOpsEntity {
         return Objects.hash(getUuid());
     }
 }
-
 

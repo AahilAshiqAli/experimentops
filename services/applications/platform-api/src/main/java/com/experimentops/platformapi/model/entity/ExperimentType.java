@@ -32,10 +32,16 @@ public class ExperimentType extends ExperimentOpsEntity {
     @Column(name = "default_config", columnDefinition = "json")
     private List<ExperimentTypeDefaultConfig> defaultConfig;
 
+    @Type(ExperimentOpsJsonType.class)
+    @Column(name = "format_mappings", columnDefinition = "json")
+    private List<ExperimentTypeFormatMapping> formatMappings;
+
     @Column(name ="status")
     @Convert(converter = StatusEnumConverter.class)
     private StatusEnum status;
 
+    @Column(name = "time_weight")
+    private Integer timeWeight;
 
     @Override
     @Generated

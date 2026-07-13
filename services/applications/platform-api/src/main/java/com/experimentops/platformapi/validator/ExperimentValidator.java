@@ -9,8 +9,6 @@ public class ExperimentValidator extends GenericValidator {
 
     public void validateExperimentRequestModel(@NonNull ExperimentRequestModel requestModel) {
         validateInputString("name", requestModel.getName());
-        // Need to add validation for checking if the experiment is part of registry
-        validateInputString("experimentType", requestModel.getExperimentType());
     }
 
 }

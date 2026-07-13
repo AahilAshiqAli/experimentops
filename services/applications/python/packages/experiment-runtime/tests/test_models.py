@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
+
 from experiment_runtime.models import (
     Artifact,
     ExperimentExecutionContext,
+    ExperimentRunExecutionConfig,
     ExperimentRunCompletedEvent,
     ExperimentRunFailureErrorEntry,
     ExperimentRunProgressEvent,
@@ -69,7 +72,7 @@ def test_completed_event_payload_keeps_event_envelope_shape() -> None:
                     size=10,
                 )
             ],
-            metrics=ExampleMetric(rows_processed=100),
+            metrics=[ExampleMetric(rows_processed=100)],
         ),
     ).to_payload()
 
@@ -85,7 +88,15 @@ def test_completed_event_payload_keeps_event_envelope_shape() -> None:
                 "size": 10,
             }
         ],
-        "metricsJson": '{"rowsProcessed":100}',
+        "metrics": [
+            {
+                "experimentType": None,
+                "metricsJson": '{"rowsProcessed":100}',
+            }
+        ],
+        "metricsJson": (
+            '[{"experimentType":null,"metricsJson":{"rowsProcessed":100}}]'
+        ),
     }
 
 
@@ -121,6 +132,50 @@ def test_execution_context_builds_from_requested_event() -> None:
         "datasetUri": "s3://bucket/input.csv",
         "configJson": {"sampleSize": 100},
     }
+
+
+def test_run_requested_event_parses_execution_configs_from_config_json() -> None:
+    requested_event = ExperimentRunRequestedEvent.from_payload(
+        {
+            "metadata": {
+                "eventUuid": "event-1",
+                "traceUuid": "request-1",
+                "uuid": "run-1",
+                "workspaceUuid": "workspace-1",
+            },
+            "payload": {
+                "projectUuid": "project-1",
+                "experimentUuid": "experiment-1",
+                "datasetUri": "s3://bucket/input.csv",
+                "configJson": json.dumps(
+                    [
+                        {
+                            "stepCount": 1,
+                            "experimentType": "CSV_PROFILE_ANALYSIS",
+                            "experimentConfigJson": {"sampleSize": 100},
+                        }
+                    ]
+                ),
+            },
+        }
+    )
+
+    assert requested_event.experiment_type is None
+    assert requested_event.execution_configs == (
+        ExperimentRunExecutionConfig(
+            step_count=1,
+            experiment_type="CSV_PROFILE_ANALYSIS",
+            experiment_config_json={"sampleSize": 100},
+        ),
+    )
+
+    context = ExperimentExecutionContext.from_requested_event(
+        requested_event,
+        requested_event.execution_configs[0],
+    )
+
+    assert context.experiment_type == "CSV_PROFILE_ANALYSIS"
+    assert context.config_json == {"sampleSize": 100}
 
 
 def test_progress_event_payload_keeps_event_envelope_shape() -> None:

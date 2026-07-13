@@ -121,6 +121,18 @@ paths:
             format: int32
             minimum: 1
             default: 20
+        - name: scanStatus
+          in: query
+          description: Dataset version scan status filter
+          required: false
+          schema:
+            type: string
+            enum:
+              - NOT_STARTED
+              - PENDING
+              - IN_PROGRESS
+              - COMPLETED
+              - FAILED
       responses:
         200:
           description: successful operation

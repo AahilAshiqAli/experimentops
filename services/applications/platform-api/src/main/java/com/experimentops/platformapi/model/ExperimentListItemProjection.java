@@ -12,8 +12,6 @@ public interface ExperimentListItemProjection {
 
     String getDescription();
 
-    String getExperimentType();
-
     StatusEnum getStatus();
 
     Timestamp getCreationDate();

@@ -135,6 +135,18 @@ components:
             - name: "normalizeColumnNames"
               datatype: "boolean"
               defaultValue: true
+        formatMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentTypeFormatMappingModel'
+          example:
+            - inputFormat: "CSV"
+              outputFormat: "CSV"
+        timeWeight:
+          type: integer
+          format: int32
+          description: Expected runtime weight for the standard CSV/text benchmark dataset.
+          example: 3
         status:
           type: string
           example: "ACTIVE"
@@ -151,6 +163,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExperimentTypeDefaultConfigModel'
+        formatMappings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentTypeFormatMappingModel'
+        timeWeight:
+          type: integer
+          format: int32
+          description: Expected runtime weight for the standard CSV/text benchmark dataset.
+          example: 3
     ExperimentTypeDefaultConfigModel:
       type: object
       properties:
@@ -169,6 +190,27 @@ components:
           type: object
           nullable: true
           example: true
+        regex:
+          type: string
+          nullable: true
+          example: "^[A-Za-z_][A-Za-z0-9_]*$"
+    ExperimentTypeFormatMappingModel:
+      type: object
+      properties:
+        inputFormat:
+          type: string
+          enum:
+            - CSV
+            - EXCEL
+            - TEXT
+          example: "CSV"
+        outputFormat:
+          type: string
+          enum:
+            - CSV
+            - EXCEL
+            - TEXT
+          example: "CSV"
     ExperimentTypeStatusChangeRequestModel:
       type: object
       properties:

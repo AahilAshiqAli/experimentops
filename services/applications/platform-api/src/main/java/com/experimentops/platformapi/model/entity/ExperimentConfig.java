@@ -5,7 +5,6 @@ import com.experimentops.platformapi.model.type.converter.StatusEnumConverter;
 import com.experimentops.utils.ExperimentOpsJsonType;
 import com.experimentops.utils.model.entity.ExperimentOpsEntity;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.Type;
@@ -28,6 +27,9 @@ public class ExperimentConfig extends ExperimentOpsEntity {
 
     @Column(name = "name")
     private String name;
+
+    @Column(name = "experiment_type")
+    private String experimentType;
 
     @Type(ExperimentOpsJsonType.class)
     @Column(columnDefinition = "json", name = "config")

@@ -26,6 +26,7 @@ public class ExperimentConfigTransformer {
 
         return ExperimentConfig.builder()
                 .name(requestModel.getName())
+                .experimentType(requestModel.getExperimentType())
                 .config(toConfigJsonNode(requestModel.getConfig()))
                 .experimentUuid(experimentUuid)
                 .workspaceUuid(headers.getWorkspaceUuid())
@@ -42,6 +43,7 @@ public class ExperimentConfigTransformer {
         ExperimentConfigResponseModel responseModel = new ExperimentConfigResponseModel();
         responseModel.setUuid(experimentConfig.getUuid());
         responseModel.setName(experimentConfig.getName());
+        responseModel.setExperimentType(experimentConfig.getExperimentType());
         responseModel.setConfig(toConfigMap(experimentConfig));
         responseModel.setExperimentUuid(experimentConfig.getExperimentUuid());
         responseModel.setStatus(experimentConfig.getStatus().name());
@@ -56,6 +58,7 @@ public class ExperimentConfigTransformer {
         log.info(headers, "updating ExperimentConfig entity fields");
 
         experimentConfig.setName(requestModel.getName());
+        experimentConfig.setExperimentType(requestModel.getExperimentType());
         experimentConfig.setConfig(toConfigJsonNode(requestModel.getConfig()));
         experimentConfig.setUpdatedBy(headers.getUserUuid());
     }

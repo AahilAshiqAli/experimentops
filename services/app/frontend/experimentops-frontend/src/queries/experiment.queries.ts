@@ -52,7 +52,6 @@ export function useMutationCreateExperiment(projectUuid: string) {
                     configCount: 0,
                     createdAt: new Date().toISOString(),
                     description: input.description,
-                    experimentType: input.experimentType,
                     experimentUuid: createdExperiment.uuid,
                     name: input.name,
                     runCount: 0,

@@ -6,7 +6,6 @@ export type Experiment = {
   configCount: number
   createdAt: string
   description: string
-  experimentType?: string
   experimentUuid: string
   name: string
   runCount: number
@@ -15,7 +14,6 @@ export type Experiment = {
 
 export type CreateExperimentInput = {
   description: string
-  experimentType: string
   name: string
 }
 
@@ -41,8 +39,8 @@ function isExperiment(value: unknown): value is Experiment {
     typeof (value as Experiment).experimentUuid === 'string' &&
     typeof (value as Experiment).name === 'string' &&
     typeof (value as Experiment).description === 'string' &&
-    (typeof (value as Experiment).experimentType === 'string' ||
-      typeof (value as Experiment).status === 'string') &&
+    (typeof (value as Experiment).status === 'string' ||
+      typeof (value as Experiment).status === 'undefined') &&
     typeof (value as Experiment).configCount === 'number' &&
     typeof (value as Experiment).runCount === 'number' &&
     typeof (value as Experiment).createdAt === 'string'

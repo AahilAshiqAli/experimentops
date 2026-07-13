@@ -1,13 +1,12 @@
 import { useState } from 'react'
 
 import { useQueryProjects } from '../../queries'
-import { ApiServiceError } from '../../utils/api.service'
 
 const PROJECTS_PER_PAGE = 6
 
 export function useProjectsContainer() {
   const [page, setPage] = useState(1)
-  const { data: projectsPage, error, isLoading } = useQueryProjects({
+  const { data: projectsPage, isLoading } = useQueryProjects({
     page: page - 1,
     size: PROJECTS_PER_PAGE,
   })
@@ -24,12 +23,6 @@ export function useProjectsContainer() {
   )
 
   return {
-    errorMessage:
-      error instanceof ApiServiceError
-        ? error.message
-        : error
-          ? 'Unable to load projects. Please try again.'
-          : null,
     firstProjectNumber,
     isLoading,
     lastProjectNumber,

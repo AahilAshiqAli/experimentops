@@ -19,7 +19,7 @@ class ExperimentRunProgressEvent(ExperimentOpsModel):
     workspace_uuid: str | None
     experiment_uuid: str | None
     experiment_run_uuid: str | None
-    progress: int
+    progress: int | float
     event_uuid: str = Field(default_factory=lambda: str(uuid4()))
     event_timestamp: int = Field(default_factory=lambda: _current_epoch_millis())
 
@@ -27,7 +27,7 @@ class ExperimentRunProgressEvent(ExperimentOpsModel):
     def from_execution_context(
         cls,
         context: ExperimentExecutionContext,
-        progress: int,
+        progress: int | float,
     ) -> "ExperimentRunProgressEvent":
         """Create a progress event from the active experiment execution context."""
 
@@ -60,7 +60,7 @@ class ExperimentRunProgressEvent(ExperimentOpsModel):
             "payload": {
                 "experimentUuid": self.experiment_uuid,
                 "experimentRunUuid": self.experiment_run_uuid,
-                "progress": str(self.progress),
+                "progress": _progress_payload(self.progress),
             },
         }
 
@@ -75,3 +75,12 @@ def _required_string(value: str | None) -> str:
     """Convert optional metadata values to the required empty-string fallback."""
 
     return value or ""
+
+
+def _progress_payload(progress: int | float) -> str:
+    progress_value = float(progress)
+
+    if progress_value.is_integer():
+        return str(int(progress_value))
+
+    return f"{progress_value:.2f}".rstrip("0").rstrip(".")

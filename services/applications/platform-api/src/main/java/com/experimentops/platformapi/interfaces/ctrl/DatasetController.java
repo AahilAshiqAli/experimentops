@@ -46,9 +46,9 @@ public class DatasetController implements DatasetApi {
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_DATASET + "')")
     @Override
-    public ResponseEntity<DatasetDetailResponseModel> getDataset(String projectUuid, String uuid, Integer page, Integer size) {
+    public ResponseEntity<DatasetDetailResponseModel> getDataset(String projectUuid, String uuid, Integer page, Integer size, String scanStatus) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
-        return ResponseEntity.status(HttpStatus.OK).body(datasetService.getDataset(uuid, projectUuid, page, size, headers));
+        return ResponseEntity.status(HttpStatus.OK).body(datasetService.getDataset(uuid, projectUuid, page, size, scanStatus, headers));
     }
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_DATASET + "')")

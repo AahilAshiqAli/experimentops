@@ -30,13 +30,13 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
                 e.uuid AS experimentUuid,
                 e.name AS name,
                 e.description AS description,
-                e.experimentType AS experimentType,
                 e.status AS status,
                 e.creationDate AS creationDate,
                 (
                     SELECT COUNT(ec)
                     FROM ExperimentConfig ec
                     WHERE ec.experimentUuid = e.uuid
+                      AND ec.status = 1
                       AND ec.enabled = true
                 ) AS configCount,
                 (

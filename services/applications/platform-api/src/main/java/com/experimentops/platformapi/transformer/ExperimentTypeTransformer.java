@@ -8,18 +8,23 @@ import com.experimentops.common.kafka.utils.ExperimentOpsMetadataUtil;
 import com.experimentops.experiment.type.event.ExperimentTypeMutationEvent;
 import com.experimentops.experiment.type.event.ExperimentTypeMutationEventPayload;
 import com.experimentops.experiment.type.model.v1.ExperimentTypeDefaultConfigModel;
+import com.experimentops.experiment.type.model.v1.ExperimentTypeFormatMappingModel;
 import com.experimentops.experiment.type.model.v1.ExperimentTypeRequestModel;
 import com.experimentops.experiment.type.model.v1.ExperimentTypeResponseModel;
 import com.experimentops.experiment.type.model.v1.ExperimentTypeStatusChangeRequestModel;
 import com.experimentops.platformapi.model.entity.ExperimentType;
 import com.experimentops.platformapi.model.entity.ExperimentTypeDefaultConfig;
+import com.experimentops.platformapi.model.entity.ExperimentTypeFormatMapping;
+import com.experimentops.platformapi.model.type.DatasetFileFormatEnum;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.utils.JSONUtil;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.ExperimentOpsUtils;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -38,6 +43,8 @@ public class ExperimentTypeTransformer {
         ExperimentTypeMutationEventPayload payload = ExperimentTypeMutationEventPayload.newBuilder()
                 .setName(normalizeExperimentTypeName(requestModel.getName()))
                 .setDefaultConfig(writeDefaultConfig(requestModel.getDefaultConfig()))
+                .setFormatMappings(writeFormatMappings(requestModel.getFormatMappings()))
+                .setTimeWeight(requestModel.getTimeWeight())
                 .build();
 
         ExperimentOpsMetadataEvent metadata = ExperimentOpsMetadataUtil.metadataEvent(
@@ -60,6 +67,8 @@ public class ExperimentTypeTransformer {
         ExperimentTypeMutationEventPayload payload = ExperimentTypeMutationEventPayload.newBuilder()
                 .setName(normalizeExperimentTypeName(requestModel.getName()))
                 .setDefaultConfig(writeDefaultConfig(requestModel.getDefaultConfig()))
+                .setFormatMappings(writeFormatMappings(requestModel.getFormatMappings()))
+                .setTimeWeight(requestModel.getTimeWeight())
                 .build();
 
         ExperimentOpsMetadataEvent metadata = ExperimentOpsMetadataUtil.metadataEvent(
@@ -105,6 +114,8 @@ public class ExperimentTypeTransformer {
         responseModel.setUuid(event.getMetadata().getUuid());
         responseModel.setName(payload.getName());
         responseModel.setDefaultConfig(toDefaultConfigModel(toDefaultConfigEntity(payload.getDefaultConfig())));
+        responseModel.setFormatMappings(toFormatMappingModel(toFormatMappingEntity(payload.getFormatMappings())));
+        responseModel.setTimeWeight(payload.getTimeWeight());
 
         return responseModel;
     }
@@ -117,6 +128,8 @@ public class ExperimentTypeTransformer {
         responseModel.setUuid(experimentType.getUuid());
         responseModel.setName(experimentType.getName());
         responseModel.setDefaultConfig(toDefaultConfigModel(experimentType.getDefaultConfig()));
+        responseModel.setFormatMappings(toFormatMappingModel(experimentType.getFormatMappings()));
+        responseModel.setTimeWeight(experimentType.getTimeWeight());
         responseModel.setStatus(experimentType.getStatus().name());
         responseModel.setUpdatedAt(experimentType.getLastUpdated().toLocalDateTime().toString());
 
@@ -131,6 +144,8 @@ public class ExperimentTypeTransformer {
         ExperimentType experimentType = ExperimentType.builder()
                 .name(payload.getName())
                 .defaultConfig(toDefaultConfigEntity(payload.getDefaultConfig()))
+                .formatMappings(toFormatMappingEntity(payload.getFormatMappings()))
+                .timeWeight(payload.getTimeWeight())
                 .status(StatusEnum.ACTIVE)
                 .build();
         experimentType.setUuid(event.getMetadata().getUuid());
@@ -153,7 +168,7 @@ public class ExperimentTypeTransformer {
                 ? Collections.emptyList()
                 : defaultConfig.stream().map(this::toDefaultConfigItem).toList();
         String json = JSONUtil.toNonTypedJsonFromObject(configItems);
-        if (json == null || json.isBlank()) {
+        if (StringUtils.isBlank(json)) {
             throw new ValidationException(ErrorCode.INVALID_INPUTS, "defaultConfig");
         }
         return json;
@@ -161,7 +176,7 @@ public class ExperimentTypeTransformer {
 
     @NonNull
     public List<ExperimentTypeDefaultConfig> toDefaultConfigEntity(String defaultConfig) {
-        if (defaultConfig == null || defaultConfig.isBlank()) {
+        if (StringUtils.isBlank(defaultConfig)) {
             return Collections.emptyList();
         }
         List<ExperimentTypeDefaultConfig> config = JSONUtil.toListFromTypedJson(defaultConfig, ExperimentTypeDefaultConfig.class);
@@ -187,6 +202,7 @@ public class ExperimentTypeTransformer {
                 .name(configModel.getName())
                 .datatype(ExperimentTypeDefaultConfig.Datatype.fromValue(configModel.getDatatype().getValue()))
                 .defaultValue(defaultValue)
+                .regex(getNullableString(configModel.getRegex()))
                 .build();
     }
 
@@ -194,7 +210,59 @@ public class ExperimentTypeTransformer {
         return new ExperimentTypeDefaultConfigModel()
                 .name(configItem.getName())
                 .datatype(ExperimentTypeDefaultConfigModel.DatatypeEnum.fromValue(configItem.getDatatype().getValue()))
-                .defaultValue(configItem.getDefaultValue());
+                .defaultValue(configItem.getDefaultValue())
+                .regex(configItem.getRegex());
+    }
+
+    private String writeFormatMappings(List<ExperimentTypeFormatMappingModel> formatMappings) {
+        List<ExperimentTypeFormatMapping> mappingItems = formatMappings == null
+                ? Collections.emptyList()
+                : formatMappings.stream().map(this::toFormatMappingItem).toList();
+        String json = JSONUtil.toNonTypedJsonFromObject(mappingItems);
+        if (StringUtils.isBlank(json)) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "formatMappings");
+        }
+        return json;
+    }
+
+    @NonNull
+    public List<ExperimentTypeFormatMapping> toFormatMappingEntity(String formatMappings) {
+        if (StringUtils.isBlank(formatMappings)) {
+            return Collections.emptyList();
+        }
+        List<ExperimentTypeFormatMapping> mappings = JSONUtil.toListFromTypedJson(formatMappings, ExperimentTypeFormatMapping.class);
+        if (mappings.isEmpty()) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "formatMappings");
+        }
+        return mappings;
+    }
+
+    @NonNull
+    private List<ExperimentTypeFormatMappingModel> toFormatMappingModel(List<ExperimentTypeFormatMapping> formatMappings) {
+        if (formatMappings == null || formatMappings.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return formatMappings.stream().map(this::toFormatMappingModel).toList();
+    }
+
+    private ExperimentTypeFormatMapping toFormatMappingItem(ExperimentTypeFormatMappingModel formatMappingModel) {
+        return ExperimentTypeFormatMapping.builder()
+                .inputFormat(DatasetFileFormatEnum.valueOf(formatMappingModel.getInputFormat().getValue()))
+                .outputFormat(DatasetFileFormatEnum.valueOf(formatMappingModel.getOutputFormat().getValue()))
+                .build();
+    }
+
+    private ExperimentTypeFormatMappingModel toFormatMappingModel(ExperimentTypeFormatMapping formatMapping) {
+        return new ExperimentTypeFormatMappingModel()
+                .inputFormat(ExperimentTypeFormatMappingModel.InputFormatEnum.fromValue(formatMapping.getInputFormat().name()))
+                .outputFormat(ExperimentTypeFormatMappingModel.OutputFormatEnum.fromValue(formatMapping.getOutputFormat().name()));
+    }
+
+    private String getNullableString(JsonNullable<String> value) {
+        if (value == null || !value.isPresent()) {
+            return null;
+        }
+        return value.get();
     }
 
 }

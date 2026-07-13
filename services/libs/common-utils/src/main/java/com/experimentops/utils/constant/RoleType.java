@@ -31,7 +31,8 @@ public enum RoleType {
             PermissionConstants.EDIT_EXPERIMENT_CONFIG,
             PermissionConstants.GET_EXPERIMENT_CONFIG,
             PermissionConstants.RUN_EXPERIMENT,
-            PermissionConstants.GET_EXPERIMENT_TYPE
+            PermissionConstants.GET_EXPERIMENT_TYPE,
+            PermissionConstants.GET_EXPERIMENT_RUNS
     ), false),
     RESEARCHER("RESEARCHER", List.of(
             PermissionConstants.ADD_DATASET,
@@ -44,7 +45,8 @@ public enum RoleType {
             PermissionConstants.EDIT_EXPERIMENT_CONFIG,
             PermissionConstants.GET_EXPERIMENT_CONFIG,
             PermissionConstants.RUN_EXPERIMENT,
-            PermissionConstants.GET_EXPERIMENT_TYPE
+            PermissionConstants.GET_EXPERIMENT_TYPE,
+            PermissionConstants.GET_EXPERIMENT_RUNS
     ), false),
     INTERNAL("INTERNAL", List.of(), true);
 

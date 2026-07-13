@@ -87,6 +87,8 @@ public class ExperimentTypeService {
                         experimentType -> {
                             experimentType.setName(event.getPayload().getName());
                             experimentType.setDefaultConfig(experimentTypeTransformer.toDefaultConfigEntity(event.getPayload().getDefaultConfig()));
+                            experimentType.setFormatMappings(experimentTypeTransformer.toFormatMappingEntity(event.getPayload().getFormatMappings()));
+                            experimentType.setTimeWeight(event.getPayload().getTimeWeight());
                             experimentTypeRepository.save(experimentType);
                         },
                         () -> {
@@ -133,7 +135,7 @@ public class ExperimentTypeService {
                 .findAllByStatusAndEnabledOrderByLastUpdatedDesc(StatusEnum.ACTIVE, true);
         List<ExperimentTypeResponseModel> experimentTypes = experimentTypesResult
                 .stream()
-                .map(experimentType -> experimentTypeTransformer.transformExperimentTypeResponseModelFromEntity(experimentType, headers))
+                .map(experimentTypeEntity -> experimentTypeTransformer.transformExperimentTypeResponseModelFromEntity(experimentTypeEntity, headers))
                 .toList();
         ExperimentTypeListResponseModel response = new ExperimentTypeListResponseModel();
         response.setData(experimentTypes);

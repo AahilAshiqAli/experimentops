@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 
 const INLINE_CONTROL_CLASS =
   'inline-block rounded-sm border-none p-0 font-mono outline-none focus:ring-1 focus:ring-primary'
@@ -168,22 +168,33 @@ export function JsonEditor({
 }
 
 export function JsonEditorDialog({
+  getValidationErrors,
   isSubmitting = false,
+  isValidationLoading = false,
   onClose,
   onSubmit,
   title,
   value,
 }: {
+  getValidationErrors?: (value: unknown) => string[]
   isSubmitting?: boolean
+  isValidationLoading?: boolean
   onClose: () => void
   onSubmit: (value: unknown) => void
   title: string
   value: unknown
 }) {
   const [draft, setDraft] = useState(value)
+  const validationErrors = useMemo(
+    () => getValidationErrors?.(draft) ?? [],
+    [draft, getValidationErrors],
+  )
+  const hasValidationErrors = validationErrors.length > 0
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (isValidationLoading || hasValidationErrors) return
+
     onSubmit(draft)
   }
 
@@ -215,6 +226,23 @@ export function JsonEditorDialog({
 
         <form className="mt-4" onSubmit={handleSubmit}>
           <JsonEditor onChange={setDraft} value={draft} />
+          {isValidationLoading ? (
+            <p className="mt-3 rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-800">
+              Loading experiment type validation rules…
+            </p>
+          ) : null}
+          {hasValidationErrors ? (
+            <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="font-semibold">
+                Fix config validation before submitting.
+              </p>
+              <ul className="mt-1 list-disc space-y-1 pl-5">
+                {validationErrors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <div className="mt-5 flex justify-end gap-3">
             <button
               className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-secondary hover:bg-slate-50"
@@ -226,7 +254,9 @@ export function JsonEditorDialog({
             </button>
             <button
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting || isValidationLoading || hasValidationErrors
+              }
               type="submit"
             >
               {isSubmitting ? 'Saving…' : 'Submit'}

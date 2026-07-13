@@ -4,6 +4,7 @@ import { AdminLayout } from '../container/AdminLayout/AdminLayout'
 import { Dashboard } from '../container/Dashboard/Dashboard'
 import { DatasetDetails } from '../container/DatasetDetails/DatasetDetails'
 import {
+  CreateExperimentRun,
   ExperimentConfigs,
   ExperimentRuns,
 } from '../container/ExperimentResources/ExperimentResources'
@@ -29,6 +30,8 @@ export const authenticatedRoutesConstant = {
     '/projects/:projectUuid/experiments/:experimentUuid/experiment-configs',
   EXPERIMENT_RUNS:
     '/projects/:projectUuid/experiments/:experimentUuid/experiment-runs',
+  EXPERIMENT_RUN_CREATE:
+    '/projects/:projectUuid/experiments/:experimentUuid/experiment-runs/new',
 } as const
 
 export const UNAUTHENTICATED_ROUTES: RouteObject[] = [
@@ -66,6 +69,10 @@ export const AUTHENTICATED_ROUTES: RouteObject[] = [
       {
         path: authenticatedRoutesConstant.EXPERIMENT_CONFIGS,
         element: <ExperimentConfigs />,
+      },
+      {
+        path: authenticatedRoutesConstant.EXPERIMENT_RUN_CREATE,
+        element: <CreateExperimentRun />,
       },
       {
         path: authenticatedRoutesConstant.EXPERIMENT_RUNS,
