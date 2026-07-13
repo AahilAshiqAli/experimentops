@@ -21,10 +21,8 @@ import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.ExperimentRunTransformer;
 import com.experimentops.platformapi.validator.ExperimentRunValidator;
 import com.experimentops.utils.ExperimentOpsLogger;
-import com.experimentops.utils.ExperimentOpsUtils;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
@@ -208,6 +206,9 @@ public class ExperimentRunService {
 
         log.info(headers, "updating experiment run status");
         experimentRun.setExperimentStatus(status);
+        if (status == ExperimentStatusEnum.SUCCEEDED) {
+            experimentRun.setProgress(100);
+        }
         experimentRunRepository.save(experimentRun);
     }
 

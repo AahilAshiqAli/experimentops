@@ -88,6 +88,7 @@ public class ExperimentTypeService {
                             experimentType.setName(event.getPayload().getName());
                             experimentType.setDefaultConfig(experimentTypeTransformer.toDefaultConfigEntity(event.getPayload().getDefaultConfig()));
                             experimentType.setFormatMappings(experimentTypeTransformer.toFormatMappingEntity(event.getPayload().getFormatMappings()));
+                            experimentType.setTimeWeight(event.getPayload().getTimeWeight());
                             experimentTypeRepository.save(experimentType);
                         },
                         () -> {

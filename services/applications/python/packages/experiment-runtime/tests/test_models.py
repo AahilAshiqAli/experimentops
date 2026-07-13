@@ -72,7 +72,7 @@ def test_completed_event_payload_keeps_event_envelope_shape() -> None:
                     size=10,
                 )
             ],
-            metrics=ExampleMetric(rows_processed=100),
+            metrics=[ExampleMetric(rows_processed=100)],
         ),
     ).to_payload()
 
@@ -88,7 +88,15 @@ def test_completed_event_payload_keeps_event_envelope_shape() -> None:
                 "size": 10,
             }
         ],
-        "metricsJson": '{"rowsProcessed":100}',
+        "metrics": [
+            {
+                "experimentType": None,
+                "metricsJson": '{"rowsProcessed":100}',
+            }
+        ],
+        "metricsJson": (
+            '[{"experimentType":null,"metricsJson":{"rowsProcessed":100}}]'
+        ),
     }
 
 

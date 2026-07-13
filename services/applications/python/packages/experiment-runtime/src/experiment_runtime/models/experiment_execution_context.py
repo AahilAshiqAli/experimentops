@@ -2,13 +2,16 @@ from __future__ import annotations
 
 from typing import Any
 
+from pydantic import Field, SerializeAsAny
+
 from experiment_runtime.base_model import ExperimentOpsModel
+from experiment_runtime.models.experiment_run_completed_event import Result
 from experiment_runtime.models.experiment_run_requested_event import (
     ExperimentRunExecutionConfig,
     ExperimentRunRequestedEvent,
 )
 
-
+""" Used duck type serialization which enables to get the fields defined in classes overridden by Result."""
 class ExperimentExecutionContext(ExperimentOpsModel):
     event_uuid: str | None
     request_uuid: str | None
@@ -19,6 +22,14 @@ class ExperimentExecutionContext(ExperimentOpsModel):
     experiment_type: str | None
     dataset_uri: str | None
     config_json: Any | None
+    previous_result: SerializeAsAny[Result] | None = Field(default=None, exclude=True)
+    pipeline_results: list[SerializeAsAny[Result]] = Field(
+        default_factory=list,
+        exclude=True,
+    )
+    progress_completed_weight: float | None = Field(default=None, exclude=True)
+    progress_step_weight: float | None = Field(default=None, exclude=True)
+    progress_total_weight: float | None = Field(default=None, exclude=True)
 
     @classmethod
     def from_requested_event(

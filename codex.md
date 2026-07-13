@@ -7,3 +7,4 @@
 - Use `ExperimentOpsUtils.isEmpty(...)` when checking whether a collection or map is null or empty.
 - Use `JSONUtil` for JSON serialization and deserialization instead of a generic `ObjectMapper`.
 - Always use transformer components for transformation code. Services should delegate object/entity/model/request/response conversion to the appropriate transformer.
+- Use Lombok `@RequiredArgsConstructor` for required-constructor generation when the runtime/framework does not require a custom constructor signature.

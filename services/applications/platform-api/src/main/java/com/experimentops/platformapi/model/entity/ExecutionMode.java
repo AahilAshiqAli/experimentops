@@ -8,6 +8,6 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExecutionMode {
-    private int stepCount;
+    private Integer stepCount;
     private String experimentConfigUuid;
 }

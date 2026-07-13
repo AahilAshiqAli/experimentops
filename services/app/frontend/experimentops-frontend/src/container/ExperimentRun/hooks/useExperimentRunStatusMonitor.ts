@@ -42,7 +42,12 @@ export function useExperimentRunStatusMonitor() {
         const data = current.data.map((run) => {
           const status = statusesByUuid.get(run.uuid)
           return status
-            ? { ...run, progress: status.progress, status: status.status }
+            ? {
+                ...run,
+                duration: status.duration,
+                progress: status.progress,
+                status: status.status,
+              }
             : run
         })
 

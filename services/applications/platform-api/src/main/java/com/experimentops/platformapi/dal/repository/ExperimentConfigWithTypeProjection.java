@@ -8,4 +8,6 @@ public interface ExperimentConfigWithTypeProjection {
     String getConfig();
 
     String getFormatMappings();
+
+    Integer getTimeWeight();
 }

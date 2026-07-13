@@ -40,6 +40,8 @@ public class ExperimentType extends ExperimentOpsEntity {
     @Convert(converter = StatusEnumConverter.class)
     private StatusEnum status;
 
+    @Column(name = "time_weight")
+    private Integer timeWeight;
 
     @Override
     @Generated

@@ -55,14 +55,18 @@ export function CreateExperimentRun() {
           <h2 className="mt-4 font-heading text-2xl font-semibold text-secondary">
             Add Experiment Run
           </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Select a dataset version, search configs by experiment type, then
-            compose the run steps.
-          </p>
 
           <section className="mt-6">
+            <input
+              className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              id="experiment-run-name"
+              onChange={(event) => container.setName(event.target.value)}
+              placeholder="Enter experiment run name"
+              type="text"
+              value={container.name}
+            />
             <button
-              className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
+              className="mt-4 w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
               onClick={() => container.setIsDatasetPickerOpen(true)}
               type="button"
             >
@@ -209,6 +213,7 @@ export function CreateExperimentRun() {
               container.createRunMutation.isPending ||
               container.validateRunMutation.isPending ||
               Boolean(container.validateRunMutation.error) ||
+              !container.name.trim() ||
               !container.selectedDatasetVersion ||
               !container.isPipelineReady
             }

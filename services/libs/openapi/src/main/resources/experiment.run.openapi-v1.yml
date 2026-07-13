@@ -178,6 +178,9 @@ components:
           type: integer
           format: int32
           example: 65
+        duration:
+          type: string
+          example: "12:39:40"
     ExperimentRunResponse:
       type: object
       properties:

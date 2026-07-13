@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from datetime import UTC, datetime
-from typing import Any
 from uuid import uuid4
 
 from pydantic import Field, SerializeAsAny
@@ -20,19 +19,20 @@ class Artifact(ExperimentOpsModel):
     type: str
     uri: str
     size: int
+    experiment_type: str | None = Field(default=None, exclude=True)
 
 
 class Metric(ExperimentOpsModel):
     """Base model for typed metrics emitted by experiment-specific results."""
 
-    pass
+    experiment_type: str | None = Field(default=None, exclude=True)
 
 
 class Result(ExperimentOpsModel):
     """Experiment result payload containing artifacts and optional metrics."""
 
     artifact: list[Artifact]
-    metrics: SerializeAsAny[Metric] | None
+    metrics: list[SerializeAsAny[Metric]] | None
 
 
 class ExperimentRunCompletedEvent(ExperimentOpsModel):
@@ -77,7 +77,7 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
             user_role=event.user_role,
         )
 
-    def to_payload(self) -> dict[str, Any]:
+    def to_payload(self) -> dict[str, object]:
         """Serialize the completed event into the broker payload shape."""
 
         return {
@@ -111,7 +111,7 @@ def _current_epoch_millis() -> int:
     return int(datetime.now(UTC).timestamp() * 1000)
 
 
-def _result_payload(result: Result | None) -> dict[str, Any] | None:
+def _result_payload(result: Result | None) -> dict[str, object] | None:
     """Serialize typed artifacts and experiment-specific metrics JSON."""
 
     if result is None:
@@ -119,17 +119,60 @@ def _result_payload(result: Result | None) -> dict[str, Any] | None:
 
     return {
         "artifact": [
-            artifact.model_dump(by_alias=True, mode="json")
+            _artifact_payload(artifact)
             for artifact in result.artifact
         ],
-        "metricsJson": (
-            json.dumps(
-                result.metrics.model_dump(by_alias=True, mode="json"),
+        "metrics": _metrics_entries_payload(result.metrics),
+        "metricsJson": _metrics_json(result.metrics),
+    }
+
+
+def _artifact_payload(artifact: Artifact) -> dict[str, object]:
+    payload = artifact.model_dump(by_alias=True, mode="json")
+
+    if artifact.experiment_type is not None:
+        payload["experimentType"] = artifact.experiment_type
+
+    return payload
+
+
+def _metrics_entries_payload(
+    metrics: list[SerializeAsAny[Metric]] | None,
+) -> list[dict[str, object]]:
+    if metrics is None:
+        return []
+
+    return [
+        {
+            "experimentType": metric.experiment_type,
+            "metricsJson": json.dumps(
+                metric.model_dump(by_alias=True, mode="json"),
                 separators=(",", ":"),
-            )
-            if result.metrics is not None
-            else None
-        ),
+            ),
+        }
+        for metric in metrics
+    ]
+
+
+def _metrics_json(
+    metrics: list[SerializeAsAny[Metric]] | None,
+) -> str | None:
+    if metrics is None:
+        return None
+
+    return json.dumps(
+        [
+            _metric_payload(metric)
+            for metric in metrics
+        ],
+        separators=(",", ":"),
+    )
+
+
+def _metric_payload(metric: Metric) -> dict[str, object]:
+    return {
+        "experimentType": metric.experiment_type,
+        "metricsJson": metric.model_dump(by_alias=True, mode="json"),
     }
 
 

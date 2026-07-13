@@ -142,6 +142,11 @@ components:
           example:
             - inputFormat: "CSV"
               outputFormat: "CSV"
+        timeWeight:
+          type: integer
+          format: int32
+          description: Expected runtime weight for the standard CSV/text benchmark dataset.
+          example: 3
         status:
           type: string
           example: "ACTIVE"
@@ -162,6 +167,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ExperimentTypeFormatMappingModel'
+        timeWeight:
+          type: integer
+          format: int32
+          description: Expected runtime weight for the standard CSV/text benchmark dataset.
+          example: 3
     ExperimentTypeDefaultConfigModel:
       type: object
       properties:

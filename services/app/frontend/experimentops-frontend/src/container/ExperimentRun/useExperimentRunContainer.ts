@@ -65,6 +65,7 @@ export function useExperimentRunContainer() {
     experimentUuid ?? '',
   )
   const [isDatasetPickerOpen, setIsDatasetPickerOpen] = useState(false)
+  const [name, setName] = useState('')
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null)
   const [selectedDatasetVersion, setSelectedDatasetVersion] =
     useState<DatasetVersion | null>(null)
@@ -255,6 +256,7 @@ export function useExperimentRunContainer() {
           experimentConfigUuid: config.uuid,
           stepCount: index + 1,
         })),
+        name: name.trim(),
       },
       {
         onError: (error) => {
@@ -300,6 +302,7 @@ export function useExperimentRunContainer() {
     isConfigPickerOpen,
     isDatasetPickerOpen,
     isPipelineReady,
+    name,
     openedDataset,
     pipelineOrder,
     projectQuery,
@@ -312,6 +315,7 @@ export function useExperimentRunContainer() {
     setIsConfigPickerOpen,
     setIsDatasetPickerOpen,
     setOpenedDataset,
+    setName,
     setSelectedExperimentType,
     validateRunMutation,
   }

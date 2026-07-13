@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExperimentRunExecutionConfig {
-    private int stepCount;
+    private Integer stepCount;
     private String experimentType;
     private JsonNode experimentConfigJson;
+    private Integer timeWeight;
 }

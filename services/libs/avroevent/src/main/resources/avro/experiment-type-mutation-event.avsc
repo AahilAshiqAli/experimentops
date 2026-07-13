@@ -14,6 +14,7 @@
             { "name": "name", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "defaultConfig", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "formatMappings", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            { "name": "timeWeight", "type": ["null", "int"], "default": null },
             { "name": "status", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
           ]
         }

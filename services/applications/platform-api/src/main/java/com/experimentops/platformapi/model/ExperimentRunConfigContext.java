@@ -18,4 +18,5 @@ public class ExperimentRunConfigContext {
     private String experimentType;
     private JsonNode experimentConfigJson;
     private List<ExperimentTypeFormatMapping> formatMappings;
+    private Integer timeWeight;
 }

@@ -16,12 +16,16 @@ export type ExperimentRunStep = {
   stepCount: number
 }
 
-export type CreateExperimentRunInput = {
+type ExperimentRunInput = {
   datasetVersionUuid: string
   executionMode: ExperimentRunStep[]
 }
 
-export type ValidateExperimentRunInput = CreateExperimentRunInput
+export type CreateExperimentRunInput = ExperimentRunInput & {
+  name: string
+}
+
+export type ValidateExperimentRunInput = ExperimentRunInput
 
 export type ExperimentRun = {
   datasetCount: number
@@ -49,6 +53,7 @@ export type ExperimentRunStatusResponse = {
   experimentRunUuid: string
   progress: number
   status: ExperimentRunStatus
+  duration: string
 }
 
 export type ExperimentRunCreationResponse = {
@@ -109,7 +114,8 @@ function isExperimentRunStatusResponse(
     typeof (value as ExperimentRunStatusResponse).experimentRunUuid ===
       'string' &&
     typeof (value as ExperimentRunStatusResponse).progress === 'number' &&
-    isExperimentRunStatus((value as ExperimentRunStatusResponse).status)
+    isExperimentRunStatus((value as ExperimentRunStatusResponse).status) &&
+    typeof (value as ExperimentRunStatusResponse).duration === 'string'
   )
 }
 

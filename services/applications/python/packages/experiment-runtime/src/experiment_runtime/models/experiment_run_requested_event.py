@@ -11,6 +11,7 @@ class ExperimentRunExecutionConfig(ExperimentOpsModel):
     step_count: int | None = None
     experiment_type: str | None = None
     experiment_config_json: Any | None = None
+    time_weight: float | None = None
 
     @classmethod
     def from_payload(cls, payload: Mapping[str, Any]) -> "ExperimentRunExecutionConfig":
@@ -18,6 +19,7 @@ class ExperimentRunExecutionConfig(ExperimentOpsModel):
             step_count=payload.get("stepCount"),
             experiment_type=payload.get("experimentType"),
             experiment_config_json=payload.get("experimentConfigJson"),
+            time_weight=payload.get("timeWeight"),
         )
 
 

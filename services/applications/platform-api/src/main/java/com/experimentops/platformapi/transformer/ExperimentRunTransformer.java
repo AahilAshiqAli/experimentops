@@ -87,7 +87,8 @@ public class ExperimentRunTransformer {
                 .runNumber(1)
                 .build();
         experimentRun.setUuid(ExperimentOpsUtils.uuid());
-
+        experimentRun.setCreatedBy(headers.getUserUuid());
+        experimentRun.setUpdatedBy(headers.getUserUuid());
         return experimentRun;
     }
 
@@ -117,6 +118,7 @@ public class ExperimentRunTransformer {
                             .stepCount(executionModeItem.getStepCount())
                             .experimentType(experimentConfig.getExperimentType())
                             .experimentConfigJson(experimentConfig.getExperimentConfigJson())
+                            .timeWeight(experimentConfig.getTimeWeight())
                             .build();
                 })
                 .toList();
@@ -136,6 +138,7 @@ public class ExperimentRunTransformer {
                 .experimentType(projection.getExperimentType())
                 .experimentConfigJson(experimentConfigJson)
                 .formatMappings(formatMappings)
+                .timeWeight(projection.getTimeWeight())
                 .build();
     }
 
@@ -199,6 +202,7 @@ public class ExperimentRunTransformer {
         responseModel.setExperimentRunUuid(experimentRun.getUuid());
         responseModel.setStatus(experimentRun.getExperimentStatus().name());
         responseModel.setProgress(experimentRun.getProgress());
+        responseModel.setDuration(formatDuration(experimentRun.getCreationDate(), experimentRun.getLastUpdated()));
         return responseModel;
     }
 

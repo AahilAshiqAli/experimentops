@@ -44,6 +44,7 @@ public class ExperimentTypeTransformer {
                 .setName(normalizeExperimentTypeName(requestModel.getName()))
                 .setDefaultConfig(writeDefaultConfig(requestModel.getDefaultConfig()))
                 .setFormatMappings(writeFormatMappings(requestModel.getFormatMappings()))
+                .setTimeWeight(requestModel.getTimeWeight())
                 .build();
 
         ExperimentOpsMetadataEvent metadata = ExperimentOpsMetadataUtil.metadataEvent(
@@ -67,6 +68,7 @@ public class ExperimentTypeTransformer {
                 .setName(normalizeExperimentTypeName(requestModel.getName()))
                 .setDefaultConfig(writeDefaultConfig(requestModel.getDefaultConfig()))
                 .setFormatMappings(writeFormatMappings(requestModel.getFormatMappings()))
+                .setTimeWeight(requestModel.getTimeWeight())
                 .build();
 
         ExperimentOpsMetadataEvent metadata = ExperimentOpsMetadataUtil.metadataEvent(
@@ -113,6 +115,7 @@ public class ExperimentTypeTransformer {
         responseModel.setName(payload.getName());
         responseModel.setDefaultConfig(toDefaultConfigModel(toDefaultConfigEntity(payload.getDefaultConfig())));
         responseModel.setFormatMappings(toFormatMappingModel(toFormatMappingEntity(payload.getFormatMappings())));
+        responseModel.setTimeWeight(payload.getTimeWeight());
 
         return responseModel;
     }
@@ -126,6 +129,7 @@ public class ExperimentTypeTransformer {
         responseModel.setName(experimentType.getName());
         responseModel.setDefaultConfig(toDefaultConfigModel(experimentType.getDefaultConfig()));
         responseModel.setFormatMappings(toFormatMappingModel(experimentType.getFormatMappings()));
+        responseModel.setTimeWeight(experimentType.getTimeWeight());
         responseModel.setStatus(experimentType.getStatus().name());
         responseModel.setUpdatedAt(experimentType.getLastUpdated().toLocalDateTime().toString());
 
@@ -141,6 +145,7 @@ public class ExperimentTypeTransformer {
                 .name(payload.getName())
                 .defaultConfig(toDefaultConfigEntity(payload.getDefaultConfig()))
                 .formatMappings(toFormatMappingEntity(payload.getFormatMappings()))
+                .timeWeight(payload.getTimeWeight())
                 .status(StatusEnum.ACTIVE)
                 .build();
         experimentType.setUuid(event.getMetadata().getUuid());
