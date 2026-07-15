@@ -44,6 +44,7 @@ These rules guide future Codex work in this frontend project.
 
 - Preserve existing user changes and avoid broad rewrites unless requested.
 - Keep UI behavior explicit and easy to trace.
+- Use the shared `Toaster` for user-facing errors. Do not render error messages or error panels inline on a screen unless the user explicitly requests an inline error state.
 - Run relevant validation after changes, typically:
   - `pnpm run build`
   - `pnpm run lint`

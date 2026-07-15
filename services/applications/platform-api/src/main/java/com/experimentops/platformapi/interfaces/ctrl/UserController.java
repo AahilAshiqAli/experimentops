@@ -2,6 +2,7 @@ package com.experimentops.platformapi.interfaces.ctrl;
 
 import com.experimentops.platformapi.service.UserService;
 import com.experimentops.user.api.v1.UserApi;
+import com.experimentops.user.model.v1.UserListResponseModel;
 import com.experimentops.user.model.v1.UserRequestModel;
 import com.experimentops.user.model.v1.UserResponseModel;
 import com.experimentops.utils.ExperimentOpsLogger;
@@ -31,5 +32,13 @@ public class UserController implements UserApi {
         log.info(experimentOpsHeaders, "Adding user : " + userRequestModel);
         UserResponseModel userModel = userService.publishUser(userRequestModel, experimentOpsHeaders);
         return ResponseEntity.ok(userModel);
+    }
+
+    @PreAuthorize("hasAuthority('" + PermissionConstants.GET_USER + "')")
+    @Override
+    public ResponseEntity<UserListResponseModel> getUserList(Integer page, Integer size) {
+        ExperimentOpsHeaders experimentOpsHeaders = HeaderUtil.getHeaders(exchange);
+        log.info(experimentOpsHeaders, "Getting users");
+        return ResponseEntity.ok(userService.getUserList(page, size, experimentOpsHeaders));
     }
 }

@@ -91,6 +91,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponseModel'
+    get:
+      summary: Get User List
+      operationId: getUserList
+      description: This API will get user list for the current workspace.
+      tags:
+        - User
+      parameters:
+        - name: page
+          in: query
+          description: Zero-based page index
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of entries to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 20
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponseModel'
 
 components:
   schemas:
@@ -128,9 +160,6 @@ components:
         email:
           type: string
           example: "admin@acmelab.com"
-        password:
-          type: string
-          example: "Admin@12345"
         firstName:
           type: string
           example: "Sarah"
@@ -160,6 +189,18 @@ components:
           type: string
           example: "WORKSPACE_ADMIN"
 
+    UserListResponseModel:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponseModel'
+        totalElements:
+          type: integer
+          format: int64
+          example: 123
+
     AuthResetPasswordRequest:
       type: object
       properties:
@@ -179,6 +220,5 @@ components:
         email:
           type: string
           example: "admin@acmelab.com"
-
 
 

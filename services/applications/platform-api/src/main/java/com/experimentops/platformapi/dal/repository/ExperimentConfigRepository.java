@@ -41,6 +41,7 @@ public interface ExperimentConfigRepository extends JpaRepository<ExperimentConf
                 ec.experiment_type AS experimentType,
                 CAST(ec.config AS CHAR) AS config,
                 CAST(et.format_mappings AS CHAR) AS formatMappings
+                et.et.time_weight AS timeWeight
             FROM tbl_experiment_config ec
             JOIN tbl_experiment_types et
                 ON et.name = ec.experiment_type

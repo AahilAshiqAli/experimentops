@@ -10,6 +10,7 @@ import com.experimentops.platformapi.model.entity.UserResetPassword;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.user.event.UserMutationEvent;
 import com.experimentops.user.event.UserMutationEventPayload;
+import com.experimentops.user.model.v1.UserListResponseModel;
 import com.experimentops.user.model.v1.UserRequestModel;
 import com.experimentops.user.model.v1.UserResponseModel;
 import com.experimentops.utils.ExperimentOpsLogger;
@@ -20,6 +21,8 @@ import com.experimentops.workspace.event.WorkspaceMutationEvent;
 import com.experimentops.workspace.event.WorkspaceMutationEventPayload;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class UserTransformer {
@@ -54,7 +57,10 @@ public class UserTransformer {
                 .build();
     }
 
-    public UserMutationEvent transformUserCreationEvent(@NonNull UserRequestModel userRequestModel, @NonNull ExperimentOpsHeaders headers) {
+    public UserMutationEvent transformUserCreationEvent(
+            @NonNull UserRequestModel userRequestModel,
+            @NonNull ExperimentOpsHeaders headers,
+            @NonNull String userPassword) {
 
         log.info(headers, "transforming the payload to user mutation event");
 
@@ -63,7 +69,7 @@ public class UserTransformer {
                 .setUserEmail(userRequestModel.getEmail())
                 .setUserFirstName(userRequestModel.getFirstName())
                 .setUserLastName(userRequestModel.getLastName())
-                .setUserPassword(userRequestModel.getPassword())
+                .setUserPassword(userPassword)
                 .setUserRole(userRequestModel.getUserRole())
                 .build();
 
@@ -94,6 +100,24 @@ public class UserTransformer {
         userResponseModel.setUserRole(payload.getUserRole());
 
         return userResponseModel;
+    }
+
+    public UserResponseModel transformUserResponseModel(@NonNull User user) {
+        UserResponseModel userResponseModel = new UserResponseModel();
+        userResponseModel.setUuid(user.getUuid());
+        userResponseModel.setEmail(user.getEmail());
+        userResponseModel.setFirstName(user.getFirstName());
+        userResponseModel.setLastName(user.getLastName());
+        userResponseModel.setUserRole(user.getRole());
+
+        return userResponseModel;
+    }
+
+    public UserListResponseModel transformUserListResponseModel(@NonNull List<UserResponseModel> users, long totalElements) {
+        UserListResponseModel responseModel = new UserListResponseModel();
+        responseModel.setData(users);
+        responseModel.setTotalElements(totalElements);
+        return responseModel;
     }
 
     public User transformUserEntity(@NonNull UserMutationEvent userMutationEvent, @NonNull ExperimentOpsHeaders headers){

@@ -19,6 +19,10 @@ const PERMISSIONS_KEYS = {
   PROJECT: {
     GET_PROJECT: ':project:get',
   },
+  USER: {
+    ADD_USER: ':user:add',
+    GET_USER: ':user:get',
+  },
 } as const
 
 export default PERMISSIONS_KEYS

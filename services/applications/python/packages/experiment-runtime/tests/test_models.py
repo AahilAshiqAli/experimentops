@@ -206,6 +206,13 @@ def test_progress_event_payload_keeps_event_envelope_shape() -> None:
         "progress": "75",
     }
 
+    fractional_payload = ExperimentRunProgressEvent.from_execution_context(
+        context=context,
+        progress=63.89,
+    ).to_payload()
+
+    assert fractional_payload["payload"]["progress"] == "64"
+
 
 def test_failure_error_entry_payload_uses_camel_case_aliases() -> None:
     error = ExperimentRunFailureErrorEntry(

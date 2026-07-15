@@ -14,6 +14,8 @@ import com.experimentops.platformapi.model.entity.UserResetPassword;
 import com.experimentops.platformapi.model.entity.Workspace;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.UserTransformer;
+import com.experimentops.platformapi.util.EmailSubjectConstants;
+import com.experimentops.platformapi.util.EmailTemplateUtil;
 import com.experimentops.platformapi.validator.AuthValidator;
 import com.experimentops.user.model.v1.AuthForgotPasswordRequest;
 import com.experimentops.user.model.v1.AuthLoginRequest;
@@ -91,8 +93,8 @@ public class AuthService {
         String passwordResetLink = buildPasswordResetLink(entityUuid);
         NotificationEvent notificationEvent = userTransformer.transformNotificationEvent(
                 user.getEmail(),
-                "Reset your ExperimentOps password",
-                buildPasswordResetBody(passwordResetLink),
+                EmailSubjectConstants.PASSWORD_RESET,
+                EmailTemplateUtil.buildPasswordResetBody(passwordResetLink),
                 EventType.PASSWORD_RESET,
                 headers
         );
@@ -126,16 +128,5 @@ public class AuthService {
     private String buildPasswordResetLink(String entityUuid) {
         String baseUrl = portalUrl.endsWith("/") ? portalUrl : portalUrl + "/";
         return baseUrl + "reset-password?token=" + entityUuid;
-    }
-
-    private String buildPasswordResetBody(String passwordResetLink) {
-        return """
-                A password reset was requested for your ExperimentOps account.
-
-                Use the link below to reset your password:
-                %s
-
-                If you did not request this, you can ignore this email.
-                """.formatted(passwordResetLink);
     }
 }
