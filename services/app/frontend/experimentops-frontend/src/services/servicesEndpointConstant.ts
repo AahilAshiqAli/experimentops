@@ -1,5 +1,8 @@
 export const ServicesUrlEndpoints = {
   AUTH_LOGIN: '/auth/login/:workspaceName',
+  AUTH_FORGOT_PASSWORD_GENERATE: '/auth/forgot-password/generate',
+  AUTH_RESET_PASSWORD_VERIFY: '/auth/reset-password/verify',
+  GET_USERS: '/user',
   GET_DATASET: '/project/:projectUuid/dataset/:datasetUuid',
   GET_DATASET_VERSION: '/dataset/:datasetUuid/version/:datasetVersionUuid',
   GET_EXPERIMENT_CONFIGS: '/experiment/:experimentUuid/experiment-config',

@@ -41,7 +41,12 @@ function App() {
     },
   ])
 
-  return <RouterProvider router={router} />
+  return (
+    <RouterProvider
+      key={isAuthenticated ? 'authenticated-router' : 'unauthenticated-router'}
+      router={router}
+    />
+  )
 }
 
 export default App

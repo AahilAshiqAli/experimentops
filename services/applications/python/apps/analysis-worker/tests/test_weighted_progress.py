@@ -72,4 +72,4 @@ def test_progress_publisher_publishes_weighted_global_progress() -> None:
 
     publisher.publish(context, 50)
 
-    assert producer.values[0]["payload"]["progress"] == "63.89"
+    assert producer.values[0]["payload"]["progress"] == "64"

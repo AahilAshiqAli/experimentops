@@ -12,7 +12,6 @@ public class UserValidator extends GenericValidator {
 
     public void validateUserRequestModel(@NonNull UserRequestModel requestModel) {
         validateInputString("email", requestModel.getEmail());
-        validateInputString("password", requestModel.getPassword());
         validateInputString("firstName", requestModel.getFirstName());
         validateInputString("lastName", requestModel.getLastName());
         validateInputString("userRole", requestModel.getUserRole());

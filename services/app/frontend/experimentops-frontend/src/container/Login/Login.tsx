@@ -8,7 +8,12 @@ export function Login() {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const { handleSubmit, isSubmitting } = useLoginContainer()
+  const {
+    handleForgotPassword,
+    handleSubmit,
+    isRequestingPassword,
+    isSubmitting,
+  } = useLoginContainer()
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -43,6 +48,14 @@ export function Login() {
               type="text"
               value={username}
             />
+            <button
+              className="mt-2 text-sm text-primary underline underline-offset-2 transition hover:text-secondary disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isRequestingPassword}
+              onClick={() => void handleForgotPassword(username.trim())}
+              type="button"
+            >
+              {isRequestingPassword ? 'Requesting password reset…' : 'Forgot Password'}
+            </button>
           </div>
 
           <div>

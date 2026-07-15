@@ -18,6 +18,7 @@ public enum RoleType {
     ), true),
     WORKSPACE_ADMIN("WORKSPACE_ADMIN", List.of(
             PermissionConstants.ADD_USER,
+            PermissionConstants.GET_USER,
             PermissionConstants.ADD_DATASET,
             PermissionConstants.EDIT_DATASET,
             PermissionConstants.GET_DATASET,

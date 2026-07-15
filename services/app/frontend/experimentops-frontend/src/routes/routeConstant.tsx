@@ -13,15 +13,19 @@ import { ProjectDetails } from '../container/ProjectDetails/ProjectDetails'
 import { ProjectDatasets } from '../container/ProjectDatasets/ProjectDatasets'
 import { ProjectExperiments } from '../container/ProjectExperiments/ProjectExperiments'
 import { Projects } from '../container/Projects/Projects'
+import { ResetPassword } from '../container/ResetPassword/ResetPassword'
+import { Users } from '../container/Users/Users'
 
 export const unAuthenticatedRoutesConstant = {
   LOGIN: '/login',
+  RESET_PASSWORD: '/reset-password',
 } as const
 
 export const authenticatedRoutesConstant = {
   HOME: '/',
   DASHBOARD: '/dashboard',
   PROJECTS: '/projects',
+  USERS: '/users',
   PROJECT_DETAILS: '/projects/:projectUuid',
   PROJECT_DATASETS: '/projects/:projectUuid/datasets',
   PROJECT_DATASET_DETAILS: '/projects/:projectUuid/datasets/:datasetUuid',
@@ -39,9 +43,17 @@ export const UNAUTHENTICATED_ROUTES: RouteObject[] = [
     path: unAuthenticatedRoutesConstant.LOGIN,
     element: <Login />,
   },
+  {
+    path: unAuthenticatedRoutesConstant.RESET_PASSWORD,
+    element: <ResetPassword />,
+  },
 ]
 
 export const AUTHENTICATED_ROUTES: RouteObject[] = [
+  {
+    path: unAuthenticatedRoutesConstant.RESET_PASSWORD,
+    element: <ResetPassword />,
+  },
   {
     path: authenticatedRoutesConstant.HOME,
     element: <AdminLayout />,
@@ -57,6 +69,10 @@ export const AUTHENTICATED_ROUTES: RouteObject[] = [
       {
         path: authenticatedRoutesConstant.PROJECTS,
         element: <Projects />,
+      },
+      {
+        path: authenticatedRoutesConstant.USERS,
+        element: <Users />,
       },
       {
         path: authenticatedRoutesConstant.PROJECT_DETAILS,

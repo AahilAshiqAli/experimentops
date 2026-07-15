@@ -19,7 +19,7 @@ class ExperimentRunProgressEvent(ExperimentOpsModel):
     workspace_uuid: str | None
     experiment_uuid: str | None
     experiment_run_uuid: str | None
-    progress: int | float
+    progress: int
     event_uuid: str = Field(default_factory=lambda: str(uuid4()))
     event_timestamp: int = Field(default_factory=lambda: _current_epoch_millis())
 
@@ -36,7 +36,7 @@ class ExperimentRunProgressEvent(ExperimentOpsModel):
             workspace_uuid=context.workspace_uuid,
             experiment_uuid=context.experiment_uuid,
             experiment_run_uuid=context.experiment_run_uuid,
-            progress=progress,
+            progress=_progress_value(progress),
         )
 
     def to_payload(self) -> dict[str, Any]:
@@ -78,9 +78,8 @@ def _required_string(value: str | None) -> str:
 
 
 def _progress_payload(progress: int | float) -> str:
-    progress_value = float(progress)
+    return str(_progress_value(progress))
 
-    if progress_value.is_integer():
-        return str(int(progress_value))
 
-    return f"{progress_value:.2f}".rstrip("0").rstrip(".")
+def _progress_value(progress: int | float) -> int:
+    return round(max(0, min(float(progress), 100)))

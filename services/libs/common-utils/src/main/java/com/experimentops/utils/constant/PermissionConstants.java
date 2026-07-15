@@ -18,6 +18,7 @@ public final class PermissionConstants {
     private static final String EXPERIMENT_CONFIG = ":experiment-config";
     private static final String EXPERIMENT_TYPE = ":experiment-type";
     public static final String ADD_USER = USER + ADD;
+    public static final String GET_USER = USER + GET;
     public static final String ADD_WORKSPACE = WORKSPACE + ADD;
     public static final String ADD_DATASET = DATASET + ADD;
     public static final String EDIT_DATASET = DATASET + EDIT;

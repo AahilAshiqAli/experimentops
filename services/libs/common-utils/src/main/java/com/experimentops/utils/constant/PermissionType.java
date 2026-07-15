@@ -9,6 +9,7 @@ import java.util.Map;
 public enum PermissionType {
 
     ADD_USER(PermissionConstants.ADD_USER, "Add User"),
+    GET_USER(PermissionConstants.GET_USER, "Get User"),
     ADD_WORKSPACE(PermissionConstants.ADD_WORKSPACE, "Add Workspace"),
     ADD_DATASET(PermissionConstants.ADD_DATASET, "Add Dataset"),
     EDIT_DATASET(PermissionConstants.EDIT_DATASET, "Edit Dataset"),

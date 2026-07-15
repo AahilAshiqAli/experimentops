@@ -3,6 +3,7 @@ package com.experimentops.avroevent.type;
 public enum EventType {
     WORKSPACE_CREATE,
     USER_CREATE,
+    USER_INVITE,
     WORKSPACE_CREATION_COMPLETE,
     PASSWORD_RESET,
     PROJECT_CREATE,
