@@ -34,7 +34,7 @@ public class ExperimentType extends ExperimentOpsEntity {
 
     @Type(ExperimentOpsJsonType.class)
     @Column(name = "format_mappings", columnDefinition = "json")
-    private List<ExperimentTypeFormatMapping> formatMappings;
+    private List<ExperimentTypeManifest> formatMappings;
 
     @Column(name ="status")
     @Convert(converter = StatusEnumConverter.class)

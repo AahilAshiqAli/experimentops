@@ -9,16 +9,53 @@ export type ExperimentTypeDefaultConfig = {
   regex: string | null
 }
 
-export type ExperimentTypeFormatMapping = {
-  inputFormat: string
-  outputFormat: string
+export type ExperimentTypeInputContract = {
+  dataKind: string
+  acceptedFormats: string[]
+}
+
+export type ExperimentTypeInputManifest = {
+  portName: string
+  required: boolean
+  cardinality: string
+  contract: ExperimentTypeInputContract
+}
+
+export type ExperimentTypeInputRelationship = {
+  type: string
+  ports: string[]
+}
+
+export type ExperimentTypeFormatStrategy = {
+  type: string
+  sourceInputPort?: string | null
+  format?: string | null
+}
+
+export type ExperimentTypeOutputManifest = {
+  name: string
+  required: boolean
+  dataKind: string
+  type: ExperimentTypeFormatStrategy
+  downStreamPolicy: string
+}
+
+export type ExperimentTypeManifest = {
+  inputs: ExperimentTypeInputManifest[]
+  inputRelationships: ExperimentTypeInputRelationship[]
+  outputs: ExperimentTypeOutputManifest[]
+  /** @deprecated Kept for compatibility with existing consumers. */
+  inputFormat?: string
+  /** @deprecated Kept for compatibility with existing consumers. */
+  outputFormat?: string
 }
 
 export type ExperimentType = {
   defaultConfig: ExperimentTypeDefaultConfig[]
-  formatMappings: ExperimentTypeFormatMapping[]
+  formatMappings: ExperimentTypeManifest[]
   name: string
   status: string
+  timeWeight: number
   updatedAt: string
   uuid: string
 }
@@ -41,14 +78,65 @@ function isExperimentTypeDefaultConfig(
   )
 }
 
-function isExperimentTypeFormatMapping(
+function isExperimentTypeInputContract(
   value: unknown,
-): value is ExperimentTypeFormatMapping {
+): value is ExperimentTypeInputContract {
   return (
     typeof value === 'object' &&
     value !== null &&
-    typeof (value as ExperimentTypeFormatMapping).inputFormat === 'string' &&
-    typeof (value as ExperimentTypeFormatMapping).outputFormat === 'string'
+    typeof (value as ExperimentTypeInputContract).dataKind === 'string' &&
+    Array.isArray((value as ExperimentTypeInputContract).acceptedFormats) &&
+    (value as ExperimentTypeInputContract).acceptedFormats.every(
+      (format) => typeof format === 'string',
+    )
+  )
+}
+
+export function isExperimentTypeManifest(
+  value: unknown,
+): value is ExperimentTypeManifest {
+  if (typeof value !== 'object' || value === null) return false
+
+  const manifest = value as ExperimentTypeManifest
+  return (
+    Array.isArray(manifest.inputs) &&
+    manifest.inputs.every(
+      (input) =>
+        typeof input === 'object' &&
+        input !== null &&
+        typeof input.portName === 'string' &&
+        typeof input.required === 'boolean' &&
+        typeof input.cardinality === 'string' &&
+        isExperimentTypeInputContract(input.contract),
+    ) &&
+    Array.isArray(manifest.inputRelationships) &&
+    manifest.inputRelationships.every(
+      (relationship) =>
+        typeof relationship === 'object' &&
+        relationship !== null &&
+        typeof relationship.type === 'string' &&
+        Array.isArray(relationship.ports) &&
+        relationship.ports.every((port) => typeof port === 'string'),
+    ) &&
+    Array.isArray(manifest.outputs) &&
+    manifest.outputs.every(
+      (output) =>
+        typeof output === 'object' &&
+        output !== null &&
+        typeof output.name === 'string' &&
+        typeof output.required === 'boolean' &&
+        typeof output.dataKind === 'string' &&
+        typeof output.type === 'object' &&
+        output.type !== null &&
+        typeof output.type.type === 'string' &&
+        (typeof output.type.sourceInputPort === 'undefined' ||
+          output.type.sourceInputPort === null ||
+          typeof output.type.sourceInputPort === 'string') &&
+        (typeof output.type.format === 'undefined' ||
+          output.type.format === null ||
+          typeof output.type.format === 'string') &&
+        typeof output.downStreamPolicy === 'string',
+    )
   )
 }
 
@@ -63,10 +151,9 @@ function isExperimentType(value: unknown): value is ExperimentType {
       isExperimentTypeDefaultConfig,
     ) &&
     Array.isArray((value as ExperimentType).formatMappings) &&
-    (value as ExperimentType).formatMappings.every(
-      isExperimentTypeFormatMapping,
-    ) &&
+    (value as ExperimentType).formatMappings.every(isExperimentTypeManifest) &&
     typeof (value as ExperimentType).status === 'string' &&
+    typeof (value as ExperimentType).timeWeight === 'number' &&
     typeof (value as ExperimentType).updatedAt === 'string'
   )
 }
@@ -84,8 +171,11 @@ function toPaginatedResponse<T>(
     return null
   }
 
+  const data = (payload as PaginatedResponse<T>).data
+  if (!data.every(isItem)) return null
+
   return {
-    data: (payload as PaginatedResponse<T>).data.filter(isItem),
+    data,
     totalElements: (payload as PaginatedResponse<T>).totalElements,
   }
 }

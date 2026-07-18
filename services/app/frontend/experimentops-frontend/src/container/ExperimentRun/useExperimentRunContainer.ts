@@ -1,56 +1,32 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import type { PipelineConnection } from '../../components/PipelineBoard'
+import type {
+  ConnectionDraft,
+  DatasetBinding,
+  DatasetBindingTarget,
+  PipelineConnection,
+  SelectedDatasetVersion,
+} from '../../components/pipeline.types'
 import {
   useMutationCreateExperimentRun,
+  useMutationGetExperimentConfig,
   useMutationValidateExperimentRun,
+  useQueryDataset,
+  useQueryExperimentConfigs,
   useQueryExperimentTypes,
   useQueryProject,
-  useQueryExperimentConfigs,
-  useQueryDataset,
   useQueryProjectDatasets,
 } from '../../queries'
 import type { Dataset, DatasetVersion } from '../../services/dataset.service'
 import type { ExperimentConfig } from '../../services/experimentConfig.service'
 import { Toaster } from '../../services/toaster.service'
-
-function getPipelineOrder(
-  configs: ExperimentConfig[],
-  connections: PipelineConnection[],
-) {
-  if (!configs.length) return []
-  if (configs.length === 1) return configs
-
-  const configByUuid = new Map(configs.map((config) => [config.uuid, config]))
-  const boardUuids = new Set(configs.map((config) => config.uuid))
-  const incoming = new Set(connections.map((connection) => connection.toUuid))
-  const outgoing = new Map(
-    connections.map((connection) => [connection.fromUuid, connection.toUuid]),
-  )
-  const startUuid = configs.find((config) => !incoming.has(config.uuid))?.uuid
-
-  if (!startUuid) return []
-
-  const order: ExperimentConfig[] = []
-  const visited = new Set<string>()
-  let currentUuid: string | undefined = startUuid
-
-  while (
-    currentUuid &&
-    boardUuids.has(currentUuid) &&
-    !visited.has(currentUuid)
-  ) {
-    const config = configByUuid.get(currentUuid)
-    if (!config) break
-
-    order.push(config)
-    visited.add(currentUuid)
-    currentUuid = outgoing.get(currentUuid)
-  }
-
-  return order.length === configs.length ? order : []
-}
+import {
+  buildExecutionMode,
+  getConnectionError,
+  getDatasetBindingError,
+  validatePipeline,
+} from './pipeline'
 
 export function useExperimentRunContainer() {
   const { experimentUuid, projectUuid } = useParams<{
@@ -61,14 +37,18 @@ export function useExperimentRunContainer() {
   const projectQuery = useQueryProject(projectUuid)
   const experimentTypesQuery = useQueryExperimentTypes()
   const createRunMutation = useMutationCreateExperimentRun(experimentUuid ?? '')
+  const configDetailsMutation = useMutationGetExperimentConfig(
+    experimentUuid ?? '',
+  )
   const validateRunMutation = useMutationValidateExperimentRun(
     experimentUuid ?? '',
   )
   const [isDatasetPickerOpen, setIsDatasetPickerOpen] = useState(false)
   const [name, setName] = useState('')
-  const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null)
-  const [selectedDatasetVersion, setSelectedDatasetVersion] =
-    useState<DatasetVersion | null>(null)
+  const [selectedDatasets, setSelectedDatasets] = useState<
+    SelectedDatasetVersion[]
+  >([])
+  const [datasetBindings, setDatasetBindings] = useState<DatasetBinding[]>([])
   const [isConfigPickerOpen, setIsConfigPickerOpen] = useState(false)
   const [selectedExperimentType, setSelectedExperimentType] = useState('')
   const [selectedConfigs, setSelectedConfigs] = useState<ExperimentConfig[]>([])
@@ -77,6 +57,7 @@ export function useExperimentRunContainer() {
   const [datasetPickerPage, setDatasetPickerPage] = useState(1)
   const [datasetPickerSearch, setDatasetPickerSearch] = useState('')
   const [openedDataset, setOpenedDataset] = useState<Dataset | null>(null)
+
   const datasetsQuery = useQueryProjectDatasets(projectUuid, {
     page: datasetPickerPage - 1,
     size: 9,
@@ -114,10 +95,26 @@ export function useExperimentRunContainer() {
       ),
     [boardConfigUuids, selectedConfigs],
   )
-  const pipelineOrder = useMemo(
-    () => getPipelineOrder(boardConfigs, connections),
-    [boardConfigs, connections],
+  const pipelineValidation = useMemo(
+    () =>
+      validatePipeline(
+        boardConfigs,
+        connections,
+        datasetBindings,
+        selectedDatasets,
+      ),
+    [boardConfigs, connections, datasetBindings, selectedDatasets],
   )
+  const pipelineOrder = pipelineValidation.order
+  const isPipelineReady = pipelineValidation.errors.length === 0
+  const executionMode = useMemo(
+    () =>
+      isPipelineReady
+        ? buildExecutionMode(pipelineOrder, connections, datasetBindings)
+        : [],
+    [connections, datasetBindings, isPipelineReady, pipelineOrder],
+  )
+
   const datasets = datasetsQuery.data?.data ?? []
   const filteredDatasets = datasetPickerSearch.trim()
     ? datasets.filter((dataset) =>
@@ -130,22 +127,10 @@ export function useExperimentRunContainer() {
     ? filteredDatasets.length
     : (datasetsQuery.data?.totalElements ?? 0)
   const datasetPickerTotalPages = Math.max(1, Math.ceil(totalDatasets / 9))
-  const isPipelineReady =
-    boardConfigs.length > 0 &&
-    pipelineOrder.length === boardConfigs.length &&
-    (boardConfigs.length === 1 ||
-      connections.length === boardConfigs.length - 1)
-  const validateRunInput = useMemo(() => {
-    if (!selectedDatasetVersion || !isPipelineReady) return null
-
-    return {
-      datasetVersionUuid: selectedDatasetVersion.datasetVersionUuid,
-      executionMode: pipelineOrder.map((config, index) => ({
-        experimentConfigUuid: config.uuid,
-        stepCount: index + 1,
-      })),
-    }
-  }, [isPipelineReady, pipelineOrder, selectedDatasetVersion])
+  const validateRunInput = useMemo(
+    () => (isPipelineReady ? { executionMode } : null),
+    [executionMode, isPipelineReady],
+  )
   const validateRun = validateRunMutation.mutate
   const resetRunValidation = validateRunMutation.reset
 
@@ -154,21 +139,51 @@ export function useExperimentRunContainer() {
       resetRunValidation()
       return
     }
-
-    validateRun(validateRunInput)
+    const timeoutId = window.setTimeout(() => {
+      validateRun(validateRunInput)
+    }, 350)
+    return () => window.clearTimeout(timeoutId)
   }, [resetRunValidation, validateRun, validateRunInput])
 
-  const handleSelectConfig = (config: ExperimentConfig) => {
-    setSelectedConfigs((current) =>
-      current.some((selected) => selected.uuid === config.uuid)
-        ? current
-        : [...current, config],
-    )
+  const handleSelectConfig = async (config: ExperimentConfig) => {
+    if (configDetailsMutation.isPending) return
+
+    try {
+      const details = await configDetailsMutation.mutateAsync(config.uuid)
+      const hydratedConfig: ExperimentConfig = { ...config, ...details }
+      setSelectedConfigs((current) =>
+        current.some((selected) => selected.uuid === hydratedConfig.uuid)
+          ? current.map((selected) =>
+              selected.uuid === hydratedConfig.uuid ? hydratedConfig : selected,
+            )
+          : [...current, hydratedConfig],
+      )
+      setIsConfigPickerOpen(false)
+    } catch (error) {
+      Toaster.error(
+        error instanceof Error
+          ? error.message
+          : 'Unable to load the experiment config details.',
+      )
+    }
   }
 
   const handleMoveConfigToBoard = (config: ExperimentConfig) => {
     setBoardConfigUuids((current) =>
       current.includes(config.uuid) ? current : [...current, config.uuid],
+    )
+  }
+
+  const removeConfigBindings = (configUuid: string) => {
+    setConnections((current) =>
+      current.filter(
+        (connection) =>
+          connection.sourceConfigUuid !== configUuid &&
+          connection.targetConfigUuid !== configUuid,
+      ),
+    )
+    setDatasetBindings((current) =>
+      current.filter((binding) => binding.targetConfigUuid !== configUuid),
     )
   }
 
@@ -179,37 +194,29 @@ export function useExperimentRunContainer() {
     setBoardConfigUuids((current) =>
       current.filter((uuid) => uuid !== configUuid),
     )
-    setConnections((current) =>
-      current.filter(
-        (connection) =>
-          connection.fromUuid !== configUuid &&
-          connection.toUuid !== configUuid,
-      ),
-    )
+    removeConfigBindings(configUuid)
   }
 
   const handleRemoveFromBoard = (configUuid: string) => {
     setBoardConfigUuids((current) =>
       current.filter((uuid) => uuid !== configUuid),
     )
-    setConnections((current) =>
-      current.filter(
-        (connection) =>
-          connection.fromUuid !== configUuid &&
-          connection.toUuid !== configUuid,
-      ),
-    )
+    removeConfigBindings(configUuid)
   }
 
-  const handleConnect = (fromUuid: string, targetUuid: string) => {
-    if (fromUuid === targetUuid) return
-
-    const nextConnections = connections.filter(
-      (connection) =>
-        connection.fromUuid !== fromUuid && connection.toUuid !== targetUuid,
+  const handleConnect = (draft: ConnectionDraft) => {
+    const error = getConnectionError(
+      draft,
+      boardConfigs,
+      connections,
+      datasetBindings,
+      selectedDatasets,
     )
-
-    setConnections([...nextConnections, { fromUuid, toUuid: targetUuid }])
+    if (error) {
+      Toaster.error(error)
+      return
+    }
+    setConnections((current) => [...current, draft])
   }
 
   const handleRemoveConnection = (connection: PipelineConnection) => {
@@ -217,20 +224,95 @@ export function useExperimentRunContainer() {
       current.filter(
         (item) =>
           !(
-            item.fromUuid === connection.fromUuid &&
-            item.toUuid === connection.toUuid
+            item.sourceConfigUuid === connection.sourceConfigUuid &&
+            item.sourceOutputName === connection.sourceOutputName &&
+            item.targetConfigUuid === connection.targetConfigUuid &&
+            item.targetInputPortName === connection.targetInputPortName
           ),
       ),
     )
   }
 
-  const handleSelectDatasetVersion = (
+  const handleToggleDatasetVersion = (
     dataset: Dataset,
     version: DatasetVersion,
   ) => {
-    setSelectedDataset(dataset)
-    setSelectedDatasetVersion(version)
-    setIsDatasetPickerOpen(false)
+    const isSelected = selectedDatasets.some(
+      (item) => item.version.datasetVersionUuid === version.datasetVersionUuid,
+    )
+    if (isSelected) {
+      setSelectedDatasets((current) =>
+        current.filter(
+          (item) =>
+            item.version.datasetVersionUuid !== version.datasetVersionUuid,
+        ),
+      )
+      setDatasetBindings((current) =>
+        current.filter(
+          (binding) =>
+            binding.datasetVersionUuid !== version.datasetVersionUuid,
+        ),
+      )
+      return
+    }
+    setSelectedDatasets((current) => [...current, { dataset, version }])
+  }
+
+  const handleRemoveSelectedDataset = (datasetVersionUuid: string) => {
+    setSelectedDatasets((current) =>
+      current.filter(
+        (item) => item.version.datasetVersionUuid !== datasetVersionUuid,
+      ),
+    )
+    setDatasetBindings((current) =>
+      current.filter(
+        (binding) => binding.datasetVersionUuid !== datasetVersionUuid,
+      ),
+    )
+  }
+
+  const handleBindDataset = (
+    target: DatasetBindingTarget,
+    datasetVersionUuid: string,
+  ) => {
+    const selected = selectedDatasets.find(
+      (item) => item.version.datasetVersionUuid === datasetVersionUuid,
+    )
+    if (!selected) {
+      Toaster.error('Select this dataset version before binding it.')
+      return
+    }
+    const error = getDatasetBindingError(
+      target,
+      selected,
+      boardConfigs,
+      connections,
+      datasetBindings,
+    )
+    if (error) {
+      Toaster.error(error)
+      return
+    }
+    setDatasetBindings((current) => [
+      ...current,
+      {
+        datasetUuid: selected.dataset.datasetUuid,
+        datasetVersionUuid,
+        ...target,
+      },
+    ])
+  }
+
+  const handleRemoveDatasetBinding = (binding: DatasetBinding) => {
+    setDatasetBindings((current) =>
+      current.filter(
+        (item) =>
+          !(
+            item.targetConfigUuid === binding.targetConfigUuid &&
+            item.targetInputPortName === binding.targetInputPortName
+          ),
+      ),
+    )
   }
 
   const handleDatasetPickerSearchChange = (search: string) => {
@@ -241,7 +323,6 @@ export function useExperimentRunContainer() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (
-      !selectedDatasetVersion ||
       !isPipelineReady ||
       validateRunMutation.isPending ||
       validateRunMutation.error
@@ -250,14 +331,7 @@ export function useExperimentRunContainer() {
     }
 
     createRunMutation.mutate(
-      {
-        datasetVersionUuid: selectedDatasetVersion.datasetVersionUuid,
-        executionMode: pipelineOrder.map((config, index) => ({
-          experimentConfigUuid: config.uuid,
-          stepCount: index + 1,
-        })),
-        name: name.trim(),
-      },
+      { executionMode, name: name.trim() },
       {
         onError: (error) => {
           Toaster.error(
@@ -280,8 +354,10 @@ export function useExperimentRunContainer() {
     availableConfigs,
     boardConfigs,
     configPickerQuery,
+    configDetailsMutation,
     connections,
     createRunMutation,
+    datasetBindings,
     datasetPickerPage,
     datasetPickerSearch,
     datasetPickerTotalPages,
@@ -290,32 +366,54 @@ export function useExperimentRunContainer() {
     experimentTypesQuery,
     experimentUuid,
     filteredDatasets,
+    getConnectionError: (draft: ConnectionDraft) =>
+      getConnectionError(
+        draft,
+        boardConfigs,
+        connections,
+        datasetBindings,
+        selectedDatasets,
+      ),
+    getDatasetBindingError: (
+      target: DatasetBindingTarget,
+      dataset: SelectedDatasetVersion,
+    ) =>
+      getDatasetBindingError(
+        target,
+        dataset,
+        boardConfigs,
+        connections,
+        datasetBindings,
+      ),
+    handleBindDataset,
     handleConnect,
     handleDatasetPickerSearchChange,
     handleMoveConfigToBoard,
     handleRemoveConfig,
     handleRemoveConnection,
+    handleRemoveDatasetBinding,
     handleRemoveFromBoard,
+    handleRemoveSelectedDataset,
     handleSelectConfig,
-    handleSelectDatasetVersion,
     handleSubmit,
+    handleToggleDatasetVersion,
     isConfigPickerOpen,
     isDatasetPickerOpen,
     isPipelineReady,
     name,
     openedDataset,
     pipelineOrder,
+    pipelineValidation,
     projectQuery,
     projectUuid,
     selectedConfigs,
-    selectedDataset,
-    selectedDatasetVersion,
+    selectedDatasets,
     selectedExperimentType,
     setDatasetPickerPage,
     setIsConfigPickerOpen,
     setIsDatasetPickerOpen,
-    setOpenedDataset,
     setName,
+    setOpenedDataset,
     setSelectedExperimentType,
     validateRunMutation,
   }

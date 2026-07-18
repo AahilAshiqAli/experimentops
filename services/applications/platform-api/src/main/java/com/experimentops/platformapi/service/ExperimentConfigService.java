@@ -2,11 +2,9 @@ package com.experimentops.platformapi.service;
 
 import com.experimentops.common.exceptions.runtime.EntityAlreadyExistsException;
 import com.experimentops.common.exceptions.runtime.EntityNotFoundException;
-import com.experimentops.experiment.model.v1.ExperimentConfigListResponseModel;
-import com.experimentops.experiment.model.v1.ExperimentConfigRequestModel;
-import com.experimentops.experiment.model.v1.ExperimentConfigResponseModel;
-import com.experimentops.experiment.model.v1.ExperimentConfigStatusChangeRequestModel;
+import com.experimentops.experiment.model.v1.*;
 import com.experimentops.platformapi.dal.repository.ExperimentConfigRepository;
+import com.experimentops.platformapi.dal.repository.ExperimentConfigWithTypeProjection;
 import com.experimentops.platformapi.dal.repository.ExperimentTypeRepository;
 import com.experimentops.platformapi.model.entity.ExperimentConfig;
 import com.experimentops.platformapi.model.entity.ExperimentType;
@@ -23,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -61,10 +60,13 @@ public class ExperimentConfigService {
     }
 
     @NonNull
-    public ExperimentConfigResponseModel getExperimentConfig(@NonNull String experimentUuid, @NonNull String uuid, @NonNull ExperimentOpsHeaders headers) {
+    public ExperimentConfigResponse getExperimentConfig(@NonNull String experimentUuid, @NonNull String uuid, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "getting experiment config with uuid " + uuid);
-        ExperimentConfig experimentConfig = findActiveExperimentConfig(experimentUuid, uuid, headers);
-        return experimentConfigTransformer.transformExperimentConfigResponseModelFromEntity(experimentConfig, headers);
+        List<String> experimentConfigUuid = new ArrayList<>(List.of(uuid));
+
+        List<ExperimentConfigWithTypeProjection> experimentConfig = experimentConfigRepository.findAllWithExperimentTypesByUuidIn(experimentConfigUuid,
+                experimentUuid, headers.getWorkspaceUuid(),  StatusEnum.ACTIVE.getCode());
+        return experimentConfigTransformer.transformExperimentConfigResponseFromEntity(experimentConfig, headers);
     }
 
     @NonNull

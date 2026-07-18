@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import { setDatasetDragData } from '../../components/datasetDrag'
 import { PipelineBoard } from '../../components/PipelineBoard'
 import { useDocumentTitle } from '../../hooks'
 import {
@@ -70,44 +71,69 @@ export function CreateExperimentRun() {
               onClick={() => container.setIsDatasetPickerOpen(true)}
               type="button"
             >
-              Find Dataset
+              Find datasets
             </button>
 
-            <div className="mt-3 rounded-lg border border-dashed border-slate-300 p-4">
-              {container.selectedDataset && container.selectedDatasetVersion ? (
-                <div>
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      ↻
-                    </div>
-                    <div className="min-w-0">
-                      <p
-                        className="truncate text-sm font-semibold text-secondary"
-                        title={container.selectedDataset.name}
-                      >
-                        {container.selectedDataset.name}
-                      </p>
-                      <p
-                        className="mt-1 truncate text-xs text-slate-500"
-                        title={
-                          container.selectedDatasetVersion.originalFileName
+            <div className="mt-3 rounded-lg border border-dashed border-slate-300 p-3">
+              {container.selectedDatasets.length ? (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Available datasets
+                  </p>
+                  {container.selectedDatasets.map(({ dataset, version }) => {
+                    const bindingCount = container.datasetBindings.filter(
+                      (binding) =>
+                        binding.datasetVersionUuid ===
+                        version.datasetVersionUuid,
+                    ).length
+                    return (
+                      <div
+                        className="group flex cursor-grab items-start gap-2 rounded-md border border-slate-200 bg-white p-2 active:cursor-grabbing"
+                        draggable
+                        key={version.datasetVersionUuid}
+                        onDragStart={(event) =>
+                          setDatasetDragData(event, version.datasetVersionUuid)
                         }
+                        title="Drag this dataset onto a compatible input port"
                       >
-                        {container.selectedDatasetVersion.originalFileName}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    className="mt-3 text-xs font-semibold text-primary hover:underline"
-                    onClick={() => container.setIsDatasetPickerOpen(true)}
-                    type="button"
-                  >
-                    Change dataset
-                  </button>
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-xs font-black text-primary">
+                          D
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className="truncate text-xs font-semibold text-secondary"
+                            title={version.originalFileName}
+                          >
+                            {version.originalFileName}
+                          </p>
+                          <p className="truncate text-[10px] text-slate-500">
+                            {dataset.name} · {version.format}
+                            {bindingCount ? ` · used ${bindingCount}×` : ''}
+                          </p>
+                        </div>
+                        <button
+                          aria-label={`Remove ${version.originalFileName}`}
+                          className="px-1 text-xs font-bold text-red-500 opacity-70 hover:opacity-100"
+                          onClick={() =>
+                            container.handleRemoveSelectedDataset(
+                              version.datasetVersionUuid,
+                            )
+                          }
+                          type="button"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )
+                  })}
+                  <p className="text-[10px] leading-4 text-slate-500">
+                    Drag a dataset onto an input box, or click an empty input
+                    box to assign it.
+                  </p>
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">
-                  No dataset version selected yet.
+                  No dataset versions selected yet.
                 </p>
               )}
             </div>
@@ -214,7 +240,6 @@ export function CreateExperimentRun() {
               container.validateRunMutation.isPending ||
               Boolean(container.validateRunMutation.error) ||
               !container.name.trim() ||
-              !container.selectedDatasetVersion ||
               !container.isPipelineReady
             }
             type="submit"
@@ -232,27 +257,38 @@ export function CreateExperimentRun() {
           <PipelineBoard
             configs={container.boardConfigs}
             connections={container.connections}
+            datasetBindings={container.datasetBindings}
+            getConnectionError={container.getConnectionError}
+            getDatasetBindingError={container.getDatasetBindingError}
+            onBindDataset={container.handleBindDataset}
             onConnect={container.handleConnect}
             onRemoveConnection={container.handleRemoveConnection}
+            onRemoveDatasetBinding={container.handleRemoveDatasetBinding}
             onRemoveFromBoard={container.handleRemoveFromBoard}
             pipelineOrder={container.pipelineOrder}
+            selectedDatasets={container.selectedDatasets}
           />
 
           {!container.isPipelineReady && container.boardConfigs.length > 0 ? (
-            <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              Connect every board config into one chain before creating the run.
-            </p>
+            <div className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <p className="font-semibold">Pipeline needs attention</p>
+              <ul className="mt-1 list-disc space-y-1 pl-5">
+                {container.pipelineValidation.errors.map((error) => (
+                  <li key={error}>{error}</li>
+                ))}
+              </ul>
+            </div>
           ) : null}
-          {container.isPipelineReady && container.selectedDatasetVersion ? (
+          {container.isPipelineReady ? (
             container.validateRunMutation.isPending ? (
               <p className="mt-4 rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-800">
-                Validating this pipeline with the selected dataset…
+                Validating this port-level pipeline…
               </p>
             ) : container.validateRunMutation.error ? (
               <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
                 {getErrorMessage(
                   container.validateRunMutation.error,
-                  'This pipeline is not valid for the selected dataset.',
+                  'This pipeline is not valid.',
                 )}
               </p>
             ) : container.validateRunMutation.isSuccess ? (
@@ -282,11 +318,11 @@ export function CreateExperimentRun() {
             container.handleDatasetPickerSearchChange
           }
           onOpenDataset={container.setOpenedDataset}
-          onSelect={container.handleSelectDatasetVersion}
+          onToggle={container.handleToggleDatasetVersion}
           projectUuid={container.projectUuid ?? ''}
-          selectedVersionUuid={
-            container.selectedDatasetVersion?.datasetVersionUuid
-          }
+          selectedVersionUuids={container.selectedDatasets.map(
+            (item) => item.version.datasetVersionUuid,
+          )}
           totalDatasetVersions={
             container.datasetVersionsQuery.data?.totalElements ?? 0
           }
@@ -298,11 +334,9 @@ export function CreateExperimentRun() {
           error={container.configPickerQuery.error}
           experimentType={container.selectedExperimentType}
           isLoading={container.configPickerQuery.isLoading}
+          isSelecting={container.configDetailsMutation.isPending}
           onClose={() => container.setIsConfigPickerOpen(false)}
-          onSelect={(config) => {
-            container.handleSelectConfig(config)
-            container.setIsConfigPickerOpen(false)
-          }}
+          onSelect={container.handleSelectConfig}
           selectedConfigUuids={container.selectedConfigs.map(
             (config) => config.uuid,
           )}

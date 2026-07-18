@@ -3,6 +3,8 @@ package com.experimentops.platformapi.dal.repository;
 public interface ExperimentConfigWithTypeProjection {
     String getExperimentConfigUuid();
 
+    String getName();
+
     String getExperimentType();
 
     String getConfig();

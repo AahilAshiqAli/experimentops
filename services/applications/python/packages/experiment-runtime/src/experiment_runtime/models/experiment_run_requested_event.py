@@ -1,25 +1,101 @@
 from __future__ import annotations
 
-import json
 from typing import Any, Mapping
 
 from experiment_runtime.base_model import ExperimentOpsModel
 from experiment_runtime.kafka.message import KafkaMessage
 
 
-class ExperimentRunExecutionConfig(ExperimentOpsModel):
+class ExperimentRunExecutionPlanInput(ExperimentOpsModel):
+    port_name: str | None = None
+    input_type: str | None = None
+    data_kind: str | None = None
+    format: str | None = None
+    dataset_version_uuid: str | None = None
+    dataset_uri: str | None = None
+    source_step_count: int | None = None
+    artifact_name: str | None = None
+
+    @classmethod
+    def from_payload(cls, payload: Mapping[str, Any]) -> "ExperimentRunExecutionPlanInput":
+        return cls(
+            port_name=payload.get("portName"),
+            input_type=payload.get("inputType"),
+            data_kind=payload.get("dataKind"),
+            format=payload.get("format"),
+            dataset_version_uuid=payload.get("datasetVersionUuid"),
+            dataset_uri=payload.get("datasetUri"),
+            source_step_count=payload.get("sourceStepCount"),
+            artifact_name=payload.get("artifactName"),
+        )
+
+
+class ExperimentRunExecutionPlanOutput(ExperimentOpsModel):
+    name: str | None = None
+    data_kind: str | None = None
+    format_strategy: str | None = None
+    format: str | None = None
+    source_input_port: str | None = None
+    required_for_run: bool | None = None
+    down_stream_policy: str | None = None
+
+    @classmethod
+    def from_payload(cls, payload: Mapping[str, Any]) -> "ExperimentRunExecutionPlanOutput":
+        return cls(
+            name=payload.get("name"),
+            data_kind=payload.get("dataKind"),
+            format_strategy=payload.get("formatStrategy"),
+            format=payload.get("format"),
+            source_input_port=payload.get("sourceInputPort"),
+            required_for_run=payload.get("requiredForRun"),
+            down_stream_policy=payload.get("downStreamPolicy"),
+        )
+
+
+class ExperimentRunExecutionPlanStep(ExperimentOpsModel):
     step_count: int | None = None
+    experiment_config_uuid: str | None = None
     experiment_type: str | None = None
     experiment_config_json: Any | None = None
     time_weight: float | None = None
+    inputs: tuple[ExperimentRunExecutionPlanInput, ...] = ()
+    outputs: tuple[ExperimentRunExecutionPlanOutput, ...] = ()
 
     @classmethod
-    def from_payload(cls, payload: Mapping[str, Any]) -> "ExperimentRunExecutionConfig":
+    def from_payload(cls, payload: Mapping[str, Any]) -> "ExperimentRunExecutionPlanStep":
         return cls(
             step_count=payload.get("stepCount"),
+            experiment_config_uuid=payload.get("experimentConfigUuid"),
             experiment_type=payload.get("experimentType"),
             experiment_config_json=payload.get("experimentConfigJson"),
             time_weight=payload.get("timeWeight"),
+            inputs=tuple(
+                ExperimentRunExecutionPlanInput.from_payload(item)
+                for item in _mapping_items(payload.get("inputs"))
+            ),
+            outputs=tuple(
+                ExperimentRunExecutionPlanOutput.from_payload(item)
+                for item in _mapping_items(payload.get("outputs"))
+            ),
+        )
+
+
+class ExperimentRunExecutionConfig(ExperimentRunExecutionPlanStep):
+    """Backward-compatible name for execution-plan steps."""
+
+
+class ExperimentRunExecutionPlan(ExperimentOpsModel):
+    schema_version: int | None = None
+    steps: tuple[ExperimentRunExecutionConfig, ...] = ()
+
+    @classmethod
+    def from_payload(cls, payload: Mapping[str, Any]) -> "ExperimentRunExecutionPlan":
+        return cls(
+            schema_version=payload.get("schemaVersion"),
+            steps=tuple(
+                ExperimentRunExecutionConfig.from_payload(item)
+                for item in _mapping_items(payload.get("steps"))
+            ),
         )
 
 
@@ -34,6 +110,7 @@ class ExperimentRunRequestedEvent(ExperimentOpsModel):
     experiment_type: str | None
     dataset_uri: str | None
     config_json: Any | None
+    execution_plan: ExperimentRunExecutionPlan | None = None
     execution_configs: tuple[ExperimentRunExecutionConfig, ...] = ()
     request_timestamp: int | None
     user_role: str | None
@@ -65,7 +142,7 @@ class ExperimentRunRequestedEvent(ExperimentOpsModel):
         if not isinstance(_event_payload, Mapping):
             _event_payload = {}
 
-        config_json = _event_payload.get("configJson")
+        execution_plan = _execution_plan_from_payload(_event_payload.get("executionPlan"))
 
         return cls(
             event_uuid=_metadata.get("eventUuid"),
@@ -77,45 +154,23 @@ class ExperimentRunRequestedEvent(ExperimentOpsModel):
             experiment_run_uuid=_metadata.get("uuid"),
             experiment_type=_event_payload.get("experimentType"),
             dataset_uri=_event_payload.get("datasetUri"),
-            config_json=config_json,
-            execution_configs=_execution_configs_from_config_json(
-                config_json=config_json,
-                experiment_type=_event_payload.get("experimentType"),
-            ),
+            config_json=_event_payload.get("configJson"),
+            execution_plan=execution_plan,
+            execution_configs=execution_plan.steps if execution_plan else (),
             request_timestamp=_metadata.get("requestTimestamp"),
             user_role=_metadata.get("userRole"),
         )
 
 
-def _execution_configs_from_config_json(
-    config_json: Any,
-    experiment_type: str | None,
-) -> tuple[ExperimentRunExecutionConfig, ...]:
-    parsed_config_json = _parse_config_json(config_json)
-    if isinstance(parsed_config_json, list):
-        return tuple(
-            ExperimentRunExecutionConfig.from_payload(item)
-            for item in parsed_config_json
-            if isinstance(item, Mapping)
-        )
+def _execution_plan_from_payload(payload: Any) -> ExperimentRunExecutionPlan | None:
+    if not isinstance(payload, Mapping):
+        return None
 
-    if experiment_type:
-        return (
-            ExperimentRunExecutionConfig(
-                step_count=1,
-                experiment_type=experiment_type,
-                experiment_config_json=parsed_config_json,
-            ),
-        )
-
-    return ()
+    return ExperimentRunExecutionPlan.from_payload(payload)
 
 
-def _parse_config_json(config_json: Any) -> Any:
-    if not isinstance(config_json, str):
-        return config_json
+def _mapping_items(value: Any) -> tuple[Mapping[str, Any], ...]:
+    if not isinstance(value, list):
+        return ()
 
-    try:
-        return json.loads(config_json)
-    except json.JSONDecodeError:
-        return config_json
+    return tuple(item for item in value if isinstance(item, Mapping))

@@ -40,7 +40,6 @@ public class ExperimentTypeService {
     @NonNull
     public ExperimentTypeResponseModel publishExperimentTypeCreationEvent(@NonNull ExperimentTypeRequestModel requestModel, @NonNull ExperimentOpsHeaders headers) {
         experimentTypeValidator.validateExperimentTypeRequestModel(requestModel);
-        assert requestModel.getName() != null;
         String experimentTypeName = experimentTypeTransformer.normalizeExperimentTypeName(requestModel.getName());
         log.info(headers, "Creating new experiment type with name " + experimentTypeName);
         experimentTypeRepository
@@ -63,7 +62,6 @@ public class ExperimentTypeService {
     public ExperimentTypeResponseModel publishExperimentTypeUpdateEvent(@NonNull String uuid, @NonNull ExperimentTypeRequestModel requestModel, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "updating experiment type with uuid " + uuid);
         experimentTypeValidator.validateExperimentTypeRequestModel(requestModel);
-        assert requestModel.getName() != null;
         String experimentTypeName = experimentTypeTransformer.normalizeExperimentTypeName(requestModel.getName());
         experimentTypeRepository
                 .findByNameAndStatusAndEnabled(experimentTypeName, StatusEnum.ACTIVE, true)

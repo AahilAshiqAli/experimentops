@@ -8,13 +8,27 @@ import com.experimentops.common.kafka.utils.ExperimentOpsMetadataUtil;
 import com.experimentops.experiment.type.event.ExperimentTypeMutationEvent;
 import com.experimentops.experiment.type.event.ExperimentTypeMutationEventPayload;
 import com.experimentops.experiment.type.model.v1.ExperimentTypeDefaultConfigModel;
-import com.experimentops.experiment.type.model.v1.ExperimentTypeFormatMappingModel;
+import com.experimentops.experiment.type.model.v1.ExperimentTypeManifestModel;
 import com.experimentops.experiment.type.model.v1.ExperimentTypeRequestModel;
 import com.experimentops.experiment.type.model.v1.ExperimentTypeResponseModel;
 import com.experimentops.experiment.type.model.v1.ExperimentTypeStatusChangeRequestModel;
+import com.experimentops.experiment.type.model.v1.FormatStrategyModel;
+import com.experimentops.experiment.type.model.v1.InputContractModel;
+import com.experimentops.experiment.type.model.v1.InputManifestModel;
+import com.experimentops.experiment.type.model.v1.InputRelationshipModel;
+import com.experimentops.experiment.type.model.v1.OutputManifestModel;
+import com.experimentops.platformapi.model.entity.DownStreamPolicyEnum;
 import com.experimentops.platformapi.model.entity.ExperimentType;
 import com.experimentops.platformapi.model.entity.ExperimentTypeDefaultConfig;
-import com.experimentops.platformapi.model.entity.ExperimentTypeFormatMapping;
+import com.experimentops.platformapi.model.entity.ExperimentTypeManifest;
+import com.experimentops.platformapi.model.entity.FormatStrategy;
+import com.experimentops.platformapi.model.entity.FormatStrategyTypeEnum;
+import com.experimentops.platformapi.model.entity.InputContract;
+import com.experimentops.platformapi.model.entity.InputManifest;
+import com.experimentops.platformapi.model.entity.InputRelationship;
+import com.experimentops.platformapi.model.entity.InputRelationshipTypeEnum;
+import com.experimentops.platformapi.model.entity.OutputDataKindEnum;
+import com.experimentops.platformapi.model.entity.OutputManifest;
 import com.experimentops.platformapi.model.type.DatasetFileFormatEnum;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.utils.JSONUtil;
@@ -214,10 +228,10 @@ public class ExperimentTypeTransformer {
                 .regex(configItem.getRegex());
     }
 
-    private String writeFormatMappings(List<ExperimentTypeFormatMappingModel> formatMappings) {
-        List<ExperimentTypeFormatMapping> mappingItems = formatMappings == null
+    private String writeFormatMappings(List<ExperimentTypeManifestModel> formatMappings) {
+        List<ExperimentTypeManifest> mappingItems = formatMappings == null
                 ? Collections.emptyList()
-                : formatMappings.stream().map(this::toFormatMappingItem).toList();
+                : formatMappings.stream().map(this::toManifestEntity).toList();
         String json = JSONUtil.toNonTypedJsonFromObject(mappingItems);
         if (StringUtils.isBlank(json)) {
             throw new ValidationException(ErrorCode.INVALID_INPUTS, "formatMappings");
@@ -226,11 +240,11 @@ public class ExperimentTypeTransformer {
     }
 
     @NonNull
-    public List<ExperimentTypeFormatMapping> toFormatMappingEntity(String formatMappings) {
+    public List<ExperimentTypeManifest> toFormatMappingEntity(String formatMappings) {
         if (StringUtils.isBlank(formatMappings)) {
             return Collections.emptyList();
         }
-        List<ExperimentTypeFormatMapping> mappings = JSONUtil.toListFromTypedJson(formatMappings, ExperimentTypeFormatMapping.class);
+        List<ExperimentTypeManifest> mappings = JSONUtil.toListFromTypedJson(formatMappings, ExperimentTypeManifest.class);
         if (mappings.isEmpty()) {
             throw new ValidationException(ErrorCode.INVALID_INPUTS, "formatMappings");
         }
@@ -238,27 +252,179 @@ public class ExperimentTypeTransformer {
     }
 
     @NonNull
-    private List<ExperimentTypeFormatMappingModel> toFormatMappingModel(List<ExperimentTypeFormatMapping> formatMappings) {
+    private List<ExperimentTypeManifestModel> toFormatMappingModel(List<ExperimentTypeManifest> formatMappings) {
         if (formatMappings == null || formatMappings.isEmpty()) {
             return Collections.emptyList();
         }
-        return formatMappings.stream().map(this::toFormatMappingModel).toList();
+        return formatMappings.stream().map(this::toManifestModel).toList();
     }
 
-    private ExperimentTypeFormatMapping toFormatMappingItem(ExperimentTypeFormatMappingModel formatMappingModel) {
-        return ExperimentTypeFormatMapping.builder()
-                .inputFormat(DatasetFileFormatEnum.valueOf(formatMappingModel.getInputFormat().getValue()))
-                .outputFormat(DatasetFileFormatEnum.valueOf(formatMappingModel.getOutputFormat().getValue()))
+    private ExperimentTypeManifest toManifestEntity(ExperimentTypeManifestModel manifestModel) {
+        return ExperimentTypeManifest.builder()
+                .inputs(toInputManifestEntity(manifestModel.getInputs()))
+                .inputRelationships(toInputRelationshipEntity(manifestModel.getInputRelationships()))
+                .outputs(toOutputManifestEntity(manifestModel.getOutputs()))
                 .build();
     }
 
-    private ExperimentTypeFormatMappingModel toFormatMappingModel(ExperimentTypeFormatMapping formatMapping) {
-        return new ExperimentTypeFormatMappingModel()
-                .inputFormat(ExperimentTypeFormatMappingModel.InputFormatEnum.fromValue(formatMapping.getInputFormat().name()))
-                .outputFormat(ExperimentTypeFormatMappingModel.OutputFormatEnum.fromValue(formatMapping.getOutputFormat().name()));
+    private ExperimentTypeManifestModel toManifestModel(ExperimentTypeManifest manifest) {
+        return new ExperimentTypeManifestModel()
+                .inputs(toInputManifestModel(manifest.getInputs()))
+                .inputRelationships(toInputRelationshipModel(manifest.getInputRelationships()))
+                .outputs(toOutputManifestModel(manifest.getOutputs()));
+    }
+
+    private List<InputManifest> toInputManifestEntity(List<InputManifestModel> inputs) {
+        if (inputs == null || inputs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return inputs.stream().map(this::toInputManifestEntity).toList();
+    }
+
+    private InputManifest toInputManifestEntity(InputManifestModel input) {
+        return InputManifest.builder()
+                .portName(input.getPortName())
+                .required(input.getRequired())
+                .cardinality(input.getCardinality())
+                .contract(toInputContractEntity(input.getContract()))
+                .build();
+    }
+
+    private InputContract toInputContractEntity(InputContractModel contract) {
+        if (contract == null) {
+            return null;
+        }
+        return InputContract.builder()
+                .dataKind(contract.getDataKind().getValue())
+                .acceptedFormats(contract.getAcceptedFormats().stream()
+                        .map(format -> DatasetFileFormatEnum.valueOf(format.getValue()))
+                        .toList())
+                .build();
+    }
+
+    private List<InputManifestModel> toInputManifestModel(List<InputManifest> inputs) {
+        if (inputs == null || inputs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return inputs.stream().map(this::toInputManifestModel).toList();
+    }
+
+    private InputManifestModel toInputManifestModel(InputManifest input) {
+        return new InputManifestModel()
+                .portName(input.getPortName())
+                .required(input.getRequired())
+                .cardinality(input.getCardinality())
+                .contract(toInputContractModel(input.getContract()));
+    }
+
+    private InputContractModel toInputContractModel(InputContract contract) {
+        if (contract == null) {
+            return null;
+        }
+        return new InputContractModel()
+                .dataKind(InputContractModel.DataKindEnum.fromValue(contract.getDataKind()))
+                .acceptedFormats(contract.getAcceptedFormats().stream()
+                        .map(format -> InputContractModel.AcceptedFormatsEnum.fromValue(format.name()))
+                        .toList());
+    }
+
+    private List<InputRelationship> toInputRelationshipEntity(List<InputRelationshipModel> relationships) {
+        if (relationships == null || relationships.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return relationships.stream().map(this::toInputRelationshipEntity).toList();
+    }
+
+    private InputRelationship toInputRelationshipEntity(InputRelationshipModel relationship) {
+        return InputRelationship.builder()
+                .type(InputRelationshipTypeEnum.valueOf(relationship.getType().getValue()))
+                .ports(relationship.getPorts())
+                .build();
+    }
+
+    private List<InputRelationshipModel> toInputRelationshipModel(List<InputRelationship> relationships) {
+        if (relationships == null || relationships.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return relationships.stream().map(this::toInputRelationshipModel).toList();
+    }
+
+    private InputRelationshipModel toInputRelationshipModel(InputRelationship relationship) {
+        return new InputRelationshipModel()
+                .type(InputRelationshipModel.TypeEnum.fromValue(relationship.getType().name()))
+                .ports(relationship.getPorts());
+    }
+
+    private List<OutputManifest> toOutputManifestEntity(List<OutputManifestModel> outputs) {
+        if (outputs == null || outputs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return outputs.stream().map(this::toOutputManifestEntity).toList();
+    }
+
+    private OutputManifest toOutputManifestEntity(OutputManifestModel output) {
+        return OutputManifest.builder()
+                .name(output.getName())
+                .required(output.getRequired())
+                .dataKind(OutputDataKindEnum.valueOf(output.getDataKind().getValue()))
+                .type(toFormatStrategyEntity(output.getType()))
+                .downStreamPolicy(DownStreamPolicyEnum.valueOf(output.getDownStreamPolicy().getValue()))
+                .build();
+    }
+
+    private FormatStrategy toFormatStrategyEntity(FormatStrategyModel strategy) {
+        if (strategy == null) {
+            return null;
+        }
+        FormatStrategy.FormatStrategyBuilder builder = FormatStrategy.builder()
+                .type(FormatStrategyTypeEnum.valueOf(strategy.getType().getValue()))
+                .sourceInputPort(getNullableString(strategy.getSourceInputPort()));
+        FormatStrategyModel.FormatEnum format = getNullableFormat(strategy.getFormat());
+        if (format != null) {
+            builder.format(DatasetFileFormatEnum.valueOf(format.getValue()));
+        }
+        return builder.build();
+    }
+
+    private List<OutputManifestModel> toOutputManifestModel(List<OutputManifest> outputs) {
+        if (outputs == null || outputs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return outputs.stream().map(this::toOutputManifestModel).toList();
+    }
+
+    private OutputManifestModel toOutputManifestModel(OutputManifest output) {
+        return new OutputManifestModel()
+                .name(output.getName())
+                .required(output.getRequired())
+                .dataKind(OutputManifestModel.DataKindEnum.fromValue(output.getDataKind().name()))
+                .type(toFormatStrategyModel(output.getType()))
+                .downStreamPolicy(OutputManifestModel.DownStreamPolicyEnum.fromValue(output.getDownStreamPolicy().name()));
+    }
+
+    private FormatStrategyModel toFormatStrategyModel(FormatStrategy strategy) {
+        if (strategy == null) {
+            return null;
+        }
+        FormatStrategyModel model = new FormatStrategyModel()
+                .type(FormatStrategyModel.TypeEnum.fromValue(strategy.getType().name()));
+        if (StringUtils.isNotBlank(strategy.getSourceInputPort())) {
+            model.sourceInputPort(strategy.getSourceInputPort());
+        }
+        if (strategy.getFormat() != null) {
+            model.format(FormatStrategyModel.FormatEnum.fromValue(strategy.getFormat().name()));
+        }
+        return model;
     }
 
     private String getNullableString(JsonNullable<String> value) {
+        if (value == null || !value.isPresent()) {
+            return null;
+        }
+        return value.get();
+    }
+
+    private FormatStrategyModel.FormatEnum getNullableFormat(JsonNullable<FormatStrategyModel.FormatEnum> value) {
         if (value == null || !value.isPresent()) {
             return null;
         }

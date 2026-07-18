@@ -5,6 +5,7 @@ import {
   createExperimentConfig,
   type CreateExperimentConfigInput,
   type ExperimentConfig,
+  getExperimentConfig,
   getExperimentConfigs,
   type PaginatedResponse,
   type PaginationParams,
@@ -36,6 +37,22 @@ export function useQueryExperimentConfigs(
         pagination,
       ),
     queryKey: ['experiments', experimentUuid, 'configs', pagination],
+  })
+}
+
+export function useMutationGetExperimentConfig(experimentUuid: string) {
+  const { accessToken } = useLogin()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (uuid: string) =>
+      getExperimentConfig(accessToken as string, experimentUuid, uuid),
+    onSuccess: (experimentConfig) => {
+      queryClient.setQueryData(
+        ['experiments', experimentUuid, 'configs', experimentConfig.uuid],
+        experimentConfig,
+      )
+    },
   })
 }
 

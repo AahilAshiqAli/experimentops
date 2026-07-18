@@ -1,10 +1,7 @@
 package com.experimentops.platformapi.interfaces.ctrl;
 
 import com.experimentops.experiment.api.v1.ExperimentConfigApi;
-import com.experimentops.experiment.model.v1.ExperimentConfigListResponseModel;
-import com.experimentops.experiment.model.v1.ExperimentConfigRequestModel;
-import com.experimentops.experiment.model.v1.ExperimentConfigResponseModel;
-import com.experimentops.experiment.model.v1.ExperimentConfigStatusChangeRequestModel;
+import com.experimentops.experiment.model.v1.*;
 import com.experimentops.platformapi.service.ExperimentConfigService;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.HeaderUtil;
@@ -36,7 +33,7 @@ public class ExperimentConfigController implements ExperimentConfigApi {
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_EXPERIMENT_CONFIG + "')")
     @Override
-    public ResponseEntity<ExperimentConfigResponseModel> getExperimentConfig(String experimentUuid, String uuid) {
+    public ResponseEntity<ExperimentConfigResponse> getExperimentConfig(String experimentUuid, String uuid) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
         return ResponseEntity.status(HttpStatus.OK).body(experimentConfigService.getExperimentConfig(experimentUuid, uuid, headers));
     }

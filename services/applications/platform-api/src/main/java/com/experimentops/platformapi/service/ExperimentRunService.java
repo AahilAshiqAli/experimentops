@@ -14,6 +14,7 @@ import com.experimentops.platformapi.dal.repository.RunDatasetRepository;
 import com.experimentops.platformapi.model.ExperimentRunConfigContext;
 import com.experimentops.platformapi.model.ExperimentRunExecutionConfig;
 import com.experimentops.platformapi.model.ExperimentRunListItemProjection;
+import com.experimentops.platformapi.model.ExperimentRunResolvedPlan;
 import com.experimentops.platformapi.model.ExperimentRunSearchCriteria;
 import com.experimentops.platformapi.model.entity.*;
 import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
@@ -57,40 +58,31 @@ public class ExperimentRunService {
 
     @NonNull
     public ExperimentRunResponseModel publishExperimentRunRequest(@NonNull String experimentUuid, @NonNull ExperimentRunRequestModel experimentRunRequestModel, @NonNull ExperimentOpsHeaders headers){
-        experimentRunValidator.validateExperimentRunRequestModel(experimentUuid, experimentRunRequestModel);
+        experimentRunValidator.validateExperimentRunRequestModel(experimentUuid, experimentRunRequestModel, true);
         Experiment experiment = getExperiment(experimentUuid, headers);
         List<ExperimentRunExecutionModeModel> requestedExecutionMode = experimentRunRequestModel.getExecutionMode()
                 .stream()
                 .sorted(Comparator.comparing(ExperimentRunExecutionModeModel::getStepCount))
                 .toList();
-        DatasetVersion datasetVersion = datasetVersionRepository
-                .findByUuidAndWorkspaceUuidAndEnabled(
-                        experimentRunRequestModel.getDatasetVersionUuid(),
-                        headers.getWorkspaceUuid(),
-                        true
-                )
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "dataset version",
-                        experimentRunRequestModel.getDatasetVersionUuid()
-                ));
-
+        Map<String, DatasetVersion> datasetVersionsByUuid = getDatasetVersionsByUuid(
+                experimentRunValidator.collectDatasetVersionUuids(requestedExecutionMode),
+                headers
+        );
         Map<String, ExperimentRunConfigContext> experimentConfigsByUuid = getExperimentConfigsByUuid(
                 experimentUuid,
                 requestedExecutionMode,
                 headers
         );
-        experimentRunValidator.validateInputOutputForExecutionMode(
+        ExperimentRunResolvedPlan resolvedPlan = experimentRunValidator.validateAndResolveExecutionPlan(
                 requestedExecutionMode,
-                datasetVersion.getFormat(),
-                experimentConfigsByUuid
+                experimentConfigsByUuid,
+                datasetVersionsByUuid
         );
         List<ExecutionMode> executionMode = experimentRunTransformer.transformExecutionMode(requestedExecutionMode);
         List<ExperimentRunExecutionConfig> executionConfigs = experimentRunTransformer.transformExperimentRunExecutionConfigs(
                 requestedExecutionMode,
                 experimentConfigsByUuid
         );
-
-        String datasetUri = datasetVersion.getStorageUri();
 
         ExperimentRun experimentRun = experimentRunTransformer.transformExperimentRunEntity(
                 experimentUuid,
@@ -102,51 +94,88 @@ public class ExperimentRunService {
         log.info(headers, "saving experiment run object");
         experimentRunRepository.save(experimentRun);
 
-        RunDataset runDataset = experimentRunTransformer.transformRunDatasetEntity(experimentRun, datasetVersion, headers);
+        List<RunDataset> runDatasets = resolvedPlan.datasetVersionUuids()
+                .stream()
+                .map(datasetVersionUuid -> experimentRunTransformer.transformRunDatasetEntity(
+                        experimentRun,
+                        datasetVersionsByUuid.get(datasetVersionUuid),
+                        headers
+                ))
+                .toList();
 
-        log.info(headers, "saving run dataset object");
-        runDatasetRepository.save(runDataset);
+        log.info(headers, "saving run dataset objects");
+        runDatasetRepository.saveAll(runDatasets);
 
         ExperimentRunEvent experimentRunEvent = experimentRunTransformer.transformExperimentRunEvent(
                 experiment,
-                datasetUri,
+                resolvedPlan.firstDatasetUri(),
                 executionConfigs,
+                resolvedPlan,
                 experimentRun.getUuid(),
                 headers
         );
         kafkaProducer.sendMessage(experimentRunRequestTopic, experimentRunEvent, experimentRunEvent.getMetadata());
-        return experimentRunTransformer.transformExperimentRunResponseModelFromEntity(experimentRun, runDataset.getUuid(), headers);
+        return experimentRunTransformer.transformExperimentRunResponseModelFromEntity(
+                experimentRun,
+                runDatasets.stream().map(RunDataset::getUuid).toList(),
+                headers
+        );
     }
 
     public void validateExperimentRunRequest(@NonNull String experimentUuid, @NonNull ExperimentRunRequestModel experimentRunRequestModel, @NonNull ExperimentOpsHeaders headers) {
-        experimentRunValidator.validateExperimentRunRequestModel(experimentUuid, experimentRunRequestModel);
-        experimentRepository
-                .findByUuidAndWorkspaceUuidAndEnabled(experimentUuid, headers.getWorkspaceUuid(), true)
-                .orElseThrow(() -> new EntityNotFoundException("experiment", experimentUuid));
+        experimentRunValidator.validateExperimentRunRequestModel(experimentUuid, experimentRunRequestModel, false);
+        getExperiment(experimentUuid, headers);
         List<ExperimentRunExecutionModeModel> requestedExecutionMode = experimentRunRequestModel.getExecutionMode()
                 .stream()
                 .sorted(Comparator.comparing(ExperimentRunExecutionModeModel::getStepCount))
                 .toList();
-        DatasetVersion datasetVersion = datasetVersionRepository
-                .findByUuidAndWorkspaceUuidAndEnabled(
-                        experimentRunRequestModel.getDatasetVersionUuid(),
-                        headers.getWorkspaceUuid(),
-                        true
-                )
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "dataset version",
-                        experimentRunRequestModel.getDatasetVersionUuid()
-                ));
+        Map<String, DatasetVersion> datasetVersionsByUuid = getDatasetVersionsByUuid(
+                experimentRunValidator.collectDatasetVersionUuids(requestedExecutionMode),
+                headers
+        );
         Map<String, ExperimentRunConfigContext> experimentConfigsByUuid = getExperimentConfigsByUuid(
                 experimentUuid,
                 requestedExecutionMode,
                 headers
         );
-        experimentRunValidator.validateInputOutputForExecutionMode(
+        experimentRunValidator.validateAndResolveExecutionPlan(
                 requestedExecutionMode,
-                datasetVersion.getFormat(),
-                experimentConfigsByUuid
+                experimentConfigsByUuid,
+                datasetVersionsByUuid
         );
+    }
+
+    private Map<String, DatasetVersion> getDatasetVersionsByUuid(
+            @NonNull List<String> datasetVersionUuids,
+            @NonNull ExperimentOpsHeaders headers) {
+
+        if (datasetVersionUuids.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, DatasetVersion> datasetVersionsByUuid = datasetVersionRepository
+                .findAllByUuidInAndWorkspaceUuidAndStatusAndEnabled(
+                        datasetVersionUuids,
+                        headers.getWorkspaceUuid(),
+                        StatusEnum.ACTIVE,
+                        true
+                )
+                .stream()
+                .collect(Collectors.toMap(DatasetVersion::getUuid, Function.identity()));
+
+        List<String> missingDatasetVersionUuids = datasetVersionUuids
+                .stream()
+                .filter(datasetVersionUuid -> !datasetVersionsByUuid.containsKey(datasetVersionUuid))
+                .toList();
+
+        if (!missingDatasetVersionUuids.isEmpty()) {
+            throw new ValidationException(
+                    ErrorCode.INVALID_INPUTS,
+                    "Invalid datasetVersionUuid: " + String.join(", ", missingDatasetVersionUuids)
+            );
+        }
+
+        return datasetVersionsByUuid;
     }
 
     private Map<String, ExperimentRunConfigContext> getExperimentConfigsByUuid(
@@ -277,7 +306,7 @@ public class ExperimentRunService {
 
     public Experiment getExperiment(String experimentUuid, ExperimentOpsHeaders headers){
         return experimentRepository
-                .findByUuidAndWorkspaceUuidAndEnabled(experimentUuid, headers.getWorkspaceUuid(), true)
+                .findByUuidAndWorkspaceUuidAndStatusAndEnabled(experimentUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
                 .orElseThrow(() -> new EntityNotFoundException("experiment", experimentUuid));
     }
 }

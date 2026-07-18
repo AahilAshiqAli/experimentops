@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,6 +18,8 @@ public interface DatasetVersionRepository extends JpaRepository<DatasetVersion, 
     long countByDatasetUuidAndWorkspaceUuidAndStatusAndEnabled(String datasetUuid, String workspaceUuid, StatusEnum statusEnum, boolean enabled);
 
     Optional<DatasetVersion> findByUuidAndWorkspaceUuidAndEnabled(String uuid, String workspaceUuid, boolean enabled);
+
+    List<DatasetVersion> findAllByUuidInAndWorkspaceUuidAndStatusAndEnabled(Collection<String> uuids, String workspaceUuid, StatusEnum status, boolean enabled);
 
     Optional<DatasetVersion> findByUuidAndDatasetUuidAndWorkspaceUuidAndEnabled(String uuid, String datasetUuid, String workspaceUuid, boolean enabled);
 

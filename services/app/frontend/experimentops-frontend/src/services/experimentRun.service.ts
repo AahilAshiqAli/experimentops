@@ -13,11 +13,18 @@ export type ExperimentRunStatus = (typeof EXPERIMENT_RUN_STATUSES)[number]
 
 export type ExperimentRunStep = {
   experimentConfigUuid: string
+  inputs: ExperimentRunStepInput[]
   stepCount: number
 }
 
+export type ExperimentRunStepInput = {
+  file: string
+  inputType: 'ARTIFACT' | 'DATASET'
+  portName: string
+  sourceStepCount?: number
+}
+
 type ExperimentRunInput = {
-  datasetVersionUuid: string
   executionMode: ExperimentRunStep[]
 }
 
@@ -58,7 +65,8 @@ export type ExperimentRunStatusResponse = {
 
 export type ExperimentRunCreationResponse = {
   experimentRunUuid: string
-  runDatasetUuid: string
+  runDatasetUuid?: string | null
+  runDatasetUuids?: string[]
   status: ExperimentRunStatus
 }
 
@@ -74,7 +82,23 @@ function isExperimentRunStep(value: unknown): value is ExperimentRunStep {
     typeof value === 'object' &&
     value !== null &&
     typeof (value as ExperimentRunStep).experimentConfigUuid === 'string' &&
-    typeof (value as ExperimentRunStep).stepCount === 'number'
+    typeof (value as ExperimentRunStep).stepCount === 'number' &&
+    Array.isArray((value as ExperimentRunStep).inputs) &&
+    (value as ExperimentRunStep).inputs.every(isExperimentRunStepInput)
+  )
+}
+
+function isExperimentRunStepInput(
+  value: unknown,
+): value is ExperimentRunStepInput {
+  if (typeof value !== 'object' || value === null) return false
+  const input = value as ExperimentRunStepInput
+  return (
+    typeof input.portName === 'string' &&
+    (input.inputType === 'ARTIFACT' || input.inputType === 'DATASET') &&
+    typeof input.file === 'string' &&
+    (input.sourceStepCount === undefined ||
+      typeof input.sourceStepCount === 'number')
   )
 }
 

@@ -15,7 +15,135 @@
             { "name": "workspaceUuid",   "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "configJson",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
             { "name": "datasetUri",      "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-            { "name": "experimentUuid",  "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+            { "name": "experimentUuid",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+            {
+              "name": "executionPlan",
+              "type": [
+                "null",
+                {
+                  "type": "record",
+                  "name": "ExperimentRunExecutionPlan",
+                  "fields": [
+                    { "name": "schemaVersion", "type": "int", "default": 1 },
+                    {
+                      "name": "steps",
+                      "type": {
+                        "type": "array",
+                        "items": {
+                          "type": "record",
+                          "name": "ExperimentRunExecutionPlanStep",
+                          "fields": [
+                            { "name": "stepCount",            "type": ["null", "int"],    "default": null },
+                            { "name": "experimentConfigUuid", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+                            { "name": "experimentType",       "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+                            { "name": "experimentConfigJson", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+                            { "name": "timeWeight",           "type": ["null", "int"],    "default": null },
+                            {
+                              "name": "inputs",
+                              "type": {
+                                "type": "array",
+                                "items": {
+                                  "type": "record",
+                                  "name": "ExperimentRunExecutionPlanInput",
+                                  "fields": [
+                                    { "name": "portName",           "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+                                    {
+                                      "name": "inputType",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "enum",
+                                          "name": "ExperimentRunPlanInputType",
+                                          "symbols": [ "DATASET", "ARTIFACT" ]
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "dataKind",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "enum",
+                                          "name": "ExperimentRunPlanDataKind",
+                                          "symbols": [ "TABULAR_DATASET", "MODEL", "TEXT_CORPUS", "IMAGE_DATASET", "REPORT", "FILE", "DIRECTORY" ]
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    {
+                                      "name": "format",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "enum",
+                                          "name": "ExperimentRunPlanDataFormat",
+                                          "symbols": [ "CSV", "EXCEL", "TEXT", "UNKNOWN", "PICKLE", "JSON", "PARQUET", "AVRO", "ORC", "PDF", "MARKDOWN", "HTML", "PNG", "JPEG", "TIFF", "WEBP", "ZIP", "DIRECTORY" ]
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    { "name": "datasetVersionUuid", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+                                    { "name": "datasetUri",         "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+                                    { "name": "sourceStepCount",    "type": ["null", "int"],    "default": null },
+                                    { "name": "artifactName",       "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+                                  ]
+                                }
+                              },
+                              "default": []
+                            },
+                            {
+                              "name": "outputs",
+                              "type": {
+                                "type": "array",
+                                "items": {
+                                  "type": "record",
+                                  "name": "ExperimentRunExecutionPlanOutput",
+                                  "fields": [
+                                    { "name": "name",             "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+                                    { "name": "dataKind",         "type": ["null", "ExperimentRunPlanDataKind"], "default": null },
+                                    {
+                                      "name": "formatStrategy",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "enum",
+                                          "name": "ExperimentRunPlanFormatStrategy",
+                                          "symbols": [ "SAME_AS_INPUT", "FIXED" ]
+                                        }
+                                      ],
+                                      "default": null
+                                    },
+                                    { "name": "format",           "type": ["null", "ExperimentRunPlanDataFormat"], "default": null },
+                                    { "name": "sourceInputPort",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+                                    { "name": "requiredForRun",   "type": ["null", "boolean"], "default": null },
+                                    {
+                                      "name": "downStreamPolicy",
+                                      "type": [
+                                        "null",
+                                        {
+                                          "type": "enum",
+                                          "name": "ExperimentRunPlanDownStreamPolicy",
+                                          "symbols": [ "CONNECTABLE", "TERMINAL", "INTERNAL" ]
+                                        }
+                                      ],
+                                      "default": null
+                                    }
+                                  ]
+                                }
+                              },
+                              "default": []
+                            }
+                          ]
+                        }
+                      },
+                      "default": []
+                    }
+                  ]
+                }
+              ],
+              "default": null
+            }
           ]
         }
       ],
