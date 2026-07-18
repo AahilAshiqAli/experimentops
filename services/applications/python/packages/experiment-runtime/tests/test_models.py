@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import json
-
 from experiment_runtime.models import (
     Artifact,
     ExperimentExecutionContext,
     ExperimentRunExecutionConfig,
+    ExperimentRunExecutionPlan,
+    ExperimentRunExecutionPlanInput,
+    ExperimentRunExecutionPlanOutput,
     ExperimentRunCompletedEvent,
     ExperimentRunFailureErrorEntry,
     ExperimentRunProgressEvent,
@@ -131,10 +132,11 @@ def test_execution_context_builds_from_requested_event() -> None:
         "experimentType": "CSV_PROFILE_ANALYSIS",
         "datasetUri": "s3://bucket/input.csv",
         "configJson": {"sampleSize": 100},
+        "inputs": {},
     }
 
 
-def test_run_requested_event_parses_execution_configs_from_config_json() -> None:
+def test_run_requested_event_parses_execution_configs_from_execution_plan() -> None:
     requested_event = ExperimentRunRequestedEvent.from_payload(
         {
             "metadata": {
@@ -147,25 +149,82 @@ def test_run_requested_event_parses_execution_configs_from_config_json() -> None
                 "projectUuid": "project-1",
                 "experimentUuid": "experiment-1",
                 "datasetUri": "s3://bucket/input.csv",
-                "configJson": json.dumps(
-                    [
+                "configJson": [
+                    {
+                        "stepCount": 99,
+                        "experimentType": "IGNORED_LEGACY_CONFIG",
+                    }
+                ],
+                "executionPlan": {
+                    "schemaVersion": 1,
+                    "steps": [
                         {
                             "stepCount": 1,
+                            "experimentConfigUuid": "config-1",
                             "experimentType": "CSV_PROFILE_ANALYSIS",
                             "experimentConfigJson": {"sampleSize": 100},
+                            "timeWeight": 5,
+                            "inputs": [
+                                {
+                                    "portName": "dataset",
+                                    "inputType": "DATASET",
+                                    "dataKind": "TABULAR_DATASET",
+                                    "format": "CSV",
+                                    "datasetVersionUuid": "dataset-version-1",
+                                    "datasetUri": "s3://bucket/input.csv",
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "name": "CLEANED_DATASET",
+                                    "dataKind": "TABULAR_DATASET",
+                                    "formatStrategy": "SAME_AS_INPUT",
+                                    "format": "CSV",
+                                    "sourceInputPort": "dataset",
+                                    "requiredForRun": True,
+                                    "downStreamPolicy": "CONNECTABLE",
+                                }
+                            ],
                         }
-                    ]
-                ),
+                    ],
+                },
             },
         }
     )
 
     assert requested_event.experiment_type is None
+    assert requested_event.execution_plan == ExperimentRunExecutionPlan(
+        schema_version=1,
+        steps=requested_event.execution_configs,
+    )
     assert requested_event.execution_configs == (
         ExperimentRunExecutionConfig(
             step_count=1,
+            experiment_config_uuid="config-1",
             experiment_type="CSV_PROFILE_ANALYSIS",
             experiment_config_json={"sampleSize": 100},
+            time_weight=5,
+            inputs=(
+                ExperimentRunExecutionPlanInput(
+                    port_name="dataset",
+                    input_type="DATASET",
+                    data_kind="TABULAR_DATASET",
+                    format="CSV",
+                    dataset_version_uuid="dataset-version-1",
+                    dataset_uri="s3://bucket/input.csv",
+                ),
+            ),
+            outputs=(
+                ExperimentRunExecutionPlanOutput(
+                    name="CLEANED_DATASET",
+                    data_kind="TABULAR_DATASET",
+                    format_strategy="SAME_AS_INPUT",
+                    format="CSV",
+                    source_input_port="dataset",
+                    required_for_run=True,
+                    down_stream_policy="CONNECTABLE",
+                ),
+            ),
         ),
     )
 

@@ -1,6 +1,7 @@
 from experiment_runtime.base_model import ExperimentOpsModel
 from experiment_runtime.models.experiment_execution_context import (
     ExperimentExecutionContext,
+    ExperimentInputContext,
 )
 from experiment_runtime.models.experiment_run_completed_event import (
     Artifact,
@@ -17,6 +18,10 @@ from experiment_runtime.models.experiment_run_progress_event import (
 )
 from experiment_runtime.models.experiment_run_requested_event import (
     ExperimentRunExecutionConfig,
+    ExperimentRunExecutionPlan,
+    ExperimentRunExecutionPlanInput,
+    ExperimentRunExecutionPlanOutput,
+    ExperimentRunExecutionPlanStep,
     ExperimentRunRequestedEvent,
 )
 
@@ -24,7 +29,12 @@ __all__ = [
     "ExperimentOpsModel",
     "Artifact",
     "ExperimentExecutionContext",
+    "ExperimentInputContext",
     "ExperimentRunExecutionConfig",
+    "ExperimentRunExecutionPlan",
+    "ExperimentRunExecutionPlanInput",
+    "ExperimentRunExecutionPlanOutput",
+    "ExperimentRunExecutionPlanStep",
     "ExperimentRunCompletedEvent",
     "ExperimentRunFailureErrorEntry",
     "ExperimentRunFailureEvent",

@@ -38,10 +38,11 @@ public interface ExperimentConfigRepository extends JpaRepository<ExperimentConf
     @Query(value = """
             SELECT
                 ec.uuid AS experimentConfigUuid,
+                ec.name AS name,
                 ec.experiment_type AS experimentType,
                 CAST(ec.config AS CHAR) AS config,
-                CAST(et.format_mappings AS CHAR) AS formatMappings
-                et.et.time_weight AS timeWeight
+                CAST(et.format_mappings AS CHAR) AS formatMappings,
+                et.time_weight AS timeWeight
             FROM tbl_experiment_config ec
             JOIN tbl_experiment_types et
                 ON et.name = ec.experiment_type
@@ -50,6 +51,7 @@ public interface ExperimentConfigRepository extends JpaRepository<ExperimentConf
             WHERE ec.uuid IN (:experimentConfigUuids)
               AND ec.experiment_uuid = :experimentUuid
               AND ec.workspace_uuid = :workspaceUuid
+              AND ec.status = :experimentTypeStatus
               AND ec.enabled = true
             """, nativeQuery = true)
     List<ExperimentConfigWithTypeProjection> findAllWithExperimentTypesByUuidIn(

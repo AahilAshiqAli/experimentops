@@ -25,9 +25,9 @@ export function DatasetVersionPickerDialog({
   onDatasetPickerPageChange,
   onDatasetPickerSearchChange,
   onOpenDataset,
-  onSelect,
+  onToggle,
   projectUuid,
-  selectedVersionUuid,
+  selectedVersionUuids,
   totalDatasetVersions,
 }: {
   datasetPickerPage: number
@@ -44,9 +44,9 @@ export function DatasetVersionPickerDialog({
   onDatasetPickerPageChange: (page: number) => void
   onDatasetPickerSearchChange: (search: string) => void
   onOpenDataset: (dataset: Dataset | null) => void
-  onSelect: (dataset: Dataset, version: DatasetVersion) => void
+  onToggle: (dataset: Dataset, version: DatasetVersion) => void
   projectUuid: string
-  selectedVersionUuid?: string
+  selectedVersionUuids: string[]
   totalDatasetVersions: number
 }) {
   return (
@@ -66,18 +66,30 @@ export function DatasetVersionPickerDialog({
               Find Dataset
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Open a dataset folder, then select a completed dataset version for
-              this run.
+              Select completed dataset versions, then bind them to config input
+              ports on the board.
             </p>
           </div>
-          <button
-            aria-label="Close dataset picker"
-            className="rounded-md p-2 text-slate-500 hover:bg-slate-100"
-            onClick={onClose}
-            type="button"
-          >
-            ×
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              {selectedVersionUuids.length} selected
+            </span>
+            <button
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
+              onClick={onClose}
+              type="button"
+            >
+              Done
+            </button>
+            <button
+              aria-label="Close dataset picker"
+              className="rounded-md p-2 text-slate-500 hover:bg-slate-100"
+              onClick={onClose}
+              type="button"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         <div className="mt-6 overflow-y-auto">
@@ -116,17 +128,17 @@ export function DatasetVersionPickerDialog({
                 ) : (
                   <DataTable
                     columns={getDatasetVersionColumns({
-                      onPreview: (version) => onSelect(openedDataset, version),
-                      onSelect: (version) => onSelect(openedDataset, version),
+                      onPreview: (version) => onToggle(openedDataset, version),
+                      onSelect: (version) => onToggle(openedDataset, version),
                       pendingUuid: null,
                       selectable: true,
-                      selectedVersionUuid,
+                      selectedVersionUuids,
                       totalElements: totalDatasetVersions,
                     })}
                     data={datasetVersions}
                     emptyMessage="No completed versions are available in this dataset folder."
                     getRowKey={(version) => version.datasetVersionUuid}
-                    onRowClick={(version) => onSelect(openedDataset, version)}
+                    onRowClick={(version) => onToggle(openedDataset, version)}
                     searchPlaceholder="Search completed dataset versions..."
                   />
                 )}

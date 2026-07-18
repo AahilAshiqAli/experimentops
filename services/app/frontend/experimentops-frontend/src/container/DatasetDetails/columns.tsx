@@ -11,6 +11,7 @@ export function getDatasetVersionColumns({
   pendingUuid,
   selectable = false,
   selectedVersionUuid,
+  selectedVersionUuids,
   totalElements,
 }: {
   onPreview: (version: DatasetVersion) => void
@@ -18,6 +19,7 @@ export function getDatasetVersionColumns({
   pendingUuid: string | null
   selectable?: boolean
   selectedVersionUuid?: string
+  selectedVersionUuids?: string[]
   totalElements: number
 }): DataTableColumn<DatasetVersion>[] {
   const columns: DataTableColumn<DatasetVersion>[] = [
@@ -90,7 +92,9 @@ export function getDatasetVersionColumns({
   return [
     {
       cell: (version) => {
-        const isSelected = selectedVersionUuid === version.datasetVersionUuid
+        const isSelected = selectedVersionUuids
+          ? selectedVersionUuids.includes(version.datasetVersionUuid)
+          : selectedVersionUuid === version.datasetVersionUuid
 
         return (
           <button

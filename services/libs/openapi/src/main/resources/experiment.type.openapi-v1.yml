@@ -138,10 +138,24 @@ components:
         formatMappings:
           type: array
           items:
-            $ref: '#/components/schemas/ExperimentTypeFormatMappingModel'
+            $ref: '#/components/schemas/ExperimentTypeManifestModel'
           example:
-            - inputFormat: "CSV"
-              outputFormat: "CSV"
+            - inputs:
+                - portName: "dataset"
+                  required: true
+                  cardinality: "ONE"
+                  contract:
+                    dataKind: "TABULAR_DATASET"
+                    acceptedFormats:
+                      - "CSV"
+              outputs:
+                - name: "profileReport"
+                  required: true
+                  dataKind: "REPORT"
+                  type:
+                    type: "FIXED"
+                    format: "JSON"
+                  downStreamPolicy: "TERMINAL"
         timeWeight:
           type: integer
           format: int32
@@ -166,7 +180,7 @@ components:
         formatMappings:
           type: array
           items:
-            $ref: '#/components/schemas/ExperimentTypeFormatMappingModel'
+            $ref: '#/components/schemas/ExperimentTypeManifestModel'
         timeWeight:
           type: integer
           format: int32
@@ -194,23 +208,152 @@ components:
           type: string
           nullable: true
           example: "^[A-Za-z_][A-Za-z0-9_]*$"
-    ExperimentTypeFormatMappingModel:
+    ExperimentTypeManifestModel:
       type: object
       properties:
-        inputFormat:
+        inputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/InputManifestModel'
+        inputRelationships:
+          type: array
+          items:
+            $ref: '#/components/schemas/InputRelationshipModel'
+        outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutputManifestModel'
+    InputManifestModel:
+      type: object
+      properties:
+        portName:
           type: string
+          example: "dataset"
+        required:
+          type: boolean
+          example: true
+        cardinality:
+          type: string
+          example: "ONE"
+        contract:
+          $ref: '#/components/schemas/InputContractModel'
+    InputContractModel:
+      type: object
+      properties:
+        dataKind:
+          type: string
+          enum:
+            - TABULAR_DATASET
+            - MODEL
+            - TEXT_CORPUS
+            - IMAGE_DATASET
+            - REPORT
+            - FILE
+            - DIRECTORY
+          example: "TABULAR_DATASET"
+        acceptedFormats:
+          type: array
+          items:
+            type: string
+            enum:
+              - CSV
+              - EXCEL
+              - TEXT
+              - UNKNOWN
+              - PICKLE
+              - JSON
+              - PARQUET
+              - AVRO
+              - ORC
+              - PDF
+              - MARKDOWN
+              - HTML
+              - PNG
+              - JPEG
+              - TIFF
+              - WEBP
+              - ZIP
+              - DIRECTORY
+    InputRelationshipModel:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - SAME_FORMAT
+          example: "SAME_FORMAT"
+        ports:
+          type: array
+          items:
+            type: string
+          example:
+            - "trainDataset"
+            - "testDataset"
+    OutputManifestModel:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "profileReport"
+        required:
+          type: boolean
+          example: true
+        dataKind:
+          type: string
+          enum:
+            - TABULAR_DATASET
+            - MODEL
+            - TEXT_CORPUS
+            - IMAGE_DATASET
+            - REPORT
+            - FILE
+            - DIRECTORY
+          example: "REPORT"
+        type:
+          $ref: '#/components/schemas/FormatStrategyModel'
+        downStreamPolicy:
+          type: string
+          enum:
+            - CONNECTABLE
+            - TERMINAL
+            - INTERNAL
+          example: "TERMINAL"
+    FormatStrategyModel:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - SAME_AS_INPUT
+            - FIXED
+          example: "FIXED"
+        sourceInputPort:
+          type: string
+          nullable: true
+          example: "dataset"
+        format:
+          type: string
+          nullable: true
           enum:
             - CSV
             - EXCEL
             - TEXT
-          example: "CSV"
-        outputFormat:
-          type: string
-          enum:
-            - CSV
-            - EXCEL
-            - TEXT
-          example: "CSV"
+            - UNKNOWN
+            - PICKLE
+            - JSON
+            - PARQUET
+            - AVRO
+            - ORC
+            - PDF
+            - MARKDOWN
+            - HTML
+            - PNG
+            - JPEG
+            - TIFF
+            - WEBP
+            - ZIP
+            - DIRECTORY
+          example: "JSON"
     ExperimentTypeStatusChangeRequestModel:
       type: object
       properties:

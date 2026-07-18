@@ -10,6 +10,7 @@ export function ExperimentConfigPickerDialog({
   error,
   experimentType,
   isLoading,
+  isSelecting,
   onClose,
   onSelect,
   selectedConfigUuids,
@@ -18,6 +19,7 @@ export function ExperimentConfigPickerDialog({
   error: unknown
   experimentType: string
   isLoading: boolean
+  isSelecting: boolean
   onClose: () => void
   onSelect: (config: ExperimentConfig) => void
   selectedConfigUuids: string[]
@@ -64,18 +66,28 @@ export function ExperimentConfigPickerDialog({
               tone="error"
             />
           ) : (
-            <DataTable
-              columns={getExperimentConfigColumns({
-                onSelect,
-                selectable: true,
-                selectedConfigUuids,
-              })}
-              data={configs}
-              emptyMessage="No configs were found for this experiment type."
-              getRowKey={(config) => config.uuid}
-              onRowClick={onSelect}
-              searchPlaceholder="Search returned configs..."
-            />
+            <div
+              aria-busy={isSelecting}
+              className={isSelecting ? 'pointer-events-none opacity-60' : ''}
+            >
+              {isSelecting ? (
+                <p className="mb-3 rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-700">
+                  Loading config inputs and outputs…
+                </p>
+              ) : null}
+              <DataTable
+                columns={getExperimentConfigColumns({
+                  onSelect,
+                  selectable: true,
+                  selectedConfigUuids,
+                })}
+                data={configs}
+                emptyMessage="No configs were found for this experiment type."
+                getRowKey={(config) => config.uuid}
+                onRowClick={onSelect}
+                searchPlaceholder="Search returned configs..."
+              />
+            </div>
           )}
         </div>
       </div>

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.commons.lang3.StringUtils;
+import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,9 +34,11 @@ public final class JSONUtil {
         // anybody that wants to include nulls should use their own mapper
         typedMapper.setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.ALWAYS, JsonInclude.Include.NON_NULL));
         typedMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        typedMapper.registerModule(new JsonNullableModule());
         nonTypedMapper.setDefaultPropertyInclusion(JsonInclude.Value.construct(JsonInclude.Include.ALWAYS, JsonInclude.Include.NON_NULL));
         nonTypedMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         nonTypedMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+        nonTypedMapper.registerModule(new JsonNullableModule());
 
         // The only difference between typedMapper and nonTypedMapper is that non typed mapper accepts a single element as array/
     }

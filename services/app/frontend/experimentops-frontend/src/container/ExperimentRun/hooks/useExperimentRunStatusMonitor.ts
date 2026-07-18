@@ -35,9 +35,12 @@ export function useExperimentRunStatusMonitor() {
     )
 
     queryClient.setQueriesData<PaginatedExperimentRuns>(
-      { queryKey: ['experiments'] },
+      {
+        predicate: (query) =>
+          query.queryKey[0] === 'experiments' && query.queryKey[2] === 'runs',
+      },
       (current) => {
-        if (!current) return current
+        if (!current || !Array.isArray(current.data)) return current
 
         const data = current.data.map((run) => {
           const status = statusesByUuid.get(run.uuid)

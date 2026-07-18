@@ -7,6 +7,7 @@ from experiment_runtime.kafka import (
 from experiment_runtime.logging.context import ExperimentOpsLogger
 from experiment_runtime.models.experiment_execution_context import (
     ExperimentExecutionContext,
+    ExperimentInputContext,
 )
 from experiment_runtime.models.experiment_run_completed_event import (
     Artifact,
@@ -19,6 +20,8 @@ from experiment_runtime.models.experiment_run_failure_event import (
 )
 from experiment_runtime.models.experiment_run_requested_event import (
     ExperimentRunExecutionConfig,
+    ExperimentRunExecutionPlanInput,
+    ExperimentRunExecutionPlanOutput,
     ExperimentRunRequestedEvent,
 )
 from experiment_runtime.registry import ExperimentRegistry
@@ -26,6 +29,8 @@ from experiment_runtime.registry import ExperimentRegistry
 
 logger = ExperimentOpsLogger.get_logger("analysis-worker")
 DEFAULT_TIME_WEIGHT = 1.0
+CONNECTABLE_DOWN_STREAM_POLICY = "CONNECTABLE"
+INTERNAL_DOWN_STREAM_POLICY = "INTERNAL"
 
 
 def build_experiment_run_requested_handler(
@@ -185,6 +190,7 @@ def _build_execution_context(
     event: ExperimentRunRequestedEvent,
     execution_config: ExperimentRunExecutionConfig,
     dataset_uri: str | None = None,
+    inputs: dict[str, ExperimentInputContext] | None = None,
     previous_result: Result | None = None,
     pipeline_results: list[Result] | None = None,
     progress_completed_weight: float | None = None,
@@ -196,7 +202,8 @@ def _build_execution_context(
         execution_config,
     ).model_copy(
         update={
-            "dataset_uri": dataset_uri or event.dataset_uri,
+            "dataset_uri": dataset_uri,
+            "inputs": inputs or {},
             "previous_result": previous_result,
             "pipeline_results": pipeline_results or [],
             "progress_completed_weight": progress_completed_weight,
@@ -213,19 +220,27 @@ def _execute_pipeline(
 ) -> list[tuple[ExperimentRunExecutionConfig, Result]]:
     step_results: list[tuple[ExperimentRunExecutionConfig, Result]] = []
     progress_states = _progress_states(execution_configs)
-    current_dataset_uri = event.dataset_uri
+    artifacts_by_step_and_name: dict[
+        tuple[int, str],
+        tuple[Artifact, ExperimentRunExecutionPlanOutput],
+    ] = {}
     previous_result: Result | None = None
 
     for index, execution_config in enumerate(execution_configs):
         progress_completed_weight, progress_step_weight, progress_total_weight = (
             progress_states[index]
         )
+        inputs = _resolve_execution_inputs(
+            execution_config=execution_config,
+            artifacts_by_step_and_name=artifacts_by_step_and_name,
+        )
         result = registry.execute(
             experiment_type=execution_config.experiment_type or "",
             context=_build_execution_context(
                 event=event,
                 execution_config=execution_config,
-                dataset_uri=current_dataset_uri,
+                dataset_uri=_primary_input_uri(inputs),
+                inputs=inputs,
                 previous_result=previous_result,
                 pipeline_results=[
                     step_result
@@ -236,13 +251,234 @@ def _execute_pipeline(
                 progress_total_weight=progress_total_weight,
             ),
         )
+        result = _record_step_artifacts(
+            execution_config=execution_config,
+            result=result,
+            artifacts_by_step_and_name=artifacts_by_step_and_name,
+        )
         step_results.append((execution_config, result))
         previous_result = result
 
-        if index < len(execution_configs) - 1:
-            current_dataset_uri = _resultant_artifact_uri(result)
-
     return step_results
+
+
+def _resolve_execution_inputs(
+    execution_config: ExperimentRunExecutionConfig,
+    artifacts_by_step_and_name: dict[
+        tuple[int, str],
+        tuple[Artifact, ExperimentRunExecutionPlanOutput],
+    ],
+) -> dict[str, ExperimentInputContext]:
+    inputs: dict[str, ExperimentInputContext] = {}
+
+    for planned_input in execution_config.inputs:
+        port_name = _required_value(planned_input.port_name, "executionPlan.steps.inputs.portName")
+        if planned_input.input_type == "DATASET":
+            inputs[port_name] = _dataset_input_context(planned_input)
+            continue
+
+        if planned_input.input_type == "ARTIFACT":
+            inputs[port_name] = _artifact_input_context(
+                planned_input=planned_input,
+                artifacts_by_step_and_name=artifacts_by_step_and_name,
+            )
+            continue
+
+        raise ValueError(
+            f"Unsupported execution input type={planned_input.input_type} port_name={port_name}"
+        )
+
+    return inputs
+
+
+def _dataset_input_context(
+    planned_input: ExperimentRunExecutionPlanInput,
+) -> ExperimentInputContext:
+    return ExperimentInputContext(
+        port_name=planned_input.port_name,
+        input_type=planned_input.input_type,
+        data_kind=planned_input.data_kind,
+        format=planned_input.format,
+        uri=_required_value(planned_input.dataset_uri, "executionPlan.steps.inputs.datasetUri"),
+        dataset_version_uuid=planned_input.dataset_version_uuid,
+    )
+
+
+def _artifact_input_context(
+    planned_input: ExperimentRunExecutionPlanInput,
+    artifacts_by_step_and_name: dict[
+        tuple[int, str],
+        tuple[Artifact, ExperimentRunExecutionPlanOutput],
+    ],
+) -> ExperimentInputContext:
+    source_step_count = _required_int(
+        planned_input.source_step_count,
+        "executionPlan.steps.inputs.sourceStepCount",
+    )
+    artifact_name = _required_value(
+        planned_input.artifact_name,
+        "executionPlan.steps.inputs.artifactName",
+    )
+    produced_artifact = artifacts_by_step_and_name.get((source_step_count, artifact_name))
+    if produced_artifact is None:
+        raise ValueError(
+            f"Missing CONNECTABLE artifact. source_step_count={source_step_count} artifact_name={artifact_name}"
+        )
+
+    artifact, output = produced_artifact
+    if planned_input.format and _normalize_value(planned_input.format) != _normalize_value(artifact.format):
+        raise ValueError(
+            f"Artifact input format mismatch. artifact_name={artifact_name} expected={planned_input.format} actual={artifact.format}"
+        )
+    if (
+        planned_input.data_kind
+        and output.data_kind
+        and _normalize_value(planned_input.data_kind) != _normalize_value(output.data_kind)
+    ):
+        raise ValueError(
+            f"Artifact input dataKind mismatch. artifact_name={artifact_name} expected={planned_input.data_kind} actual={output.data_kind}"
+        )
+
+    return ExperimentInputContext(
+        port_name=planned_input.port_name,
+        input_type=planned_input.input_type,
+        data_kind=planned_input.data_kind,
+        format=planned_input.format or artifact.format,
+        uri=artifact.uri,
+        source_step_count=source_step_count,
+        artifact_name=artifact_name,
+    )
+
+
+def _record_step_artifacts(
+    execution_config: ExperimentRunExecutionConfig,
+    result: Result,
+    artifacts_by_step_and_name: dict[
+        tuple[int, str],
+        tuple[Artifact, ExperimentRunExecutionPlanOutput],
+    ],
+) -> Result:
+    planned_outputs = tuple(
+        output for output in execution_config.outputs
+        if output.name
+    )
+    if not planned_outputs:
+        if result.artifact:
+            raise ValueError(
+                f"Step {execution_config.step_count} produced artifacts but executionPlan.outputs is empty"
+            )
+        return result
+
+    artifacts = tuple(result.artifact or ())
+    if len(planned_outputs) == 1 and len(artifacts) == 1:
+        output = planned_outputs[0]
+        normalized_artifact = _normalize_artifact_for_output(
+            artifact=artifacts[0],
+            output=output,
+            step_count=execution_config.step_count,
+        )
+        _index_artifact_if_connectable(
+            artifact=normalized_artifact,
+            output=output,
+            step_count=execution_config.step_count,
+            artifacts_by_step_and_name=artifacts_by_step_and_name,
+        )
+        return result.model_copy(update={"artifact": [normalized_artifact]})
+
+    artifacts_by_type = {artifact.type: artifact for artifact in artifacts}
+    normalized_artifacts: list[Artifact] = []
+    for output in planned_outputs:
+        artifact = artifacts_by_type.get(output.name)
+        if artifact is None:
+            if _is_required_for_run(output):
+                raise ValueError(
+                    f"Step {execution_config.step_count} did not produce planned output artifact={output.name}"
+                )
+            continue
+
+        normalized_artifact = _normalize_artifact_for_output(
+            artifact=artifact,
+            output=output,
+            step_count=execution_config.step_count,
+        )
+        _index_artifact_if_connectable(
+            artifact=normalized_artifact,
+            output=output,
+            step_count=execution_config.step_count,
+            artifacts_by_step_and_name=artifacts_by_step_and_name,
+        )
+        normalized_artifacts.append(normalized_artifact)
+
+    unexpected_artifact_types = [
+        artifact.type
+        for artifact in artifacts
+        if artifact.type not in {output.name for output in planned_outputs}
+    ]
+    if unexpected_artifact_types:
+        raise ValueError(
+            f"Step {execution_config.step_count} produced unexpected artifacts={unexpected_artifact_types}"
+        )
+
+    return result.model_copy(update={"artifact": normalized_artifacts})
+
+
+def _is_required_for_run(output: ExperimentRunExecutionPlanOutput) -> bool:
+    return output.required_for_run is not False
+
+
+def _normalize_artifact_for_output(
+    artifact: Artifact,
+    output: ExperimentRunExecutionPlanOutput,
+    step_count: int | None,
+) -> Artifact:
+    output_name = _required_value(output.name, "executionPlan.steps.outputs.name")
+    output_format = _required_value(output.format, "executionPlan.steps.outputs.format")
+
+    if _normalize_value(artifact.format) != _normalize_value(output_format):
+        raise ValueError(
+            f"Step {step_count} artifact format mismatch. artifact={output_name} expected={output_format} actual={artifact.format}"
+        )
+
+    return artifact.model_copy(
+        update={
+            "type": output_name,
+            "format": output_format,
+        }
+    )
+
+
+def _index_artifact_if_connectable(
+    artifact: Artifact,
+    output: ExperimentRunExecutionPlanOutput,
+    step_count: int | None,
+    artifacts_by_step_and_name: dict[
+        tuple[int, str],
+        tuple[Artifact, ExperimentRunExecutionPlanOutput],
+    ],
+) -> None:
+    resolved_step_count = _required_int(step_count, "executionPlan.steps.stepCount")
+    output_name = _required_value(output.name, "executionPlan.steps.outputs.name")
+    down_stream_policy = _normalize_value(output.down_stream_policy)
+
+    if down_stream_policy == CONNECTABLE_DOWN_STREAM_POLICY:
+        artifacts_by_step_and_name[(resolved_step_count, output_name)] = (artifact, output)
+        return
+
+    if down_stream_policy == INTERNAL_DOWN_STREAM_POLICY:
+        return
+
+    if down_stream_policy:
+        return
+
+    raise ValueError(f"Step {step_count} output {output_name} is missing downStreamPolicy")
+
+
+def _primary_input_uri(inputs: dict[str, ExperimentInputContext]) -> str | None:
+    for input_context in inputs.values():
+        if input_context.uri:
+            return input_context.uri
+
+    return None
 
 
 def _merge_results(
@@ -257,7 +493,7 @@ def _merge_results(
             experiment_type=execution_config.experiment_type,
         )
         for execution_config, result in step_results
-        for artifact in result.artifact
+        for artifact in _visible_artifacts(execution_config, result)
     ]
     metrics = [
         _with_metric_experiment_type(
@@ -268,6 +504,21 @@ def _merge_results(
         for metric in _result_metrics(result)
     ]
     return Result(artifact=artifacts, metrics=metrics or None)
+
+
+def _visible_artifacts(
+    execution_config: ExperimentRunExecutionConfig,
+    result: Result,
+) -> list[Artifact]:
+    policies_by_name = {
+        output.name: _normalize_value(output.down_stream_policy)
+        for output in execution_config.outputs
+        if output.name
+    }
+    return [
+        artifact for artifact in result.artifact
+        if policies_by_name.get(artifact.type) != INTERNAL_DOWN_STREAM_POLICY
+    ]
 
 
 def _progress_states(
@@ -306,13 +557,6 @@ def _sort_execution_configs(
     )
 
 
-def _resultant_artifact_uri(result: Result) -> str:
-    if not result.artifact:
-        raise ValueError("Pipeline step did not produce an artifact for the next step")
-
-    return result.artifact[0].uri
-
-
 def _with_experiment_type(
     artifact: Artifact,
     experiment_type: str | None,
@@ -346,3 +590,24 @@ def _experiment_types_label(
         if execution_config.experiment_type
     ]
     return ",".join(experiment_types) if experiment_types else None
+
+
+def _required_value(value: str | None, field_name: str) -> str:
+    if value is None or not value.strip():
+        raise ValueError(f"{field_name} is required")
+
+    return value
+
+
+def _required_int(value: int | None, field_name: str) -> int:
+    if value is None:
+        raise ValueError(f"{field_name} is required")
+
+    return value
+
+
+def _normalize_value(value: str | None) -> str | None:
+    if value is None:
+        return None
+
+    return value.strip().upper()

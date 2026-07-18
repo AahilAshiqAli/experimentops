@@ -6,6 +6,7 @@ export const ServicesUrlEndpoints = {
   GET_DATASET: '/project/:projectUuid/dataset/:datasetUuid',
   GET_DATASET_VERSION: '/dataset/:datasetUuid/version/:datasetVersionUuid',
   GET_EXPERIMENT_CONFIGS: '/experiment/:experimentUuid/experiment-config',
+  GET_EXPERIMENT_CONFIG: '/experiment/:experimentUuid/experiment-config/:uuid',
   CREATE_EXPERIMENT_RUN: '/experiment/:experimentUuid/experiment-run/',
   GET_EXPERIMENT_RUNS: '/experiment/:experimentUuid/experiment-run/',
   GET_EXPERIMENT_RUN_STATUSES: '/experiment-runs/status',

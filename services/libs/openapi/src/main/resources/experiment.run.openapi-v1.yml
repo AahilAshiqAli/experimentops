@@ -217,6 +217,13 @@ components:
         runDatasetUuid:
           type: string
           example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        runDatasetUuids:
+          type: array
+          items:
+            type: string
+          example:
+            - "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+            - "2d97b9bc-7489-4f3a-9d51-a88e7de6037f"
         status:
           type: string
           example: "PENDING"
@@ -226,9 +233,6 @@ components:
         name:
           type: string
           example: "CSV Run 2"
-        datasetVersionUuid:
-          type: string
-          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
         executionMode:
           type: array
           items:
@@ -243,3 +247,29 @@ components:
         experimentConfigUuid:
           type: string
           example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        inputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRunInputModel'
+    ExperimentRunInputModel:
+      type: object
+      properties:
+        portName:
+          type: string
+          example: "trainData"
+        inputType:
+          type: string
+          enum:
+            - DATASET
+            - ARTIFACT
+          example: "DATASET"
+        file:
+          type: string
+          description: Dataset version UUID when inputType is DATASET, or output artifact name when inputType is ARTIFACT.
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        sourceStepCount:
+          type: integer
+          format: int32
+          nullable: true
+          description: Required for ARTIFACT inputs and must point to an earlier step.
+          example: 1

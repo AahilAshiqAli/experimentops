@@ -11,6 +11,18 @@ from experiment_runtime.models.experiment_run_requested_event import (
     ExperimentRunRequestedEvent,
 )
 
+
+class ExperimentInputContext(ExperimentOpsModel):
+    port_name: str | None = None
+    input_type: str | None = None
+    data_kind: str | None = None
+    format: str | None = None
+    uri: str | None = None
+    dataset_version_uuid: str | None = None
+    source_step_count: int | None = None
+    artifact_name: str | None = None
+
+
 """ Used duck type serialization which enables to get the fields defined in classes overridden by Result."""
 class ExperimentExecutionContext(ExperimentOpsModel):
     event_uuid: str | None
@@ -22,6 +34,7 @@ class ExperimentExecutionContext(ExperimentOpsModel):
     experiment_type: str | None
     dataset_uri: str | None
     config_json: Any | None
+    inputs: dict[str, ExperimentInputContext] = Field(default_factory=dict)
     previous_result: SerializeAsAny[Result] | None = Field(default=None, exclude=True)
     pipeline_results: list[SerializeAsAny[Result]] = Field(
         default_factory=list,

@@ -4,5 +4,19 @@ public enum DatasetFileFormatEnum {
     CSV,
     EXCEL,
     TEXT,
-    UNKNOWN
+    UNKNOWN,
+    PICKLE,
+    JSON,
+    PARQUET,
+    AVRO,
+    ORC,
+    PDF,
+    MARKDOWN,
+    HTML,
+    PNG,
+    JPEG,
+    TIFF,
+    WEBP,
+    ZIP,
+    DIRECTORY
 }
