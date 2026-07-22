@@ -21,7 +21,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -60,11 +59,15 @@ public class ExperimentConfigService {
     }
 
     @NonNull
-    public ExperimentConfigResponse getExperimentConfig(@NonNull String experimentUuid, @NonNull String uuid, @NonNull ExperimentOpsHeaders headers) {
-        log.info(headers, "getting experiment config with uuid " + uuid);
-        List<String> experimentConfigUuid = new ArrayList<>(List.of(uuid));
+    public List<ExperimentConfigResponse> getExperimentConfig(@NonNull String experimentUuid, @NonNull ExperimentConfigListRequestModel requestModel, @NonNull ExperimentOpsHeaders headers) {
+        List<String> experimentConfigUuids = requestModel.getExperimentConfigUuids();
+        log.info(headers, "getting experiment configs with uuids " + experimentConfigUuids);
 
-        List<ExperimentConfigWithTypeProjection> experimentConfig = experimentConfigRepository.findAllWithExperimentTypesByUuidIn(experimentConfigUuid,
+        if (experimentConfigUuids == null || experimentConfigUuids.isEmpty()) {
+            return List.of();
+        }
+
+        List<ExperimentConfigWithTypeProjection> experimentConfig = experimentConfigRepository.findAllWithExperimentTypesByUuidIn(experimentConfigUuids,
                 experimentUuid, headers.getWorkspaceUuid(),  StatusEnum.ACTIVE.getCode());
         return experimentConfigTransformer.transformExperimentConfigResponseFromEntity(experimentConfig, headers);
     }

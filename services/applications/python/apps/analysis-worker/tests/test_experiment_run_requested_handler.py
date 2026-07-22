@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import json
+
+from analysis_worker.handlers.experiment_run_progress_publisher import (
+    ExperimentRunProgressPublisher,
+)
 from analysis_worker.handlers.experiment_run_requested_handler import (
     build_experiment_run_requested_handler,
 )
@@ -91,6 +96,67 @@ class NoArtifactRegistry(FakeRegistry):
         return Result(artifact=[], metrics=[])
 
 
+class CsvReportAliasRegistry(FakeRegistry):
+    def supported_types(self) -> list[str]:
+        return ["CSV_PROFILE_ANALYSIS"]
+
+    def execute(
+        self,
+        experiment_type: str,
+        context: ExperimentExecutionContext,
+    ) -> Result:
+        self.contexts.append(context)
+        return Result(
+            artifact=[
+                Artifact(
+                    format="csv",
+                    type="CLEANED_DATASET",
+                    uri="s3://bucket/cleaned.csv",
+                    size=10,
+                ),
+                Artifact(
+                    format="json",
+                    type="CLEANING_REPORT",
+                    uri="s3://bucket/report.json",
+                    size=20,
+                ),
+            ],
+            metrics=[FakeMetric(rows_processed=100)],
+        )
+
+
+class LoggingRegistry(FakeRegistry):
+    def __init__(self, progress_publisher: ExperimentRunProgressPublisher) -> None:
+        super().__init__()
+        self.progress_publisher = progress_publisher
+
+    def supported_types(self) -> list[str]:
+        return ["CSV_CLEANING"]
+
+    def execute(
+        self,
+        experiment_type: str,
+        context: ExperimentExecutionContext,
+    ) -> Result:
+        self.contexts.append(context)
+        assert context.run_log_sink is not None
+        context.run_log_sink.info(experiment_type, "Loaded CSV data.")
+        context.run_log_sink.warning(experiment_type, "Internal dtype warning.")
+        self.progress_publisher.publish(context, 25)
+        context.run_log_sink.info(experiment_type, "Finished cleaning CSV data.")
+        return Result(
+            artifact=[
+                Artifact(
+                    format="csv",
+                    type="CLEANED_DATASET",
+                    uri="s3://bucket/cleaned.csv",
+                    size=10,
+                )
+            ],
+            metrics=[],
+        )
+
+
 class FakeProducer:
     def __init__(self) -> None:
         self.produced: list[dict[str, object]] = []
@@ -102,6 +168,21 @@ class FakeProducer:
         value: dict[str, object],
     ) -> None:
         self.produced.append({"topic": topic, "key": key, "value": value})
+
+
+class FakeObjectStorage:
+    def __init__(self) -> None:
+        self.uploads: dict[str, bytes] = {}
+
+    def upload_file(self, key: str, content: bytes) -> str:
+        self.uploads[key] = content
+        return f"s3://logs-bucket/{key}"
+
+    def download_file(self, key: str) -> bytes:
+        return self.uploads[key]
+
+    def delete_file(self, key: str) -> None:
+        del self.uploads[key]
 
 
 def test_handler_executes_configs_as_dataset_pipeline() -> None:
@@ -228,6 +309,8 @@ def test_handler_executes_configs_as_dataset_pipeline() -> None:
             "uri": "s3://bucket/first_analysis.csv",
             "size": 10,
             "experimentType": "FIRST_ANALYSIS",
+            "stepCount": 1,
+            "portName": "FIRST_ANALYSIS_ARTIFACT",
         },
         {
             "format": "CSV",
@@ -235,6 +318,8 @@ def test_handler_executes_configs_as_dataset_pipeline() -> None:
             "uri": "s3://bucket/second_analysis.csv",
             "size": 10,
             "experimentType": "SECOND_ANALYSIS",
+            "stepCount": 2,
+            "portName": "SECOND_ANALYSIS_ARTIFACT",
         },
     ]
     assert payload["result"]["metrics"] == [
@@ -251,6 +336,196 @@ def test_handler_executes_configs_as_dataset_pipeline() -> None:
         '[{"experimentType":"FIRST_ANALYSIS","metricsJson":{"rowsProcessed":100}},'
         '{"experimentType":"SECOND_ANALYSIS","metricsJson":{"rowsProcessed":200}}]'
     )
+
+
+def test_handler_uploads_run_log_file_and_publishes_sequence_logs(tmp_path) -> None:
+    progress_producer = FakeProducer()
+    progress_publisher = ExperimentRunProgressPublisher(
+        producer=progress_producer,
+        producer_topic="progress-topic",
+    )
+    registry = LoggingRegistry(progress_publisher)
+    producer = FakeProducer()
+    failure_producer = FakeProducer()
+    object_storage = FakeObjectStorage()
+    handler = build_experiment_run_requested_handler(
+        registry=registry,
+        producer=producer,
+        producer_topic="completed-topic",
+        failure_producer=failure_producer,
+        failure_producer_topic="failure-topic",
+        progress_publisher=progress_publisher,
+        object_storage=object_storage,
+        log_root_dir=tmp_path,
+    )
+
+    handler(
+        KafkaMessage(
+            topic="requested-topic",
+            partition=0,
+            offset=1,
+            key="run-1",
+            value={
+                "metadata": {
+                    "eventUuid": "event-1",
+                    "traceUuid": "request-1",
+                    "requesterUuid": "user-1",
+                    "uuid": "run-1",
+                    "workspaceUuid": "workspace-1",
+                },
+                "payload": {
+                    "projectUuid": "project-1",
+                    "experimentUuid": "experiment-1",
+                    "executionPlan": {
+                        "schemaVersion": 1,
+                        "steps": [
+                                {
+                                    "stepCount": 4,
+                                    "experimentConfigUuid": "config-1",
+                                    "experimentType": "CSV_CLEANING",
+                                    "inputs": [],
+                                    "outputs": [
+                                        {
+                                            "name": "CLEANED_DATASET",
+                                            "dataKind": "TABULAR_DATASET",
+                                            "formatStrategy": "FIXED",
+                                            "format": "CSV",
+                                            "downStreamPolicy": "TERMINAL",
+                                        }
+                                    ],
+                                }
+                        ],
+                    },
+                },
+            },
+            headers={},
+            timestamp_millis=None,
+        )
+    )
+
+    assert failure_producer.produced == []
+    assert len(progress_producer.produced) == 2
+    first_progress = progress_producer.produced[0]["value"]["payload"]
+    final_progress = progress_producer.produced[1]["value"]["payload"]
+    assert first_progress["currentStep"] == 4
+    assert first_progress["sequence"] == 1
+    assert first_progress["logs"][0]["message"] == "Loaded CSV data."
+    assert [log["message"] for log in final_progress["logs"]] == [
+        "Finished cleaning CSV data."
+    ]
+    assert final_progress["progress"] == "100"
+    assert final_progress["sequence"] == 2
+
+    completed_payload = producer.produced[0]["value"]["payload"]
+    log_file_url = completed_payload["logFileUrl"]
+    assert log_file_url == (
+        "s3://logs-bucket/workspaces/workspace-1/projects/project-1/"
+        "experiments/experiment-1/runs/run-1/logs/run.jsonl"
+    )
+    uploaded_log = next(iter(object_storage.uploads.values())).decode()
+    uploaded_records = [
+        json.loads(line)
+        for line in uploaded_log.splitlines()
+    ]
+    assert [record["message"] for record in uploaded_records] == [
+        "Loaded CSV data.",
+        "Internal dtype warning.",
+        "Finished cleaning CSV data.",
+    ]
+
+
+def test_handler_maps_csv_report_artifact_to_training_report_output() -> None:
+    registry = CsvReportAliasRegistry()
+    producer = FakeProducer()
+    failure_producer = FakeProducer()
+    handler = build_experiment_run_requested_handler(
+        registry=registry,
+        producer=producer,
+        producer_topic="completed-topic",
+        failure_producer=failure_producer,
+        failure_producer_topic="failure-topic",
+    )
+
+    handler(
+        KafkaMessage(
+            topic="requested-topic",
+            partition=0,
+            offset=1,
+            key="run-1",
+            value={
+                "metadata": {
+                    "eventUuid": "event-1",
+                    "traceUuid": "request-1",
+                    "requesterUuid": "user-1",
+                    "uuid": "run-1",
+                    "workspaceUuid": "workspace-1",
+                },
+                "payload": {
+                    "projectUuid": "project-1",
+                    "experimentUuid": "experiment-1",
+                    "executionPlan": {
+                        "schemaVersion": 1,
+                        "steps": [
+                            {
+                                "stepCount": 1,
+                                "experimentConfigUuid": "config-1",
+                                "experimentType": "CSV_PROFILE_ANALYSIS",
+                                "inputs": [],
+                                "outputs": [
+                                    {
+                                        "name": "cleanedTrainData",
+                                        "dataKind": "TABULAR_DATASET",
+                                        "type": {
+                                            "type": "SAME_AS_INPUT",
+                                            "format": None,
+                                            "sourceInputPort": "trainData",
+                                        },
+                                        "required": False,
+                                        "downStreamPolicy": "CONNECTABLE",
+                                    },
+                                    {
+                                        "name": "trainingReport",
+                                        "dataKind": "REPORT",
+                                        "type": {
+                                            "type": "FIXED",
+                                            "format": "JSON",
+                                            "sourceInputPort": None,
+                                        },
+                                        "required": True,
+                                        "downStreamPolicy": "TERMINAL",
+                                    },
+                                ],
+                            }
+                        ],
+                    },
+                },
+            },
+            headers={},
+            timestamp_millis=None,
+        )
+    )
+
+    assert failure_producer.produced == []
+    assert producer.produced[0]["value"]["payload"]["result"]["artifact"] == [
+        {
+            "format": "csv",
+            "type": "cleanedTrainData",
+            "uri": "s3://bucket/cleaned.csv",
+            "size": 10,
+            "experimentType": "CSV_PROFILE_ANALYSIS",
+            "stepCount": 1,
+            "portName": "cleanedTrainData",
+        },
+        {
+            "format": "JSON",
+            "type": "trainingReport",
+            "uri": "s3://bucket/report.json",
+            "size": 20,
+            "experimentType": "CSV_PROFILE_ANALYSIS",
+            "stepCount": 1,
+            "portName": "trainingReport",
+        },
+    ]
 
 
 def test_handler_does_not_parse_config_json_without_execution_plan() -> None:

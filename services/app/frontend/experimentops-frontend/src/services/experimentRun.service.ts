@@ -37,9 +37,63 @@ export type ValidateExperimentRunInput = ExperimentRunInput
 export type ExperimentRun = {
   datasetCount: number
   duration: string
-  executionMode: ExperimentRunStep[]
   name: string
   progress: number
+  status: ExperimentRunStatus
+  uuid: string
+}
+
+export type ExperimentRunDataset = {
+  datasetVersionUuid: string
+  name: string
+}
+
+export type ExperimentRunArtifact = {
+  portName: string
+  uuid: string
+}
+
+export type ExperimentRunResolvedInput = {
+  fileUuid: string
+  format?: string | null
+  inputType: 'ARTIFACT' | 'DATASET'
+  name: string
+  portName: string
+}
+
+export type ExperimentRunStepOutput = {
+  artifactUuid: string
+  downstreamPolicy?: string | null
+  format?: string | null
+  name: string
+  portName: string
+  size?: number | null
+  status?: string | null
+}
+
+export type ExperimentRunDetailStep = {
+  experimentConfigUuid: string
+  experimentType: string
+  inputs: ExperimentRunResolvedInput[]
+  outputs: ExperimentRunStepOutput[]
+  stepCount: number
+}
+
+export type ExperimentRunDetail = {
+  artifactCount: number
+  createdBy: string
+  creationDate: string
+  datasets: ExperimentRunDataset[]
+  executionMode: ExperimentRunDetailStep[]
+  experimentName: string
+  experimentUUID: string
+  lastUpdated: string
+  message: string | null
+  name: string
+  numSteps: number
+  projectName: string
+  projectUUID: string
+  runArtifacts: ExperimentRunArtifact[]
   status: ExperimentRunStatus
   uuid: string
 }
@@ -77,31 +131,6 @@ function isExperimentRunStatus(value: unknown): value is ExperimentRunStatus {
   )
 }
 
-function isExperimentRunStep(value: unknown): value is ExperimentRunStep {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as ExperimentRunStep).experimentConfigUuid === 'string' &&
-    typeof (value as ExperimentRunStep).stepCount === 'number' &&
-    Array.isArray((value as ExperimentRunStep).inputs) &&
-    (value as ExperimentRunStep).inputs.every(isExperimentRunStepInput)
-  )
-}
-
-function isExperimentRunStepInput(
-  value: unknown,
-): value is ExperimentRunStepInput {
-  if (typeof value !== 'object' || value === null) return false
-  const input = value as ExperimentRunStepInput
-  return (
-    typeof input.portName === 'string' &&
-    (input.inputType === 'ARTIFACT' || input.inputType === 'DATASET') &&
-    typeof input.file === 'string' &&
-    (input.sourceStepCount === undefined ||
-      typeof input.sourceStepCount === 'number')
-  )
-}
-
 function isExperimentRun(value: unknown): value is ExperimentRun {
   return (
     typeof value === 'object' &&
@@ -111,9 +140,7 @@ function isExperimentRun(value: unknown): value is ExperimentRun {
     typeof (value as ExperimentRun).progress === 'number' &&
     typeof (value as ExperimentRun).datasetCount === 'number' &&
     typeof (value as ExperimentRun).duration === 'string' &&
-    isExperimentRunStatus((value as ExperimentRun).status) &&
-    Array.isArray((value as ExperimentRun).executionMode) &&
-    (value as ExperimentRun).executionMode.every(isExperimentRunStep)
+    isExperimentRunStatus((value as ExperimentRun).status)
   )
 }
 
@@ -140,6 +167,112 @@ function isExperimentRunStatusResponse(
     typeof (value as ExperimentRunStatusResponse).progress === 'number' &&
     isExperimentRunStatus((value as ExperimentRunStatusResponse).status) &&
     typeof (value as ExperimentRunStatusResponse).duration === 'string'
+  )
+}
+
+function isExperimentRunDataset(value: unknown): value is ExperimentRunDataset {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as ExperimentRunDataset).datasetVersionUuid === 'string' &&
+    typeof (value as ExperimentRunDataset).name === 'string'
+  )
+}
+
+function isExperimentRunArtifact(
+  value: unknown,
+): value is ExperimentRunArtifact {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as ExperimentRunArtifact).uuid === 'string' &&
+    typeof (value as ExperimentRunArtifact).portName === 'string'
+  )
+}
+
+function isExperimentRunResolvedInput(
+  value: unknown,
+): value is ExperimentRunResolvedInput {
+  if (typeof value !== 'object' || value === null) return false
+  const input = value as ExperimentRunResolvedInput
+  return (
+    typeof input.portName === 'string' &&
+    (input.inputType === 'ARTIFACT' || input.inputType === 'DATASET') &&
+    typeof input.name === 'string' &&
+    typeof input.fileUuid === 'string' &&
+    (input.format === undefined ||
+      input.format === null ||
+      typeof input.format === 'string')
+  )
+}
+
+function isExperimentRunStepOutput(
+  value: unknown,
+): value is ExperimentRunStepOutput {
+  if (typeof value !== 'object' || value === null) return false
+  const output = value as ExperimentRunStepOutput
+  return (
+    typeof output.artifactUuid === 'string' &&
+    typeof output.portName === 'string' &&
+    typeof output.name === 'string' &&
+    (output.format === undefined ||
+      output.format === null ||
+      typeof output.format === 'string') &&
+    (output.size === undefined ||
+      output.size === null ||
+      typeof output.size === 'number') &&
+    (output.status === undefined ||
+      output.status === null ||
+      typeof output.status === 'string') &&
+    (output.downstreamPolicy === undefined ||
+      output.downstreamPolicy === null ||
+      typeof output.downstreamPolicy === 'string')
+  )
+}
+
+function isExperimentRunDetailStep(
+  value: unknown,
+): value is ExperimentRunDetailStep {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as ExperimentRunDetailStep).experimentConfigUuid ===
+      'string' &&
+    typeof (value as ExperimentRunDetailStep).stepCount === 'number' &&
+    typeof (value as ExperimentRunDetailStep).experimentType === 'string' &&
+    Array.isArray((value as ExperimentRunDetailStep).inputs) &&
+    (value as ExperimentRunDetailStep).inputs.every(
+      isExperimentRunResolvedInput,
+    ) &&
+    Array.isArray((value as ExperimentRunDetailStep).outputs) &&
+    (value as ExperimentRunDetailStep).outputs.every(isExperimentRunStepOutput)
+  )
+}
+
+function isExperimentRunDetail(value: unknown): value is ExperimentRunDetail {
+  if (typeof value !== 'object' || value === null) return false
+
+  const run = value as ExperimentRunDetail
+  return (
+    typeof run.uuid === 'string' &&
+    typeof run.name === 'string' &&
+    isExperimentRunStatus(run.status) &&
+    (run.message === null || typeof run.message === 'string') &&
+    typeof run.experimentUUID === 'string' &&
+    typeof run.experimentName === 'string' &&
+    typeof run.projectUUID === 'string' &&
+    typeof run.projectName === 'string' &&
+    typeof run.creationDate === 'string' &&
+    typeof run.lastUpdated === 'string' &&
+    typeof run.createdBy === 'string' &&
+    typeof run.artifactCount === 'number' &&
+    typeof run.numSteps === 'number' &&
+    Array.isArray(run.datasets) &&
+    run.datasets.every(isExperimentRunDataset) &&
+    Array.isArray(run.runArtifacts) &&
+    run.runArtifacts.every(isExperimentRunArtifact) &&
+    Array.isArray(run.executionMode) &&
+    run.executionMode.every(isExperimentRunDetailStep)
   )
 }
 
@@ -187,6 +320,27 @@ export async function getExperimentRuns(
 
   if (!isPaginatedExperimentRuns(payload)) {
     throw new Error('The experiment run service returned an invalid response.')
+  }
+
+  return payload
+}
+
+export async function getExperimentRun(
+  accessToken: string,
+  uuid: string,
+): Promise<ExperimentRunDetail> {
+  const payload = await ApiService.get<unknown>(
+    ServicesUrlEndpoints.GET_EXPERIMENT_RUN.replace(
+      ':uuid',
+      encodeURIComponent(uuid),
+    ),
+    { headers: getAuthenticatedRequestHeaders(accessToken) },
+  )
+
+  if (!isExperimentRunDetail(payload)) {
+    throw new Error(
+      'The experiment run detail service returned an invalid response.',
+    )
   }
 
   return payload

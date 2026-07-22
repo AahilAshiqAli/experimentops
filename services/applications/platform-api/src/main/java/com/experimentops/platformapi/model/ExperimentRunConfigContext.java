@@ -15,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ExperimentRunConfigContext {
     private String experimentConfigUuid;
+    private String experimentConfigName;
     private String experimentType;
     private JsonNode experimentConfigJson;
     private List<ExperimentTypeManifest> formatMappings;

@@ -1,4 +1,8 @@
 from experiment_runtime.base_model import ExperimentOpsModel
+from experiment_runtime.logging.run_sink import (
+    ExperimentRunLogSink,
+    ExperimentRunUserLogRecord,
+)
 from experiment_runtime.models.experiment_execution_context import (
     ExperimentExecutionContext,
     ExperimentInputContext,
@@ -30,6 +34,8 @@ __all__ = [
     "Artifact",
     "ExperimentExecutionContext",
     "ExperimentInputContext",
+    "ExperimentRunLogSink",
+    "ExperimentRunUserLogRecord",
     "ExperimentRunExecutionConfig",
     "ExperimentRunExecutionPlan",
     "ExperimentRunExecutionPlanInput",

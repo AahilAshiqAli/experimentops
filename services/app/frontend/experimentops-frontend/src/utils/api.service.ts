@@ -1,7 +1,4 @@
-import axios, {
-  type AxiosRequestConfig,
-  type Method,
-} from 'axios'
+import axios, { type AxiosRequestConfig, type Method } from 'axios'
 
 import { BASE_URL } from './environment'
 

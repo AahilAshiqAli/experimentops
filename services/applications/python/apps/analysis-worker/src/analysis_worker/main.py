@@ -76,6 +76,8 @@ def main() -> None:
                 producer_topic=settings.producer_topic,
                 failure_producer=failure_producer,
                 failure_producer_topic=settings.failure_producer_topic,
+                progress_publisher=progress_publisher,
+                object_storage=object_storage,
             ),
             commit_on_handler_error=False,
             commit_on_deserialization_error=False,

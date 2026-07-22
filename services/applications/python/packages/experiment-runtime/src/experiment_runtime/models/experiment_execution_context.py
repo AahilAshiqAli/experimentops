@@ -5,6 +5,7 @@ from typing import Any
 from pydantic import Field, SerializeAsAny
 
 from experiment_runtime.base_model import ExperimentOpsModel
+from experiment_runtime.logging.run_sink import ExperimentRunLogSink
 from experiment_runtime.models.experiment_run_completed_event import Result
 from experiment_runtime.models.experiment_run_requested_event import (
     ExperimentRunExecutionConfig,
@@ -43,6 +44,10 @@ class ExperimentExecutionContext(ExperimentOpsModel):
     progress_completed_weight: float | None = Field(default=None, exclude=True)
     progress_step_weight: float | None = Field(default=None, exclude=True)
     progress_total_weight: float | None = Field(default=None, exclude=True)
+    current_step: int | None = Field(default=None, exclude=True)
+    progress_sequence: int = Field(default=0, exclude=True)
+    last_published_progress: int | None = Field(default=None, exclude=True)
+    run_log_sink: ExperimentRunLogSink | None = Field(default=None, exclude=True)
 
     @classmethod
     def from_requested_event(

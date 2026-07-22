@@ -31,7 +31,8 @@
                 }
               },
               "default": []
-            }
+            },
+            { "name": "logFileUrl", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
           ]
         }
       ],

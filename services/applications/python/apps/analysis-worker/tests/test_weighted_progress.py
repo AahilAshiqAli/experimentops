@@ -4,6 +4,7 @@ from analysis_worker.handlers.experiment_run_progress_publisher import (
     ExperimentRunProgressPublisher,
 )
 from analysis_worker.handlers.weighted_progress import WeightedProgressCalculator
+from experiment_runtime.logging.run_sink import ExperimentRunLogSink
 from experiment_runtime.models import ExperimentExecutionContext
 
 
@@ -49,12 +50,15 @@ def test_weighted_progress_calculator_clamps_global_progress() -> None:
     assert calculator.calculate(150) == 27.78
 
 
-def test_progress_publisher_publishes_weighted_global_progress() -> None:
+def test_progress_publisher_publishes_weighted_global_progress(tmp_path) -> None:
     producer = FakeProducer()
     publisher = ExperimentRunProgressPublisher(
         producer=producer,
         producer_topic="progress-topic",
     )
+    run_log_sink = ExperimentRunLogSink(tmp_path / "run.log.jsonl")
+    run_log_sink.info("BINARY_CLASSIFICATION", "Prepared model inputs.")
+    run_log_sink.warning("BINARY_CLASSIFICATION", "Debug-only warning.")
     context = ExperimentExecutionContext(
         event_uuid="event-1",
         request_uuid="request-1",
@@ -68,8 +72,25 @@ def test_progress_publisher_publishes_weighted_global_progress() -> None:
         progress_completed_weight=5,
         progress_step_weight=13,
         progress_total_weight=18,
+        current_step=2,
+        run_log_sink=run_log_sink,
     )
 
     publisher.publish(context, 50)
 
     assert producer.values[0]["payload"]["progress"] == "64"
+    assert producer.values[0]["payload"]["currentStep"] == 2
+    assert producer.values[0]["payload"]["sequence"] == 1
+    assert producer.values[0]["payload"]["logs"] == [
+        {
+            "timestamp": producer.values[0]["payload"]["logs"][0]["timestamp"],
+            "level": "INFO",
+            "experimentType": "BINARY_CLASSIFICATION",
+            "message": "Prepared model inputs.",
+        }
+    ]
+
+    publisher.publish(context, 100)
+
+    assert producer.values[1]["payload"]["sequence"] == 2
+    assert producer.values[1]["payload"]["logs"] == []

@@ -43,10 +43,19 @@ public class ExperimentRun extends ExperimentOpsEntity {
     private ExperimentStatusEnum experimentStatus;
 
     @Column(name = "progress")
-    private int progress;
+    private Integer progress;
 
     @Column(name = "run_number")
-    private int runNumber;
+    private Integer runNumber;
+
+    @Column(name = "message")
+    private String message;
+
+    @Column(name = "logs")
+    private String logs;
+
+    @Column(name = "step_completed")
+    private Integer stepCompleted;
 
     @Override
     @Generated

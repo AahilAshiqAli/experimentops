@@ -77,6 +77,8 @@ def test_clean_context_downloads_input_and_uploads_artifacts(tmp_path: Path) -> 
                     "experiments/experiment-1/runs/run-1/artifacts/"
                     "csv-profile-analysis/input_cleaned.csv"
                 ]),
+                "stepCount": None,
+                "portName": None,
             },
             {
                 "format": "json",
@@ -87,6 +89,8 @@ def test_clean_context_downloads_input_and_uploads_artifacts(tmp_path: Path) -> 
                     "experiments/experiment-1/runs/run-1/artifacts/"
                     "csv-profile-analysis/input_cleaning_report.json"
                 ]),
+                "stepCount": None,
+                "portName": None,
             },
         ],
         "metrics": result.metrics.model_dump(by_alias=True),

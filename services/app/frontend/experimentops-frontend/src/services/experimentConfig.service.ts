@@ -28,6 +28,10 @@ export type CreateExperimentConfigInput = {
   name: string
 }
 
+export type ExperimentConfigDetailsInput = {
+  experimentConfigUuids: string[]
+}
+
 export type CreatedExperimentConfig = ExperimentConfig
 
 export type PaginationParams = {
@@ -179,21 +183,38 @@ export async function getExperimentConfigs(
   return experimentConfigs
 }
 
-export async function getExperimentConfig(
+export async function getExperimentConfigsByUuids(
   accessToken: string,
   experimentUuid: string,
-  uuid: string,
-): Promise<ExperimentConfigDetail> {
-  const payload = await ApiService.get<unknown>(
-    ServicesUrlEndpoints.GET_EXPERIMENT_CONFIG.replace(
+  experimentConfigUuids: string[],
+): Promise<ExperimentConfigDetail[]> {
+  const payload = await ApiService.post<unknown, ExperimentConfigDetailsInput>(
+    ServicesUrlEndpoints.POST_EXPERIMENT_CONFIG_DETAILS.replace(
       ':experimentUuid',
       encodeURIComponent(experimentUuid),
-    ).replace(':uuid', encodeURIComponent(uuid)),
-    { headers: getAuthenticatedRequestHeaders(accessToken) },
+    ),
+    { experimentConfigUuids },
+    {
+      headers: {
+        ...getAuthenticatedRequestHeaders(accessToken),
+        'Content-Type': 'application/json',
+      },
+    },
   )
-  const experimentConfig = toExperimentConfigDetail(payload)
+  const experimentConfigs = Array.isArray(payload)
+    ? payload
+        .map(toExperimentConfigDetail)
+        .filter((config): config is ExperimentConfigDetail => Boolean(config))
+    : []
 
-  if (!experimentConfig || experimentConfig.formatMappings.length === 0) {
+  if (
+    !Array.isArray(payload) ||
+    experimentConfigs.length !== payload.length ||
+    experimentConfigs.some((config) => config.formatMappings.length === 0) ||
+    experimentConfigUuids.some(
+      (uuid) => !experimentConfigs.some((config) => config.uuid === uuid),
+    )
+  ) {
     throw new ApiServiceError(
       'The experiment config detail service returned an invalid response.',
       500,
@@ -201,7 +222,7 @@ export async function getExperimentConfig(
     )
   }
 
-  return experimentConfig
+  return experimentConfigs
 }
 
 export async function createExperimentConfig(

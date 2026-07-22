@@ -47,6 +47,7 @@ class ExperimentRunFailureEvent(ExperimentOpsModel):
     errors: tuple[ExperimentRunFailureErrorEntry, ...]
     request_timestamp: int | None = None
     user_role: str | None = None
+    log_file_url: str | None = None
     event_uuid: str = Field(default_factory=lambda: str(uuid4()))
     event_timestamp: int = Field(default_factory=lambda: _current_epoch_millis())
 
@@ -56,6 +57,7 @@ class ExperimentRunFailureEvent(ExperimentOpsModel):
         event: ExperimentRunRequestedEvent,
         exception: BaseException,
         experiment_type: str | None = None,
+        log_file_url: str | None = None,
     ) -> "ExperimentRunFailureEvent":
         return cls(
             request_uuid=event.request_uuid,
@@ -68,6 +70,7 @@ class ExperimentRunFailureEvent(ExperimentOpsModel):
             errors=(ExperimentRunFailureErrorEntry.from_exception(exception),),
             request_timestamp=event.request_timestamp,
             user_role=event.user_role,
+            log_file_url=log_file_url,
         )
 
     def to_payload(self) -> dict[str, Any]:
@@ -92,6 +95,7 @@ class ExperimentRunFailureEvent(ExperimentOpsModel):
                 "experimentType": self.experiment_type,
                 "status": "FAILED",
                 "errors": [error.to_payload() for error in self.errors],
+                "logFileUrl": self.log_file_url,
             },
         }
 

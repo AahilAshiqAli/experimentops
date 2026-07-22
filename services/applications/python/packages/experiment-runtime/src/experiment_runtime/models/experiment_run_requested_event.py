@@ -18,11 +18,22 @@ class ExperimentRunExecutionPlanInput(ExperimentOpsModel):
 
     @classmethod
     def from_payload(cls, payload: Mapping[str, Any]) -> "ExperimentRunExecutionPlanInput":
+        contract = payload.get("contract")
+        if not isinstance(contract, Mapping):
+            contract = {}
+
+        accepted_formats = contract.get("acceptedFormats")
+        inferred_format = (
+            accepted_formats[0]
+            if isinstance(accepted_formats, list) and accepted_formats
+            else None
+        )
+
         return cls(
             port_name=payload.get("portName"),
             input_type=payload.get("inputType"),
-            data_kind=payload.get("dataKind"),
-            format=payload.get("format"),
+            data_kind=payload.get("dataKind") or contract.get("dataKind"),
+            format=payload.get("format") or inferred_format,
             dataset_version_uuid=payload.get("datasetVersionUuid"),
             dataset_uri=payload.get("datasetUri"),
             source_step_count=payload.get("sourceStepCount"),
@@ -41,13 +52,17 @@ class ExperimentRunExecutionPlanOutput(ExperimentOpsModel):
 
     @classmethod
     def from_payload(cls, payload: Mapping[str, Any]) -> "ExperimentRunExecutionPlanOutput":
+        output_type = payload.get("type")
+        if not isinstance(output_type, Mapping):
+            output_type = {}
+
         return cls(
             name=payload.get("name"),
             data_kind=payload.get("dataKind"),
-            format_strategy=payload.get("formatStrategy"),
-            format=payload.get("format"),
-            source_input_port=payload.get("sourceInputPort"),
-            required_for_run=payload.get("requiredForRun"),
+            format_strategy=payload.get("formatStrategy") or output_type.get("type"),
+            format=payload.get("format") or output_type.get("format"),
+            source_input_port=payload.get("sourceInputPort") or output_type.get("sourceInputPort"),
+            required_for_run=payload.get("requiredForRun", payload.get("required")),
             down_stream_policy=payload.get("downStreamPolicy"),
         )
 

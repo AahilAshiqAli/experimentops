@@ -34,6 +34,8 @@ class CsvProfileAnalysisExecutor:
                 progress,
             ),
             object_storage=self._object_storage,
+            run_log_sink=context.run_log_sink,
+            experiment_type=context.experiment_type,
         )
 
         logger.info(

@@ -3,17 +3,81 @@
   "type": "record",
   "name": "ExperimentRunProgressEvent",
   "fields": [
-    { "name": "metadata", "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent" },
+    {
+      "name": "metadata",
+      "type": "com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent"
+    },
     {
       "name": "payload",
-      "type": [ "null",
+      "type": [
+        "null",
         {
           "type": "record",
           "name": "ExperimentRunProgressEventPayload",
           "fields": [
-            { "name": "experimentUuid",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-            { "name": "experimentRunUuid",  "type": ["null", "string"], "default": null, "avro.java.string": "String" },
-            { "name": "progress",  "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+            {
+              "name": "experimentUuid",
+              "type": ["null", "string"],
+              "default": null,
+              "avro.java.string": "String"
+            },
+            {
+              "name": "experimentRunUuid",
+              "type": ["null", "string"],
+              "default": null,
+              "avro.java.string": "String"
+            },
+            {
+              "name": "progress",
+              "type": ["null", "string"],
+              "default": null,
+              "avro.java.string": "String"
+            },
+            {
+              "name": "currentStep",
+              "type": ["null", "int"],
+              "default": null
+            },
+            {
+              "name": "sequence",
+              "type": "long"
+            },
+            {
+              "name": "logs",
+              "type": {
+                "type": "array",
+                "items": {
+                  "type": "record",
+                  "name": "ExperimentRunUserLogEvent",
+                  "fields": [
+                    {
+                      "name": "timestamp",
+                      "type": {
+                        "type": "long",
+                        "logicalType": "timestamp-millis"
+                      }
+                    },
+                    {
+                      "name": "level",
+                      "type": "string",
+                      "avro.java.string": "String"
+                    },
+                    {
+                      "name": "message",
+                      "type": "string",
+                      "avro.java.string": "String"
+                    },
+                    {
+                      "name": "experimentType",
+                      "type": ["null", "string"],
+                      "default": null,
+                      "avro.java.string": "String"
+                    }
+                  ]
+                }
+              },
+              "default": []
+            }
           ]
         }
       ],

@@ -32,6 +32,12 @@ public class RunDataset extends ExperimentOpsEntity {
     @Column(name = "usage_type")
     private String usage;
 
+    @Column(name = "step_count")
+    private Integer stepCount;
+
+    @Column(name = "port_name")
+    private String portName;
+
     @Override
     @Generated
     public boolean equals(Object o) {

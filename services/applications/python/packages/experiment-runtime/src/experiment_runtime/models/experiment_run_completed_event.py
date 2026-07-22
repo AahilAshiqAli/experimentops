@@ -20,6 +20,8 @@ class Artifact(ExperimentOpsModel):
     uri: str
     size: int
     experiment_type: str | None = Field(default=None, exclude=True)
+    step_count: int | None = None
+    port_name: str | None = None
 
 
 class Metric(ExperimentOpsModel):
@@ -49,6 +51,7 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
     request_timestamp: int | None = None
     user_role: str | None = None
     result: Result | None
+    log_file_url: str | None = None
     event_uuid: str = Field(default_factory=lambda: str(uuid4()))
     event_timestamp: int = Field(default_factory=lambda: _current_epoch_millis())
 
@@ -58,6 +61,7 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
         event: ExperimentRunRequestedEvent,
         result: Result | None,
         experiment_type: str | None = None,
+        log_file_url: str | None = None,
     ) -> "ExperimentRunCompletedEvent":
         """Create a completed event from the original run request and result."""
 
@@ -73,6 +77,7 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
             experiment_type=experiment_type or event.experiment_type,
             status=status,
             result=result,
+            log_file_url=log_file_url,
             request_timestamp=event.request_timestamp,
             user_role=event.user_role,
         )
@@ -101,6 +106,7 @@ class ExperimentRunCompletedEvent(ExperimentOpsModel):
                 "experimentType": self.experiment_type,
                 "status": self.status,
                 "result": _result_payload(self.result),
+                "logFileUrl": self.log_file_url,
             },
         }
 
@@ -128,7 +134,7 @@ def _result_payload(result: Result | None) -> dict[str, object] | None:
 
 
 def _artifact_payload(artifact: Artifact) -> dict[str, object]:
-    payload = artifact.model_dump(by_alias=True, mode="json")
+    payload = artifact.model_dump(by_alias=True, mode="json", exclude_none=True)
 
     if artifact.experiment_type is not None:
         payload["experimentType"] = artifact.experiment_type

@@ -16,6 +16,8 @@ import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
@@ -93,6 +95,27 @@ public class ObjectStorageGateway {
 
     public byte[] downloadObject(String storageUriOrObjectKey) {
         return downloadFile(storageUriOrObjectKey);
+    }
+
+    public PresignedObjectRead createPresignedReadUrl(String storageUriOrObjectKey, ExperimentOpsHeaders headers) {
+        String objectKey = toObjectKey(storageUriOrObjectKey);
+
+        log.info(headers, "creating presigned read url for object key: " + objectKey);
+
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(objectKey)
+                .build();
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(uploadUrlExpiration)
+                .getObjectRequest(getObjectRequest)
+                .build();
+        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+
+        return new PresignedObjectRead(
+                presignedRequest.url().toString(),
+                Instant.now().plus(uploadUrlExpiration)
+        );
     }
 
     public DatasetFileMetadata getDatasetFileMetadata(String objectKey) {
@@ -204,5 +227,10 @@ public class ObjectStorageGateway {
     }
 
     public record DatasetFileMetadata(long size, String contentType) {
+    }
+
+    public record PresignedObjectRead(
+            String downloadUrl,
+            Instant expiresAt) {
     }
 }

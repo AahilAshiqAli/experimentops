@@ -10,7 +10,7 @@ import type {
 } from '../../components/pipeline.types'
 import {
   useMutationCreateExperimentRun,
-  useMutationGetExperimentConfig,
+  useMutationGetExperimentConfigsByUuids,
   useMutationValidateExperimentRun,
   useQueryDataset,
   useQueryExperimentConfigs,
@@ -37,7 +37,7 @@ export function useExperimentRunContainer() {
   const projectQuery = useQueryProject(projectUuid)
   const experimentTypesQuery = useQueryExperimentTypes()
   const createRunMutation = useMutationCreateExperimentRun(experimentUuid ?? '')
-  const configDetailsMutation = useMutationGetExperimentConfig(
+  const configDetailsMutation = useMutationGetExperimentConfigsByUuids(
     experimentUuid ?? '',
   )
   const validateRunMutation = useMutationValidateExperimentRun(
@@ -149,8 +149,17 @@ export function useExperimentRunContainer() {
     if (configDetailsMutation.isPending) return
 
     try {
-      const details = await configDetailsMutation.mutateAsync(config.uuid)
-      const hydratedConfig: ExperimentConfig = { ...config, ...details }
+      const details = await configDetailsMutation.mutateAsync([config.uuid])
+      const matchingDetails = details.find(
+        (detail) => detail.uuid === config.uuid,
+      )
+      if (!matchingDetails) {
+        throw new Error('The selected experiment config was not returned.')
+      }
+      const hydratedConfig: ExperimentConfig = {
+        ...config,
+        ...matchingDetails,
+      }
       setSelectedConfigs((current) =>
         current.some((selected) => selected.uuid === hydratedConfig.uuid)
           ? current.map((selected) =>
