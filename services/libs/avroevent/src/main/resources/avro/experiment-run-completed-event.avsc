@@ -35,7 +35,9 @@
                             { "name": "type",   "type": "string", "avro.java.string": "String" },
                             { "name": "uri",    "type": "string", "avro.java.string": "String" },
                             { "name": "size",   "type": "long" },
-                            { "name": "experimentType", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
+                            { "name": "experimentType", "type": ["null", "string"], "default": null, "avro.java.string": "String" },
+                            { "name": "stepCount", "type": ["null", "int"], "default": null },
+                            { "name": "portName", "type": ["null", "string"], "default": null, "avro.java.string": "String" }
                           ]
                         }
                       },
@@ -61,7 +63,8 @@
                 }
               ],
               "default": null
-            }
+            },
+            { "name": "logFileUrl",       "type": ["null", "string"], "default": null, "avro.java.string": "String" }
           ]
         }
       ],

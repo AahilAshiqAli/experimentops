@@ -15,8 +15,94 @@ servers:
 tags:
   - name: Experiment run
     description: Everything about experiment runs
+  - name: Experiment run log
+    description: Everything about experiment run logs
 
 paths:
+  /experiment-runs/{uuid}:
+    get:
+      summary: Get Experiment Run
+      description: This API will get experiment run details.
+      tags:
+        - Experiment run
+      operationId: getExperimentRun
+      parameters:
+        - name: uuid
+          in: path
+          description: Experiment run uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Experiment run fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRunDetailResponseModel'
+
+  /experiment-runs/{uuid}/logs:
+    get:
+      summary: Get Experiment Run logs
+      description: This API will get experiment run logs in a sequence range sorted by timestamp ascending.
+      tags:
+        - Experiment run log
+      operationId: getExperimentRunLogs
+      parameters:
+        - name: uuid
+          in: path
+          description: Experiment run uuid
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Zero-based page index
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of entries to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 20
+      responses:
+        200:
+          description: Experiment run logs fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRunLogListResponseModel'
+
+  /experiment-runs/{uuid}/logs/download-url:
+    get:
+      summary: Get Experiment Run logs Download URL
+      description: Generates a presigned read URL for the experiment run log file.
+      tags:
+        - Experiment run log
+      operationId: getExperimentRunLogDownloadUrl
+      parameters:
+        - name: uuid
+          in: path
+          description: Experiment run uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Presigned experiment run log download URL generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRunLogDownloadUrlResponseModel'
+
   /experiment-runs/status:
     post:
       summary: Get Experiment Run status
@@ -155,6 +241,45 @@ components:
           type: integer
           format: int64
           example: 123
+    ExperimentRunLogListResponseModel:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRunLogResponse'
+        totalElements:
+          type: integer
+          format: int64
+          example: 123
+    ExperimentRunLogResponse:
+      type: object
+      properties:
+        sequence:
+          type: integer
+          format: int64
+          example: 10
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          example: "INFO"
+        experimentType:
+          type: string
+          example: "CSV_PROFILE_ANALYSIS"
+        message:
+          type: string
+          example: "Started profiling step"
+    ExperimentRunLogDownloadUrlResponseModel:
+      type: object
+      properties:
+        downloadUrl:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
     ExperimentRunStatusRequestModel:
       type: object
       required:
@@ -204,10 +329,148 @@ components:
         duration:
           type: string
           example: "12:39:40"
+    ExperimentRunDetailResponseModel:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        name:
+          type: string
+          example: "CSV Run 2"
+        status:
+          type: string
+          example: "PENDING"
+        message:
+          type: string
+          example: "Experiment run is pending"
+        experimentUUID:
+          type: string
+          example: "6ac52f13-a10c-4b42-b2f8-6ff0242a9a77"
+        experimentName:
+          type: string
+          example: "CSV Profiling"
+        projectUUID:
+          type: string
+          example: "47d3d94a-8bc4-4d54-8354-6fb362e44b75"
+        projectName:
+          type: string
+          example: "Customer Analytics"
+        creationDate:
+          type: string
+          format: date-time
+        lastUpdated:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+          example: "user-1"
+        artifactCount:
+          type: integer
+          format: int64
+          example: 2
+        numSteps:
+          type: integer
+          format: int32
+          example: 3
+        datasets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRunDatasetModel'
+        runArtifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRunArtifactModel'
         executionMode:
           type: array
           items:
-            $ref: '#/components/schemas/ExperimentRunExecutionModeModel'
+            $ref: '#/components/schemas/ExperimentRunDetailExecutionModeModel'
+    ExperimentRunDatasetModel:
+      type: object
+      properties:
+        datasetVersionUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        name:
+          type: string
+          example: "customers.csv"
+    ExperimentRunArtifactModel:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "7d8c3b20-5f7e-4e52-b247-811fd38f757b"
+        portName:
+          type: string
+          example: "report"
+    ExperimentRunDetailExecutionModeModel:
+      type: object
+      properties:
+        stepCount:
+          type: integer
+          format: int32
+          example: 1
+        experimentConfigUuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        experimentType:
+          type: string
+          example: "CSV_PROFILE_ANALYSIS"
+        inputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRunResolvedInputModel'
+        outputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRunStepOutputModel'
+    ExperimentRunResolvedInputModel:
+      type: object
+      properties:
+        portName:
+          type: string
+          example: "trainData"
+        inputType:
+          type: string
+          enum:
+            - DATASET
+            - ARTIFACT
+          example: "DATASET"
+        name:
+          type: string
+          example: "customers.csv"
+        fileUuid:
+          type: string
+          description: Dataset version UUID when inputType is DATASET, or run artifact UUID when inputType is ARTIFACT.
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        format:
+          type: string
+          example: "CSV"
+    ExperimentRunStepOutputModel:
+      type: object
+      properties:
+        artifactUuid:
+          type: string
+          example: "7d8c3b20-5f7e-4e52-b247-811fd38f757b"
+        portName:
+          type: string
+          example: "cleanedData"
+        name:
+          type: string
+          example: "cleanedData.csv"
+        format:
+          type: string
+          example: "CSV"
+        size:
+          type: integer
+          format: int64
+          example: 24000
+        status:
+          type: string
+          example: "INTERMEDIATE"
+        downstreamPolicy:
+          type: string
+          example: "CONNECTABLE"
     ExperimentRunResponseModel:
       type: object
       properties:

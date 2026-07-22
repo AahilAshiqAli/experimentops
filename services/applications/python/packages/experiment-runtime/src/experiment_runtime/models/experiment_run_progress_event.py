@@ -7,6 +7,7 @@ from uuid import uuid4
 from pydantic import Field
 
 from experiment_runtime.base_model import ExperimentOpsModel
+from experiment_runtime.logging.run_sink import ExperimentRunUserLogRecord
 from experiment_runtime.models.experiment_execution_context import (
     ExperimentExecutionContext,
 )
@@ -20,6 +21,9 @@ class ExperimentRunProgressEvent(ExperimentOpsModel):
     experiment_uuid: str | None
     experiment_run_uuid: str | None
     progress: int
+    current_step: int | None = None
+    sequence: int = 0
+    logs: tuple[ExperimentRunUserLogRecord, ...] = ()
     event_uuid: str = Field(default_factory=lambda: str(uuid4()))
     event_timestamp: int = Field(default_factory=lambda: _current_epoch_millis())
 
@@ -28,6 +32,9 @@ class ExperimentRunProgressEvent(ExperimentOpsModel):
         cls,
         context: ExperimentExecutionContext,
         progress: int | float,
+        current_step: int | None = None,
+        sequence: int = 0,
+        logs: list[ExperimentRunUserLogRecord] | tuple[ExperimentRunUserLogRecord, ...] = (),
     ) -> "ExperimentRunProgressEvent":
         """Create a progress event from the active experiment execution context."""
 
@@ -37,6 +44,9 @@ class ExperimentRunProgressEvent(ExperimentOpsModel):
             experiment_uuid=context.experiment_uuid,
             experiment_run_uuid=context.experiment_run_uuid,
             progress=_progress_value(progress),
+            current_step=current_step,
+            sequence=sequence,
+            logs=tuple(logs),
         )
 
     def to_payload(self) -> dict[str, Any]:
@@ -61,6 +71,9 @@ class ExperimentRunProgressEvent(ExperimentOpsModel):
                 "experimentUuid": self.experiment_uuid,
                 "experimentRunUuid": self.experiment_run_uuid,
                 "progress": _progress_payload(self.progress),
+                "currentStep": self.current_step,
+                "sequence": self.sequence,
+                "logs": [log.to_payload() for log in self.logs],
             },
         }
 

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLogin } from '../context-api/logincontext'
 import {
   createExperimentRun,
+  getExperimentRun,
   getExperimentRunStatuses,
   getExperimentRuns,
   type CreateExperimentRunInput,
@@ -47,6 +48,19 @@ export function useQueryExperimentRuns(
         params,
       ),
     queryKey: ['experiments', experimentUuid, 'runs', params],
+  })
+}
+
+export function useQueryExperimentRun(uuid?: string) {
+  const { accessToken, hasPermission } = useLogin()
+  const canViewExperimentRun = hasPermission(
+    PERMISSIONS_KEYS.EXPERIMENT_RUN.GET_EXPERIMENT_RUNS,
+  )
+
+  return useQuery({
+    enabled: Boolean(accessToken && uuid && canViewExperimentRun),
+    queryFn: () => getExperimentRun(accessToken as string, uuid as string),
+    queryKey: ['experiment-runs', uuid],
   })
 }
 

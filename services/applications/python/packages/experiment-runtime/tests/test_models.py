@@ -9,7 +9,9 @@ from experiment_runtime.models import (
     ExperimentRunExecutionPlanOutput,
     ExperimentRunCompletedEvent,
     ExperimentRunFailureErrorEntry,
+    ExperimentRunFailureEvent,
     ExperimentRunProgressEvent,
+    ExperimentRunUserLogRecord,
     ExperimentRunRequestedEvent,
     Metric,
     Result,
@@ -71,15 +73,19 @@ def test_completed_event_payload_keeps_event_envelope_shape() -> None:
                     type="CLEANED_DATASET",
                     uri="s3://bucket/output.csv",
                     size=10,
+                    step_count=1,
+                    port_name="CLEANED_DATASET",
                 )
             ],
             metrics=[ExampleMetric(rows_processed=100)],
         ),
+        log_file_url="s3://bucket/run.log",
     ).to_payload()
 
     assert payload["metadata"]["traceUuid"] == "request-1"
     assert payload["metadata"]["uuid"] == "run-1"
     assert payload["payload"]["experimentType"] == "CSV_PROFILE_ANALYSIS"
+    assert payload["payload"]["logFileUrl"] == "s3://bucket/run.log"
     assert payload["payload"]["result"] == {
         "artifact": [
             {
@@ -87,6 +93,8 @@ def test_completed_event_payload_keeps_event_envelope_shape() -> None:
                 "type": "CLEANED_DATASET",
                 "uri": "s3://bucket/output.csv",
                 "size": 10,
+                "stepCount": 1,
+                "portName": "CLEANED_DATASET",
             }
         ],
         "metrics": [
@@ -237,6 +245,77 @@ def test_run_requested_event_parses_execution_configs_from_execution_plan() -> N
     assert context.config_json == {"sampleSize": 100}
 
 
+def test_run_requested_event_parses_nested_execution_plan_contracts() -> None:
+    requested_event = ExperimentRunRequestedEvent.from_payload(
+        {
+            "metadata": {
+                "eventUuid": "event-1",
+                "traceUuid": "request-1",
+                "uuid": "run-1",
+                "workspaceUuid": "workspace-1",
+            },
+            "payload": {
+                "projectUuid": "project-1",
+                "experimentUuid": "experiment-1",
+                "executionPlan": {
+                    "schemaVersion": 1,
+                    "steps": [
+                        {
+                            "stepCount": 1,
+                            "experimentType": "CSV_PROFILE_ANALYSIS",
+                            "inputs": [
+                                {
+                                    "portName": "trainData",
+                                    "required": True,
+                                    "contract": {
+                                        "dataKind": "TABULAR_DATASET",
+                                        "acceptedFormats": ["CSV", "PARQUET"],
+                                    },
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "name": "cleanedTrainData",
+                                    "type": {
+                                        "type": "SAME_AS_INPUT",
+                                        "format": None,
+                                        "sourceInputPort": "trainData",
+                                    },
+                                    "dataKind": "TABULAR_DATASET",
+                                    "required": False,
+                                    "downStreamPolicy": "CONNECTABLE",
+                                },
+                                {
+                                    "name": "trainingReport",
+                                    "type": {
+                                        "type": "FIXED",
+                                        "format": "JSON",
+                                        "sourceInputPort": None,
+                                    },
+                                    "dataKind": "REPORT",
+                                    "required": True,
+                                    "downStreamPolicy": "TERMINAL",
+                                },
+                            ],
+                        }
+                    ],
+                },
+            },
+        }
+    )
+
+    step = requested_event.execution_configs[0]
+
+    assert step.inputs[0].data_kind == "TABULAR_DATASET"
+    assert step.inputs[0].format == "CSV"
+    assert step.outputs[0].format_strategy == "SAME_AS_INPUT"
+    assert step.outputs[0].source_input_port == "trainData"
+    assert step.outputs[0].required_for_run is False
+    assert step.outputs[1].format_strategy == "FIXED"
+    assert step.outputs[1].format == "JSON"
+    assert step.outputs[1].required_for_run is True
+
+
 def test_progress_event_payload_keeps_event_envelope_shape() -> None:
     context = ExperimentExecutionContext(
         event_uuid="event-1",
@@ -253,6 +332,16 @@ def test_progress_event_payload_keeps_event_envelope_shape() -> None:
     payload = ExperimentRunProgressEvent.from_execution_context(
         context=context,
         progress=75,
+        current_step=2,
+        sequence=3,
+        logs=[
+            ExperimentRunUserLogRecord(
+                timestamp=123456,
+                level="INFO",
+                experiment_type="CSV_PROFILE_ANALYSIS",
+                message="Loaded CSV.",
+            )
+        ],
     ).to_payload()
 
     assert payload["metadata"]["traceUuid"] == "request-1"
@@ -263,6 +352,16 @@ def test_progress_event_payload_keeps_event_envelope_shape() -> None:
         "experimentUuid": "experiment-1",
         "experimentRunUuid": "run-1",
         "progress": "75",
+        "currentStep": 2,
+        "sequence": 3,
+        "logs": [
+            {
+                "timestamp": 123456,
+                "level": "INFO",
+                "experimentType": "CSV_PROFILE_ANALYSIS",
+                "message": "Loaded CSV.",
+            }
+        ],
     }
 
     fractional_payload = ExperimentRunProgressEvent.from_execution_context(
@@ -285,3 +384,34 @@ def test_failure_error_entry_payload_uses_camel_case_aliases() -> None:
         "errorMessage": "failed",
         "stackTrace": "trace",
     }
+
+
+def test_failure_event_payload_includes_log_file_url() -> None:
+    requested_event = ExperimentRunRequestedEvent.from_payload(
+        {
+            "metadata": {
+                "eventUuid": "event-1",
+                "traceUuid": "request-1",
+                "requesterUuid": "user-1",
+                "uuid": "run-1",
+                "workspaceUuid": "workspace-1",
+                "requestTimestamp": 123,
+                "userRole": "OWNER",
+            },
+            "payload": {
+                "projectUuid": "project-1",
+                "experimentUuid": "experiment-1",
+                "experimentType": "CSV_PROFILE_ANALYSIS",
+                "datasetUri": "s3://bucket/input.csv",
+                "configJson": {"sampleSize": 100},
+            },
+        }
+    )
+
+    payload = ExperimentRunFailureEvent.from_requested_event(
+        event=requested_event,
+        exception=RuntimeError("failed"),
+        log_file_url="s3://bucket/run.log",
+    ).to_payload()
+
+    assert payload["payload"]["logFileUrl"] == "s3://bucket/run.log"

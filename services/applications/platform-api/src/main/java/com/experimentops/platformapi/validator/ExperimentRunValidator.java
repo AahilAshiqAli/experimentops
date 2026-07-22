@@ -2,6 +2,9 @@ package com.experimentops.platformapi.validator;
 
 import com.experimentops.common.exceptions.constant.ErrorCode;
 import com.experimentops.common.exceptions.runtime.ValidationException;
+import com.experimentops.experiment.run.event.ExperimentRunCompletedArtifact;
+import com.experimentops.experiment.run.event.ExperimentRunCompletedEvent;
+import com.experimentops.experiment.run.event.ExperimentRunCompletedResult;
 import com.experimentops.experiment.run.model.v1.ExperimentRunExecutionModeModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunInputModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
@@ -139,6 +142,122 @@ public class ExperimentRunValidator extends GenericValidator {
         return ExperimentRunResolvedPlan.builder()
                 .steps(resolvedSteps)
                 .build();
+    }
+
+    public void validateCompletedArtifacts(@NonNull ExperimentRunCompletedEvent event, @NonNull ExperimentRunResolvedPlan resolvedPlan, @NonNull Map<Integer, String> experimentConfigNamesByStep) {
+
+        ExperimentRunCompletedResult result = event.getPayload().getResult();
+        if (result == null || result.getArtifact() == null) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "Experiment run completed event did not include artifacts");
+        }
+
+        Map<ArtifactReference, ExperimentRunCompletedArtifact> actualArtifactsByReference = new HashMap<>();
+        for (ExperimentRunCompletedArtifact artifact : result.getArtifact()) {
+            validateCompletedArtifactReference(artifact);
+            ArtifactReference reference = new ArtifactReference(artifact.getStepCount(), artifact.getPortName());
+            if (actualArtifactsByReference.put(reference, artifact) != null) {
+                throw completedArtifactValidationException(
+                        experimentConfigNamesByStep,
+                        artifact.getStepCount(),
+                        "Produced duplicate artifact: " + artifact.getPortName()
+                );
+            }
+        }
+
+        Set<ArtifactReference> expectedReferences = new HashSet<>();
+        for (ExperimentRunResolvedPlan.Step step : resolvedPlan.getSteps()) {
+            for (ExperimentRunResolvedPlan.Output output : step.getOutputs()) {
+                ArtifactReference expectedReference = new ArtifactReference(step.getStepCount(), output.getName());
+                expectedReferences.add(expectedReference);
+                ExperimentRunCompletedArtifact actualArtifact = actualArtifactsByReference.get(expectedReference);
+
+                if (output.getDownStreamPolicy() == DownStreamPolicyEnum.INTERNAL) {
+                    if (actualArtifact != null) {
+                        throw completedArtifactValidationException(
+                                experimentConfigNamesByStep,
+                                step.getStepCount(),
+                                "Produced internal artifact: " + output.getName()
+                        );
+                    }
+                    continue;
+                }
+
+                if (actualArtifact == null) {
+                    if (!Boolean.TRUE.equals(output.getRequiredForRun())) {
+                        continue;
+                    }
+                    throw completedArtifactValidationException(
+                            experimentConfigNamesByStep,
+                            step.getStepCount(),
+                            "Did not produce required artifact: " + output.getName()
+                    );
+                }
+
+                validateCompletedArtifactFormat(actualArtifact, output, step.getStepCount(), experimentConfigNamesByStep);
+                validateCompletedArtifactType(actualArtifact, output, step.getStepCount(), experimentConfigNamesByStep);
+            }
+        }
+
+        for (ArtifactReference actualReference : actualArtifactsByReference.keySet()) {
+            if (!expectedReferences.contains(actualReference)) {
+                throw completedArtifactValidationException(
+                        experimentConfigNamesByStep,
+                        actualReference.stepCount(),
+                        "Produced unexpected artifact: " + actualReference.portName()
+                );
+            }
+        }
+    }
+
+    private void validateCompletedArtifactReference(ExperimentRunCompletedArtifact artifact) {
+        if (artifact == null || artifact.getStepCount() == null || StringUtils.isBlank(artifact.getPortName())) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "Completed artifact is missing stepCount or portName");
+        }
+    }
+
+    private void validateCompletedArtifactFormat(
+            @NonNull ExperimentRunCompletedArtifact artifact,
+            ExperimentRunResolvedPlan.Output output,
+            Integer stepCount,
+            @NonNull Map<Integer, String> experimentConfigNamesByStep) {
+
+        String expectedFormat = output.getFormat() == null ? null : output.getFormat().name();
+        if (StringUtils.equalsIgnoreCase(expectedFormat, artifact.getFormat())) {
+            return;
+        }
+        throw completedArtifactValidationException(
+                experimentConfigNamesByStep,
+                stepCount,
+                "Required artifact " + output.getName() + " expected format " + expectedFormat + " but got " + artifact.getFormat()
+        );
+    }
+
+    private void validateCompletedArtifactType(
+            @NonNull ExperimentRunCompletedArtifact artifact,
+            ExperimentRunResolvedPlan.Output output,
+            Integer stepCount,
+            @NonNull Map<Integer, String> experimentConfigNamesByStep) {
+
+        if (StringUtils.equals(output.getName(), artifact.getType())) {
+            return;
+        }
+        throw completedArtifactValidationException(
+                experimentConfigNamesByStep,
+                stepCount,
+                "Required artifact " + output.getName() + " expected type " + output.getName() + " but got " + artifact.getType()
+        );
+    }
+
+    private ValidationException completedArtifactValidationException(
+            @NonNull Map<Integer, String> experimentConfigNamesByStep,
+            Integer stepCount,
+            @NonNull String message) {
+
+        String experimentConfigName = experimentConfigNamesByStep.getOrDefault(stepCount, "Experiment config");
+        return new ValidationException(
+                ErrorCode.INVALID_INPUTS,
+                experimentConfigName + " failed step number : " + stepCount + ". " + message
+        );
     }
 
     private ExperimentRunResolvedPlan.Step resolveStep(
@@ -629,5 +748,8 @@ public class ExperimentRunValidator extends GenericValidator {
     }
 
     private record OutputReference(Integer stepCount, String outputName) {
+    }
+
+    private record ArtifactReference(Integer stepCount, String portName) {
     }
 }

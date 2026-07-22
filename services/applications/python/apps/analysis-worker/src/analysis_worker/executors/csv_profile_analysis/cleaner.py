@@ -15,6 +15,7 @@ from analysis_worker.executors.csv_profile_analysis.model import (
     CsvCleaningReport,
     CsvProfileAnalysisContext,
 )
+from experiment_runtime.logging.run_sink import ExperimentRunLogSink
 from experiment_runtime.models.experiment_run_completed_event import Artifact
 from experiment_runtime.storage import ObjectStorage
 
@@ -31,6 +32,8 @@ def clean_context(
     context: CsvProfileAnalysisContext,
     publish_progress: Callable[[int], None],
     object_storage: ObjectStorage | None = None,
+    run_log_sink: ExperimentRunLogSink | None = None,
+    experiment_type: str | None = None,
 ) -> CsvCleaningOutput:
     """Clean the requested CSV dataset, persist artifacts, and return the result."""
 
@@ -50,6 +53,13 @@ def clean_context(
     config = context.cleaning_config
 
     df = _read_csv(input_file_path)
+    _log_info(
+        run_log_sink,
+        experiment_type,
+        "Loaded CSV with %s rows and %s columns.",
+        len(df),
+        len(df.columns),
+    )
     publish_progress(25)
 
     input_rows = len(df)
@@ -128,6 +138,12 @@ def clean_context(
     report_file_path = output_dir / f"{input_file_path.stem}_cleaning_report.json"
 
     df.to_csv(cleaned_file_path, index=False)
+    _log_info(
+        run_log_sink,
+        experiment_type,
+        "Cleaned CSV data and wrote %s rows to the output file.",
+        len(df),
+    )
     publish_progress(75)
 
     metrics = CsvCleaningMetrics(
@@ -149,6 +165,7 @@ def clean_context(
         context=context,
         object_storage=object_storage,
     )
+    _log_info(run_log_sink, experiment_type, "Uploaded cleaned dataset artifact.")
     cleaning_report_uri = _to_file_uri(report_file_path)
 
     cleaned_output = _build_cleaning_output(
@@ -203,8 +220,36 @@ def clean_context(
         context=context,
         object_storage=object_storage,
     )
+    _log_info(run_log_sink, experiment_type, "Created CSV cleaning report.")
+    _log_verbose(
+        run_log_sink,
+        experiment_type,
+        "CSV cleaning metrics: %s",
+        metrics.model_dump(by_alias=True, mode="json"),
+    )
+    publish_progress(100)
 
     return cleaned_output
+
+
+def _log_info(
+    run_log_sink: ExperimentRunLogSink | None,
+    experiment_type: str | None,
+    message: str,
+    *args: object,
+) -> None:
+    if run_log_sink is not None:
+        run_log_sink.info(experiment_type, message, *args)
+
+
+def _log_verbose(
+    run_log_sink: ExperimentRunLogSink | None,
+    experiment_type: str | None,
+    message: str,
+    *args: object,
+) -> None:
+    if run_log_sink is not None:
+        run_log_sink.verbose(experiment_type, message, *args)
 
 
 def _resolve_input_file_path(

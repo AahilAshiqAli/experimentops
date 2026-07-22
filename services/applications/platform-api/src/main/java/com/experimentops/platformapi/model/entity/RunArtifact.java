@@ -38,6 +38,23 @@ public class RunArtifact extends ExperimentOpsEntity {
     @Column(name = "size_bytes")
     private long size;
 
+    @Column(name = "experiment_type")
+    private String experimentType;
+
+    @Column(name = "step_count")
+    private Integer stepCount;
+
+    @Column(name = "port_name")
+    private String portName;
+
+    @Column(name = "status")
+    @Enumerated(EnumType.STRING)
+    private RunArtifactStatusEnum status;
+
+    @Column(name = "downstream_policy")
+    @Enumerated(EnumType.STRING)
+    private DownStreamPolicyEnum downStreamPolicy;
+
     @Override
     @Generated
     public boolean equals(Object o) {

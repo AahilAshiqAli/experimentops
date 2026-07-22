@@ -15,6 +15,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("v1/")
@@ -33,9 +35,9 @@ public class ExperimentConfigController implements ExperimentConfigApi {
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_EXPERIMENT_CONFIG + "')")
     @Override
-    public ResponseEntity<ExperimentConfigResponse> getExperimentConfig(String experimentUuid, String uuid) {
+    public ResponseEntity<List<ExperimentConfigResponse>> getExperimentConfig(String experimentUuid, ExperimentConfigListRequestModel requestModel) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
-        return ResponseEntity.status(HttpStatus.OK).body(experimentConfigService.getExperimentConfig(experimentUuid, uuid, headers));
+        return ResponseEntity.status(HttpStatus.OK).body(experimentConfigService.getExperimentConfig(experimentUuid, requestModel, headers));
     }
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_EXPERIMENT_CONFIG + "')")

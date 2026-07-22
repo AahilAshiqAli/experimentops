@@ -59,11 +59,5 @@ export function getExperimentRunColumns(): DataTableColumn<ExperimentRun>[] {
       key: 'duration',
       value: (run) => run.duration,
     },
-    {
-      header: 'Pipeline',
-      key: 'executionMode',
-      value: (run) =>
-        `${run.executionMode.length} step${run.executionMode.length === 1 ? '' : 's'}`,
-    },
   ]
 }

@@ -1,6 +1,10 @@
 package com.experimentops.platformapi.validator;
 
 import com.experimentops.common.exceptions.runtime.ValidationException;
+import com.experimentops.experiment.run.event.ExperimentRunCompletedArtifact;
+import com.experimentops.experiment.run.event.ExperimentRunCompletedEvent;
+import com.experimentops.experiment.run.event.ExperimentRunCompletedEventPayload;
+import com.experimentops.experiment.run.event.ExperimentRunCompletedResult;
 import com.experimentops.experiment.run.model.v1.ExperimentRunExecutionModeModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunInputModel;
 import com.experimentops.platformapi.model.ExperimentRunConfigContext;
@@ -228,6 +232,66 @@ class ExperimentRunValidatorTest {
         )).isInstanceOf(ValidationException.class);
     }
 
+    @Test
+    void rejectsCompletedEventWhenRequiredArtifactIsMissing() {
+        ExperimentRunResolvedPlan plan = resolvedPlan(outputFixed(
+                "report",
+                true,
+                OutputDataKindEnum.REPORT,
+                DatasetFileFormatEnum.JSON,
+                DownStreamPolicyEnum.TERMINAL
+        ));
+
+        assertThatThrownBy(() -> validator.validateCompletedArtifacts(
+                completedEvent(List.of()),
+                plan,
+                Map.of(1, "CSV_PROFILE_ANALYSIS_NORMALIZE")
+        ))
+                .isInstanceOf(ValidationException.class)
+                .hasMessage("CSV_PROFILE_ANALYSIS_NORMALIZE failed step number : 1. Did not produce required artifact: report");
+    }
+
+    @Test
+    void validatesProducedOptionalArtifact() {
+        ExperimentRunResolvedPlan plan = resolvedPlan(outputFixed(
+                "debugData",
+                false,
+                OutputDataKindEnum.TABULAR_DATASET,
+                DatasetFileFormatEnum.CSV,
+                DownStreamPolicyEnum.CONNECTABLE
+        ));
+
+        assertThatThrownBy(() -> validator.validateCompletedArtifacts(
+                completedEvent(List.of(completedArtifact(1, "debugData", "debugData", "JSON"))),
+                plan,
+                Map.of(1, "CSV_PROFILE_ANALYSIS_NORMALIZE")
+        ))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("Required artifact debugData expected format CSV but got JSON");
+    }
+
+    @Test
+    void rejectsCompletedEventWithUnexpectedArtifact() {
+        ExperimentRunResolvedPlan plan = resolvedPlan(outputFixed(
+                "report",
+                true,
+                OutputDataKindEnum.REPORT,
+                DatasetFileFormatEnum.JSON,
+                DownStreamPolicyEnum.TERMINAL
+        ));
+
+        assertThatThrownBy(() -> validator.validateCompletedArtifacts(
+                completedEvent(List.of(
+                        completedArtifact(1, "report", "report", "JSON"),
+                        completedArtifact(1, "extra", "extra", "JSON")
+                )),
+                plan,
+                Map.of(1, "CSV_PROFILE_ANALYSIS_NORMALIZE")
+        ))
+                .isInstanceOf(ValidationException.class)
+                .hasMessage("CSV_PROFILE_ANALYSIS_NORMALIZE failed step number : 1. Produced unexpected artifact: extra");
+    }
+
     private static ExperimentRunConfigContext config(String uuid, ExperimentTypeManifest manifest) {
         return ExperimentRunConfigContext.builder()
                 .experimentConfigUuid(uuid)
@@ -345,5 +409,56 @@ class ExperimentRunValidatorTest {
                 .build();
         datasetVersion.setUuid(uuid);
         return datasetVersion;
+    }
+
+    private static ExperimentRunResolvedPlan resolvedPlan(OutputManifest output) {
+        return ExperimentRunResolvedPlan.builder()
+                .steps(List.of(ExperimentRunResolvedPlan.Step.builder()
+                        .stepCount(1)
+                        .experimentConfigUuid(FIRST_CONFIG_UUID)
+                        .experimentType("CSV_PROFILE_ANALYSIS")
+                        .inputs(List.of())
+                        .outputs(List.of(ExperimentRunResolvedPlan.Output.builder()
+                                .name(output.getName())
+                                .dataKind(output.getDataKind().name())
+                                .formatStrategy(output.getType().getType())
+                                .format(output.getType().getFormat())
+                                .sourceInputPort(output.getType().getSourceInputPort())
+                                .downStreamPolicy(output.getDownStreamPolicy())
+                                .requiredForRun(output.getRequired())
+                                .build()))
+                        .build()))
+                .build();
+    }
+
+    private static ExperimentRunCompletedEvent completedEvent(List<ExperimentRunCompletedArtifact> artifacts) {
+        return new ExperimentRunCompletedEvent(
+                null,
+                new ExperimentRunCompletedEventPayload(
+                        null,
+                        null,
+                        null,
+                        "SUCCEEDED",
+                        new ExperimentRunCompletedResult(artifacts, List.of(), null),
+                        null
+                )
+        );
+    }
+
+    private static ExperimentRunCompletedArtifact completedArtifact(
+            Integer stepCount,
+            String portName,
+            String type,
+            String format) {
+
+        return new ExperimentRunCompletedArtifact(
+                format,
+                type,
+                "s3://bucket/" + stepCount + "/" + portName,
+                100L,
+                "CSV_PROFILE_ANALYSIS",
+                stepCount,
+                portName
+        );
     }
 }

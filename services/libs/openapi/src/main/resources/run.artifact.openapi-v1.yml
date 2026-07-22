@@ -1,0 +1,110 @@
+openapi: 3.0.1
+
+info:
+  title: ExperimentOps
+  description: ExperimentOps API.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+    variables:
+      basePath:
+        default: api/v1
+
+tags:
+  - name: Run Artifact
+    description: Everything about run artifacts
+
+paths:
+  /experiment-run/{experimentRunUuid}/artifact:
+    get:
+      summary: Get Artifacts for an experiment
+      tags:
+        - Run Artifact
+      operationId: getExperimentArtifacts
+      parameters:
+        - name: experimentRunUuid
+          in: path
+          description: experiment uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunArtifactListResponseModel'
+  /run-artifact/{artifactUuid}/download-url:
+    get:
+      summary: Get Run Artifact Download URL
+      description: Generates a presigned read URL for a run artifact.
+      tags:
+        - Run Artifact
+      operationId: getRunArtifactDownloadUrl
+      parameters:
+        - name: artifactUuid
+          in: path
+          description: Run artifact uuid
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Presigned run artifact download URL generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunArtifactDownloadUrlResponseModel'
+
+components:
+  schemas:
+    RunArtifactListResponseModel:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunArtifactResponseModel'
+
+    RunArtifactResponseModel:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "9f5c8c9a-8d5f-4a41-8cb4-6c8b3b5d12a1"
+        artifactType:
+          type: string
+          example: CLEANED_DATASET
+        experimentType:
+          type: string
+          example: CSV_CLEANING
+        format:
+          type: string
+          example: CSV
+        size:
+          type: integer
+          example: 24000
+        stepCount:
+          type: integer
+          example: 2
+        portName:
+          type: string
+          example: cleanedReport
+        status:
+          type: string
+          example: PRIMARY
+        downstreamPolicy:
+          type: string
+          example: CONNECTABLE
+    RunArtifactDownloadUrlResponseModel:
+      type: object
+      properties:
+        downloadUrl:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time

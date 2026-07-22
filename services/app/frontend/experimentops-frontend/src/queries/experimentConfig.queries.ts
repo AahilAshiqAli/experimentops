@@ -5,8 +5,8 @@ import {
   createExperimentConfig,
   type CreateExperimentConfigInput,
   type ExperimentConfig,
-  getExperimentConfig,
   getExperimentConfigs,
+  getExperimentConfigsByUuids,
   type PaginatedResponse,
   type PaginationParams,
   updateExperimentConfig,
@@ -40,18 +40,56 @@ export function useQueryExperimentConfigs(
   })
 }
 
-export function useMutationGetExperimentConfig(experimentUuid: string) {
+export function useQueryExperimentConfigsByUuids(
+  experimentUuid?: string,
+  experimentConfigUuids: string[] = [],
+) {
+  const { accessToken, hasPermission } = useLogin()
+  const canViewExperimentConfigs = hasPermission(
+    PERMISSIONS_KEYS.EXPERIMENT_CONFIG.GET_EXPERIMENT_CONFIG,
+  )
+
+  return useQuery({
+    enabled: Boolean(
+      accessToken &&
+      experimentUuid &&
+      experimentConfigUuids.length &&
+      canViewExperimentConfigs,
+    ),
+    queryFn: () =>
+      getExperimentConfigsByUuids(
+        accessToken as string,
+        experimentUuid as string,
+        experimentConfigUuids,
+      ),
+    queryKey: [
+      'experiments',
+      experimentUuid,
+      'configs',
+      'details',
+      experimentConfigUuids,
+    ],
+  })
+}
+
+export function useMutationGetExperimentConfigsByUuids(experimentUuid: string) {
   const { accessToken } = useLogin()
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (uuid: string) =>
-      getExperimentConfig(accessToken as string, experimentUuid, uuid),
-    onSuccess: (experimentConfig) => {
-      queryClient.setQueryData(
-        ['experiments', experimentUuid, 'configs', experimentConfig.uuid],
-        experimentConfig,
-      )
+    mutationFn: (experimentConfigUuids: string[]) =>
+      getExperimentConfigsByUuids(
+        accessToken as string,
+        experimentUuid,
+        experimentConfigUuids,
+      ),
+    onSuccess: (experimentConfigs) => {
+      experimentConfigs.forEach((experimentConfig) => {
+        queryClient.setQueryData(
+          ['experiments', experimentUuid, 'configs', experimentConfig.uuid],
+          experimentConfig,
+        )
+      })
     },
   })
 }

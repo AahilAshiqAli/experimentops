@@ -19,16 +19,22 @@ import java.util.Objects;
 public class ExperimentRunResolvedPlan {
     private List<Step> steps;
 
-    public List<String> datasetVersionUuids() {
+
+    public List<DatasetAttachment> datasetAttachments() {
         if (steps == null) {
             return List.of();
         }
         return steps.stream()
                 .filter(Objects::nonNull)
-                .flatMap(step -> step.getInputs() == null ? List.<Input>of().stream() : step.getInputs().stream())
-                .map(Input::getDatasetVersionUuid)
-                .filter(Objects::nonNull)
-                .distinct()
+                .flatMap(step -> step.getInputs() == null
+                        ? List.<DatasetAttachment>of().stream()
+                        : step.getInputs().stream()
+                        .filter(input -> input.getDatasetVersionUuid() != null)
+                        .map(input -> new DatasetAttachment(
+                                step.getStepCount(),
+                                input.getPortName(),
+                                input.getDatasetVersionUuid()
+                        )))
                 .toList();
     }
 
@@ -86,5 +92,12 @@ public class ExperimentRunResolvedPlan {
         private String sourceInputPort;
         private DownStreamPolicyEnum downStreamPolicy;
         private Boolean requiredForRun;
+    }
+
+    public record DatasetAttachment(
+            Integer stepCount,
+            String portName,
+            String datasetVersionUuid
+    ) {
     }
 }

@@ -63,6 +63,7 @@ export function ExperimentRuns() {
             data={container.experimentRunsQuery.data?.data ?? []}
             emptyMessage="No experiment runs match the current filters."
             getRowKey={(run) => run.uuid}
+            onRowClick={(run) => container.handleOpenRun(run.uuid)}
             pagination={{
               onPageChange: container.setPage,
               page: container.activePage,

@@ -3,34 +3,20 @@ package com.experimentops.platformapi.transformer;
 import com.experimentops.avroevent.type.EventType;
 import com.experimentops.common.kafka.model.event.ExperimentOpsMetadataEvent;
 import com.experimentops.common.kafka.utils.ExperimentOpsMetadataUtil;
-import com.experimentops.experiment.run.event.ExperimentRunEvent;
-import com.experimentops.experiment.run.event.ExperimentRunEventPayload;
-import com.experimentops.experiment.run.event.ExperimentRunExecutionPlan;
-import com.experimentops.experiment.run.event.ExperimentRunExecutionPlanInput;
-import com.experimentops.experiment.run.event.ExperimentRunExecutionPlanOutput;
-import com.experimentops.experiment.run.event.ExperimentRunExecutionPlanStep;
-import com.experimentops.experiment.run.event.ExperimentRunPlanDataFormat;
-import com.experimentops.experiment.run.event.ExperimentRunPlanDataKind;
-import com.experimentops.experiment.run.event.ExperimentRunPlanDownStreamPolicy;
-import com.experimentops.experiment.run.event.ExperimentRunPlanFormatStrategy;
-import com.experimentops.experiment.run.event.ExperimentRunPlanInputType;
+import com.experimentops.experiment.run.event.*;
 import com.experimentops.experiment.run.model.v1.*;
 import com.experimentops.platformapi.dal.repository.ExperimentConfigWithTypeProjection;
 import com.experimentops.platformapi.model.ExperimentRunConfigContext;
+import com.experimentops.platformapi.model.ExperimentRunDetailArtifact;
+import com.experimentops.platformapi.model.ExperimentRunDetailDataset;
+import com.experimentops.platformapi.model.ExperimentRunDetailSummary;
 import com.experimentops.platformapi.model.ExperimentRunExecutionConfig;
 import com.experimentops.platformapi.model.ExperimentRunListItemProjection;
 import com.experimentops.platformapi.model.ExperimentRunResolvedPlan;
-import com.experimentops.platformapi.model.entity.DatasetVersion;
-import com.experimentops.platformapi.model.entity.DownStreamPolicyEnum;
-import com.experimentops.platformapi.model.entity.ExecutionMode;
-import com.experimentops.platformapi.model.entity.ExecutionModeInput;
-import com.experimentops.platformapi.model.entity.Experiment;
-import com.experimentops.platformapi.model.entity.ExperimentRun;
-import com.experimentops.platformapi.model.entity.ExperimentTypeManifest;
-import com.experimentops.platformapi.model.entity.FormatStrategyTypeEnum;
-import com.experimentops.platformapi.model.entity.RunDataset;
+import com.experimentops.platformapi.model.entity.*;
 import com.experimentops.platformapi.model.type.DatasetFileFormatEnum;
 import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
+import com.experimentops.run.artifact.model.v1.RunArtifactResponseModel;
 import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.ExperimentOpsUtils;
 import com.experimentops.utils.JSONUtil;
@@ -43,9 +29,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.time.Duration;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Component
 public class ExperimentRunTransformer {
@@ -102,6 +93,7 @@ public class ExperimentRunTransformer {
                 .workspaceUuid(headers.getWorkspaceUuid())
                 .experimentStatus(ExperimentStatusEnum.PENDING)
                 .runNumber(1)
+                .progress(0)
                 .build();
         experimentRun.setUuid(ExperimentOpsUtils.uuid());
         experimentRun.setCreatedBy(headers.getUserUuid());
@@ -168,6 +160,7 @@ public class ExperimentRunTransformer {
         return ExperimentRunConfigContext
                 .builder()
                 .experimentConfigUuid(projection.getExperimentConfigUuid())
+                .experimentConfigName(projection.getName())
                 .experimentType(projection.getExperimentType())
                 .experimentConfigJson(experimentConfigJson)
                 .formatMappings(formatMappings)
@@ -179,6 +172,7 @@ public class ExperimentRunTransformer {
     public RunDataset transformRunDatasetEntity(
             @NonNull ExperimentRun experimentRun,
             @NonNull DatasetVersion datasetVersion,
+            ExperimentRunResolvedPlan.DatasetAttachment datasetAttachment,
             @NonNull ExperimentOpsHeaders headers) {
 
         log.info(headers, "transforming the payload to Run Dataset Entity");
@@ -188,10 +182,237 @@ public class ExperimentRunTransformer {
                 .datasetVersionUuid(datasetVersion.getUuid())
                 .workspaceUuid(headers.getWorkspaceUuid())
                 .usage(RUN_DATASET_USAGE_INPUT)
+                .stepCount(datasetAttachment.stepCount())
+                .portName(datasetAttachment.portName())
                 .build();
         runDataset.setUuid(ExperimentOpsUtils.uuid());
 
         return runDataset;
+    }
+
+    @NonNull
+    public RunArtifact transformRunArtifactEntity(
+            @NonNull String experimentRunUuid,
+            @NonNull ExperimentRunCompletedArtifact artifact,
+            @NonNull RunArtifactStatusEnum status,
+            @NonNull DownStreamPolicyEnum downStreamPolicy,
+            @NonNull ExperimentOpsHeaders headers) {
+
+        log.info(headers, "transforming the payload to Run Artifact Entity");
+
+        RunArtifact runArtifact = RunArtifact.builder()
+                .experimentRunUuid(experimentRunUuid)
+                .workspaceUuid(headers.getWorkspaceUuid())
+                .artifactType(artifact.getType())
+                .storageUri(artifact.getUri())
+                .experimentType(artifact.getExperimentType())
+                .format(artifact.getFormat())
+                .size(artifact.getSize())
+                .stepCount(artifact.getStepCount())
+                .portName(artifact.getPortName())
+                .status(status)
+                .downStreamPolicy(downStreamPolicy)
+                .build();
+        runArtifact.setUuid(ExperimentOpsUtils.uuid());
+
+        return runArtifact;
+    }
+
+    @NonNull
+    public RunArtifactResponseModel transformRunArtifactListResponseModel(
+            @NonNull RunArtifact runArtifact,
+            @NonNull ExperimentOpsHeaders headers) {
+
+        log.info(headers, "transforming the Run Artifact entity to Run Artifact response model");
+
+        return new RunArtifactResponseModel()
+                .uuid(runArtifact.getUuid())
+                .artifactType(runArtifact.getArtifactType())
+                .format(runArtifact.getFormat())
+                .size(Math.toIntExact(runArtifact.getSize()))
+                .stepCount(runArtifact.getStepCount())
+                .portName(runArtifact.getPortName())
+                .status(runArtifact.getStatus().name())
+                .experimentType(runArtifact.getExperimentType())
+                .downstreamPolicy(runArtifact.getDownStreamPolicy().name());
+    }
+
+    @NonNull
+    public ExperimentRunDetailResponseModel transformExperimentRunDetailResponseModel(
+            @NonNull ExperimentRunDetailSummary summary,
+            @NonNull List<ExperimentRunDetailDataset> datasets,
+            @NonNull List<ExperimentRunDetailArtifact> primaryArtifacts,
+            @NonNull Map<String, String> experimentTypesByConfigUuid,
+            @NonNull Map<String, DatasetVersion> datasetVersionsByUuid,
+            @NonNull List<RunArtifact> runArtifacts,
+            @NonNull ExperimentOpsHeaders headers) {
+
+        log.info(headers, "transforming the Experiment Run entity to Experiment Run detail response");
+
+        ExperimentRunDetailResponseModel responseModel = new ExperimentRunDetailResponseModel();
+        responseModel.setUuid(summary.uuid());
+        responseModel.setName(summary.name());
+        responseModel.setStatus(summary.experimentStatus() == null ? null : summary.experimentStatus().name());
+        responseModel.setMessage(summary.message());
+        responseModel.setExperimentUUID(summary.experimentUuid());
+        responseModel.setExperimentName(summary.experimentName());
+        responseModel.setProjectUUID(summary.projectUuid());
+        responseModel.setProjectName(summary.projectName());
+        responseModel.setCreationDate(toOffsetDateTime(summary.creationDate()));
+        responseModel.setLastUpdated(toOffsetDateTime(summary.lastUpdated()));
+        responseModel.setCreatedBy(summary.createdBy());
+        responseModel.setArtifactCount(summary.artifactCount());
+        responseModel.setNumSteps(summary.executionMode().size());
+        responseModel.setDatasets(transformExperimentRunDatasetModels(datasets));
+        responseModel.setRunArtifacts(transformExperimentRunArtifactModels(primaryArtifacts));
+        responseModel.setExecutionMode(transformExperimentRunDetailExecutionModeModels(
+                summary.executionMode(),
+                experimentTypesByConfigUuid,
+                datasetVersionsByUuid,
+                runArtifacts
+        ));
+        return responseModel;
+    }
+
+    @NonNull
+    private List<ExperimentRunDatasetModel> transformExperimentRunDatasetModels(
+            @NonNull List<ExperimentRunDetailDataset> datasets) {
+
+        return datasets
+                .stream()
+                .map(dataset -> new ExperimentRunDatasetModel()
+                        .datasetVersionUuid(dataset.datasetVersionUuid())
+                        .name(dataset.name()))
+                .toList();
+    }
+
+    @NonNull
+    private List<ExperimentRunArtifactModel> transformExperimentRunArtifactModels(
+            @NonNull List<ExperimentRunDetailArtifact> runArtifacts) {
+
+        return runArtifacts
+                .stream()
+                .map(runArtifact -> new ExperimentRunArtifactModel()
+                        .uuid(runArtifact.uuid())
+                        .portName(runArtifact.portName()))
+                .toList();
+    }
+
+    @NonNull
+    private List<ExperimentRunDetailExecutionModeModel> transformExperimentRunDetailExecutionModeModels(
+            List<ExecutionMode> executionMode,
+            @NonNull Map<String, String> experimentTypesByConfigUuid,
+            @NonNull Map<String, DatasetVersion> datasetVersionsByUuid,
+            @NonNull List<RunArtifact> runArtifacts) {
+
+        if (executionMode == null) {
+            return List.of();
+        }
+        Map<Integer, List<RunArtifact>> runArtifactsByStepCount = runArtifacts
+                .stream()
+                .filter(runArtifact -> runArtifact.getStepCount() != null)
+                .collect(Collectors.groupingBy(RunArtifact::getStepCount));
+        return executionMode
+                .stream()
+                .map(executionModeItem -> new ExperimentRunDetailExecutionModeModel()
+                        .stepCount(executionModeItem.getStepCount())
+                        .experimentConfigUuid(executionModeItem.getExperimentConfigUuid())
+                        .experimentType(experimentTypesByConfigUuid.get(executionModeItem.getExperimentConfigUuid()))
+                        .inputs(transformResolvedInputModels(
+                                executionModeItem.getInputs(),
+                                datasetVersionsByUuid,
+                                runArtifacts
+                        ))
+                        .outputs(transformStepOutputModels(
+                                runArtifactsByStepCount.getOrDefault(
+                                        executionModeItem.getStepCount(),
+                                        Collections.emptyList()
+                                )
+                        )))
+                .toList();
+    }
+
+    @NonNull
+    private List<ExperimentRunResolvedInputModel> transformResolvedInputModels(
+            List<ExecutionModeInput> inputs,
+            @NonNull Map<String, DatasetVersion> datasetVersionsByUuid,
+            @NonNull List<RunArtifact> runArtifacts) {
+
+        if (inputs == null) {
+            return List.of();
+        }
+        return inputs
+                .stream()
+                .map(input -> transformResolvedInputModel(input, datasetVersionsByUuid, runArtifacts))
+                .toList();
+    }
+
+    @NonNull
+    private ExperimentRunResolvedInputModel transformResolvedInputModel(
+            @NonNull ExecutionModeInput input,
+            @NonNull Map<String, DatasetVersion> datasetVersionsByUuid,
+            @NonNull List<RunArtifact> runArtifacts) {
+
+        ExperimentRunResolvedInputModel model = new ExperimentRunResolvedInputModel()
+                .portName(input.getPortName());
+        if (input.getInputType() != null) {
+            model.setInputType(ExperimentRunResolvedInputModel.InputTypeEnum.fromValue(input.getInputType()));
+        }
+        if ("DATASET".equals(input.getInputType())) {
+            DatasetVersion datasetVersion = datasetVersionsByUuid.get(input.getFile());
+            model.setFileUuid(input.getFile());
+            if (datasetVersion != null) {
+                model.setName(datasetVersion.getName());
+                model.setFormat(datasetVersion.getFormat());
+            }
+            return model;
+        }
+
+        RunArtifact sourceArtifact = findSourceArtifact(input, runArtifacts);
+        if (sourceArtifact != null) {
+            model.setFileUuid(sourceArtifact.getUuid());
+            model.setName(artifactDisplayName(sourceArtifact));
+            model.setFormat(sourceArtifact.getFormat());
+        } else {
+            model.setFileUuid(input.getFile());
+            model.setName(input.getFile());
+        }
+        return model;
+    }
+
+    private RunArtifact findSourceArtifact(
+            @NonNull ExecutionModeInput input,
+            @NonNull List<RunArtifact> runArtifacts) {
+
+        return runArtifacts
+                .stream()
+                .filter(runArtifact -> Objects.equals(runArtifact.getStepCount(), input.getSourceStepCount()))
+                .filter(runArtifact -> Objects.equals(runArtifact.getPortName(), input.getFile()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @NonNull
+    private List<ExperimentRunStepOutputModel> transformStepOutputModels(@NonNull List<RunArtifact> runArtifacts) {
+        return runArtifacts
+                .stream()
+                .map(runArtifact -> new ExperimentRunStepOutputModel()
+                        .artifactUuid(runArtifact.getUuid())
+                        .portName(runArtifact.getPortName())
+                        .name(artifactDisplayName(runArtifact))
+                        .format(runArtifact.getFormat())
+                        .size(runArtifact.getSize())
+                        .status(runArtifact.getStatus() == null ? null : runArtifact.getStatus().name())
+                        .downstreamPolicy(runArtifact.getDownStreamPolicy() == null ? null : runArtifact.getDownStreamPolicy().name()))
+                .toList();
+    }
+
+    @NonNull
+    private String artifactDisplayName(@NonNull RunArtifact runArtifact) {
+        if (StringUtils.isBlank(runArtifact.getFormat())) {
+            return runArtifact.getPortName();
+        }
+        return runArtifact.getPortName() + "." + runArtifact.getFormat().toLowerCase();
     }
 
     @NonNull
@@ -299,7 +520,6 @@ public class ExperimentRunTransformer {
         response.setDatasetCount(experimentRun.getDatasetCount().intValue());
         response.setStatus(experimentRun.getExperimentStatus().name());
         response.setDuration(formatDuration(experimentRun.getCreationDate(), experimentRun.getLastUpdated()));
-        response.setExecutionMode(transformExecutionModeModel(experimentRun.getExecutionMode()));
 
         return response;
     }
@@ -315,7 +535,7 @@ public class ExperimentRunTransformer {
     }
 
     @NonNull
-    private List<ExperimentRunExecutionModeModel> transformExecutionModeModel(List<ExecutionMode> executionMode) {
+    public List<ExperimentRunExecutionModeModel> transformExecutionModeModel(List<ExecutionMode> executionMode) {
         if (executionMode == null) {
             return List.of();
         }
@@ -356,6 +576,10 @@ public class ExperimentRunTransformer {
         return value.get();
     }
 
+    private OffsetDateTime toOffsetDateTime(Timestamp timestamp) {
+        return timestamp == null ? null : OffsetDateTime.ofInstant(timestamp.toInstant(), ZoneOffset.UTC);
+    }
+
 
     @NonNull
     private String formatDuration(Timestamp creationDate, Timestamp lastUpdated) {
@@ -378,5 +602,39 @@ public class ExperimentRunTransformer {
         experimentRunListResponseModel.setTotalElements(experimentRunPage.getTotalElements());
 
         return experimentRunListResponseModel;
+    }
+
+    public ExperimentRunLogListResponseModel transformExperimentRunLogListResponseModel(@NonNull Page<ExperimentRunLog> experimentRunLogPage) {
+        ExperimentRunLogListResponseModel responseModel = new ExperimentRunLogListResponseModel();
+        responseModel.setData(experimentRunLogPage
+                .getContent()
+                .stream()
+                .map(this::transformExperimentRunLogResponse)
+                .toList());
+        responseModel.setTotalElements(experimentRunLogPage.getTotalElements());
+        return responseModel;
+    }
+
+    private ExperimentRunLogResponse transformExperimentRunLogResponse(@NonNull ExperimentRunLog experimentRunLog) {
+        return new ExperimentRunLogResponse()
+                .sequence(experimentRunLog.getSequence())
+                .timestamp(toOffsetDateTime(experimentRunLog.getTimestamp()))
+                .level(experimentRunLog.getLevel())
+                .experimentType(experimentRunLog.getExperimentType())
+                .message(experimentRunLog.getMessage());
+    }
+
+    public ExperimentRunLog transformExperimentRunLog(@NonNull ExperimentRunUserLogEvent log, @NonNull String experimentRunUuid, long sequence, @NonNull ExperimentOpsHeaders headers) {
+        ExperimentRunLog experimentRunLog = ExperimentRunLog.builder()
+                .experimentRunUuid(experimentRunUuid)
+                .sequence(sequence)
+                .level(log.getLevel())
+                .timestamp(Timestamp.from(log.getTimestamp()))
+                .experimentType(log.getExperimentType())
+                .message(log.getMessage())
+                .build();
+        experimentRunLog.setCreatedBy(headers.getUserUuid());
+        experimentRunLog.setUpdatedBy(headers.getUserUuid());
+        return experimentRunLog;
     }
 }

@@ -82,6 +82,12 @@ export function useExperimentRunsContainer() {
     )
   }
 
+  const handleOpenRun = (experimentRunUuid: string) => {
+    navigate(
+      `/projects/${projectUuid}/experiments/${experimentUuid}/experiment-runs/${experimentRunUuid}`,
+    )
+  }
+
   return {
     activePage,
     canListExperimentRuns,
@@ -90,6 +96,7 @@ export function useExperimentRunsContainer() {
     experimentRunStatuses: EXPERIMENT_RUN_STATUSES,
     handleAddRun,
     handleNameChange,
+    handleOpenRun,
     handleStatusChange,
     name,
     page,

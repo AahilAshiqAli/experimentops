@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import tempfile
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
 from experiment_runtime.kafka import (
     ExperimentOpsKafkaProducer,
     KafkaMessage,
 )
+from experiment_runtime.logging.run_sink import ExperimentRunLogSink
 from experiment_runtime.logging.context import ExperimentOpsLogger
 from experiment_runtime.models.experiment_execution_context import (
     ExperimentExecutionContext,
@@ -25,6 +31,11 @@ from experiment_runtime.models.experiment_run_requested_event import (
     ExperimentRunRequestedEvent,
 )
 from experiment_runtime.registry import ExperimentRegistry
+from experiment_runtime.storage import ObjectStorage
+
+from analysis_worker.handlers.experiment_run_progress_publisher import (
+    ExperimentRunProgressPublisher,
+)
 
 
 logger = ExperimentOpsLogger.get_logger("analysis-worker")
@@ -33,15 +44,43 @@ CONNECTABLE_DOWN_STREAM_POLICY = "CONNECTABLE"
 INTERNAL_DOWN_STREAM_POLICY = "INTERNAL"
 
 
+@dataclass(frozen=True)
+class _PipelineExecution:
+    step_results: list[tuple[ExperimentRunExecutionConfig, Result]]
+    progress_sequence: int
+    last_published_progress: int | None
+    current_step: int | None
+
+
+class _PipelineExecutionError(Exception):
+    def __init__(
+        self,
+        original: Exception,
+        *,
+        progress_sequence: int,
+        last_published_progress: int | None,
+        current_step: int | None,
+    ) -> None:
+        super().__init__(str(original))
+        self.original = original
+        self.progress_sequence = progress_sequence
+        self.last_published_progress = last_published_progress
+        self.current_step = current_step
+
+
 def build_experiment_run_requested_handler(
     registry: ExperimentRegistry,
     producer: ExperimentOpsKafkaProducer,
     producer_topic: str,
     failure_producer: ExperimentOpsKafkaProducer,
     failure_producer_topic: str,
+    progress_publisher: ExperimentRunProgressPublisher | None = None,
+    object_storage: ObjectStorage | None = None,
+    log_root_dir: Path | None = None,
 ):
     def handle_experiment_run_requested(message: KafkaMessage) -> None:
         event = ExperimentRunRequestedEvent.from_kafka_message(message)
+        run_log_sink = _create_run_log_sink(event, log_root_dir)
 
         logger.info(
             "Received experiment run request. execution_config_count=%s topic=%s partition=%s offset=%s",
@@ -71,25 +110,64 @@ def build_experiment_run_requested_handler(
                 return
 
         try:
-            step_results = _execute_pipeline(
+            pipeline_execution = _execute_pipeline(
                 event=event,
                 execution_configs=execution_configs,
                 registry=registry,
+                run_log_sink=run_log_sink,
             )
-        except Exception as exception:
+        except _PipelineExecutionError as pipeline_error:
+            exception = pipeline_error.original
+            run_log_sink.error(
+                _experiment_types_label(execution_configs),
+                "Experiment processing failed: %s",
+                str(exception) or exception.__class__.__name__,
+            )
+            _publish_final_progress(
+                event=event,
+                progress_publisher=progress_publisher,
+                progress=pipeline_error.last_published_progress or 0,
+                current_step=pipeline_error.current_step,
+                progress_sequence=pipeline_error.progress_sequence,
+                run_log_sink=run_log_sink,
+            )
+            log_file_url = _upload_run_logs(
+                event=event,
+                run_log_sink=run_log_sink,
+                object_storage=object_storage,
+            )
             _handle_experiment_run_exception(
                 event=event,
                 exception=exception,
                 producer=failure_producer,
                 failure_producer_topic=failure_producer_topic,
                 experiment_type=_experiment_types_label(execution_configs),
+                log_file_url=log_file_url,
             )
             return
 
+        if (
+            pipeline_execution.last_published_progress != 100
+            or run_log_sink.has_pending_progress_logs()
+        ):
+            _publish_final_progress(
+                event=event,
+                progress_publisher=progress_publisher,
+                progress=100,
+                current_step=pipeline_execution.current_step,
+                progress_sequence=pipeline_execution.progress_sequence,
+                run_log_sink=run_log_sink,
+            )
+        log_file_url = _upload_run_logs(
+            event=event,
+            run_log_sink=run_log_sink,
+            object_storage=object_storage,
+        )
         completed_event = ExperimentRunCompletedEvent.from_requested_event(
             event=event,
-            result=_merge_results(step_results),
+            result=_merge_results(pipeline_execution.step_results),
             experiment_type=_experiment_types_label(execution_configs),
+            log_file_url=log_file_url,
         )
 
         producer.produce_sync(
@@ -102,7 +180,7 @@ def build_experiment_run_requested_handler(
             "Experiment processing finished and completion event published. experiment_types=%s producer_topic=%s result_count=%s",
             _experiment_types_label(execution_configs),
             producer_topic,
-            len(step_results),
+            len(pipeline_execution.step_results),
         )
 
     return handle_experiment_run_requested
@@ -114,6 +192,7 @@ def _handle_experiment_run_exception(
     producer: ExperimentOpsKafkaProducer,
     failure_producer_topic: str,
     experiment_type: str | None = None,
+    log_file_url: str | None = None,
 ) -> None:
     logger.exception(
         "Experiment processing failed. experiment_type=%s",
@@ -126,6 +205,7 @@ def _handle_experiment_run_exception(
         producer=producer,
         failure_producer_topic=failure_producer_topic,
         experiment_type=experiment_type,
+        log_file_url=log_file_url,
     )
 
 
@@ -135,11 +215,13 @@ def _publish_failure_event(
     producer: ExperimentOpsKafkaProducer,
     failure_producer_topic: str,
     experiment_type: str | None = None,
+    log_file_url: str | None = None,
 ) -> None:
     failure_event = ExperimentRunFailureEvent.from_requested_event(
         event=event,
         exception=exception,
         experiment_type=experiment_type,
+        log_file_url=log_file_url,
     )
 
     producer.produce_sync(
@@ -154,6 +236,72 @@ def _publish_failure_event(
         failure_producer_topic,
         exception.__class__.__name__,
     )
+
+
+def _create_run_log_sink(
+    event: ExperimentRunRequestedEvent,
+    log_root_dir: Path | None,
+) -> ExperimentRunLogSink:
+    root_dir = log_root_dir or Path(tempfile.gettempdir()) / "experimentops"
+    run_id = event.experiment_run_uuid or event.event_uuid or "unknown-run"
+
+    return ExperimentRunLogSink(root_dir / run_id / "run.log.jsonl")
+
+
+def _publish_final_progress(
+    event: ExperimentRunRequestedEvent,
+    progress_publisher: ExperimentRunProgressPublisher | None,
+    progress: int,
+    current_step: int | None,
+    progress_sequence: int,
+    run_log_sink: ExperimentRunLogSink,
+) -> None:
+    if progress_publisher is None:
+        return
+
+    context = ExperimentExecutionContext.from_requested_event(event).model_copy(
+        update={
+            "current_step": current_step,
+            "progress_sequence": progress_sequence,
+            "run_log_sink": run_log_sink,
+        }
+    )
+    progress_publisher.publish(context, progress)
+
+
+def _upload_run_logs(
+    event: ExperimentRunRequestedEvent,
+    run_log_sink: ExperimentRunLogSink,
+    object_storage: ObjectStorage | None,
+) -> str | None:
+    if object_storage is None:
+        return None
+
+    key = _run_log_object_key(event)
+    return object_storage.upload_file(key, run_log_sink.read_bytes_for_upload())
+
+
+def _run_log_object_key(event: ExperimentRunRequestedEvent) -> str:
+    workspace_uuid = event.workspace_uuid or "unknown-workspace"
+    project_uuid = event.project_uuid or "unknown-project"
+    experiment_uuid = event.experiment_uuid or "unknown-experiment"
+    run_uuid = event.experiment_run_uuid or "unknown-run"
+
+    return (
+        f"workspaces/{workspace_uuid}/projects/{project_uuid}/"
+        f"experiments/{experiment_uuid}/runs/{run_uuid}/logs/run.jsonl"
+    )
+
+
+def _current_step(
+    execution_configs: tuple[ExperimentRunExecutionConfig, ...],
+    index: int,
+) -> int | None:
+    if not execution_configs:
+        return None
+
+    execution_config = execution_configs[index]
+    return execution_config.step_count or index + 1
 
 
 def _is_supported_execution_config(
@@ -196,6 +344,9 @@ def _build_execution_context(
     progress_completed_weight: float | None = None,
     progress_step_weight: float | None = None,
     progress_total_weight: float | None = None,
+    current_step: int | None = None,
+    progress_sequence: int = 0,
+    run_log_sink: ExperimentRunLogSink | None = None,
 ) -> ExperimentExecutionContext:
     return ExperimentExecutionContext.from_requested_event(
         event,
@@ -209,6 +360,9 @@ def _build_execution_context(
             "progress_completed_weight": progress_completed_weight,
             "progress_step_weight": progress_step_weight,
             "progress_total_weight": progress_total_weight,
+            "current_step": current_step,
+            "progress_sequence": progress_sequence,
+            "run_log_sink": run_log_sink,
         }
     )
 
@@ -217,9 +371,13 @@ def _execute_pipeline(
     event: ExperimentRunRequestedEvent,
     execution_configs: tuple[ExperimentRunExecutionConfig, ...],
     registry: ExperimentRegistry,
-) -> list[tuple[ExperimentRunExecutionConfig, Result]]:
+    run_log_sink: ExperimentRunLogSink,
+) -> _PipelineExecution:
     step_results: list[tuple[ExperimentRunExecutionConfig, Result]] = []
     progress_states = _progress_states(execution_configs)
+    progress_sequence = 0
+    last_published_progress: int | None = None
+    current_step: int | None = None
     artifacts_by_step_and_name: dict[
         tuple[int, str],
         tuple[Artifact, ExperimentRunExecutionPlanOutput],
@@ -227,6 +385,7 @@ def _execute_pipeline(
     previous_result: Result | None = None
 
     for index, execution_config in enumerate(execution_configs):
+        current_step = _current_step(execution_configs, index)
         progress_completed_weight, progress_step_weight, progress_total_weight = (
             progress_states[index]
         )
@@ -234,32 +393,51 @@ def _execute_pipeline(
             execution_config=execution_config,
             artifacts_by_step_and_name=artifacts_by_step_and_name,
         )
-        result = registry.execute(
-            experiment_type=execution_config.experiment_type or "",
-            context=_build_execution_context(
-                event=event,
-                execution_config=execution_config,
-                dataset_uri=_primary_input_uri(inputs),
-                inputs=inputs,
-                previous_result=previous_result,
-                pipeline_results=[
-                    step_result
-                    for _, step_result in step_results
-                ],
-                progress_completed_weight=progress_completed_weight,
-                progress_step_weight=progress_step_weight,
-                progress_total_weight=progress_total_weight,
-            ),
+        context = _build_execution_context(
+            event=event,
+            execution_config=execution_config,
+            dataset_uri=_primary_input_uri(inputs),
+            inputs=inputs,
+            previous_result=previous_result,
+            pipeline_results=[
+                step_result
+                for _, step_result in step_results
+            ],
+            progress_completed_weight=progress_completed_weight,
+            progress_step_weight=progress_step_weight,
+            progress_total_weight=progress_total_weight,
+            current_step=current_step,
+            progress_sequence=progress_sequence,
+            run_log_sink=run_log_sink,
         )
+        try:
+            result = registry.execute(
+                experiment_type=execution_config.experiment_type or "",
+                context=context,
+            )
+        except Exception as exception:
+            raise _PipelineExecutionError(
+                exception,
+                progress_sequence=context.progress_sequence,
+                last_published_progress=context.last_published_progress,
+                current_step=current_step,
+            ) from exception
+        progress_sequence = context.progress_sequence
         result = _record_step_artifacts(
             execution_config=execution_config,
             result=result,
             artifacts_by_step_and_name=artifacts_by_step_and_name,
         )
+        last_published_progress = context.last_published_progress
         step_results.append((execution_config, result))
         previous_result = result
 
-    return step_results
+    return _PipelineExecution(
+        step_results=step_results,
+        progress_sequence=progress_sequence,
+        last_published_progress=last_published_progress,
+        current_step=current_step,
+    )
 
 
 def _resolve_execution_inputs(
@@ -386,16 +564,26 @@ def _record_step_artifacts(
         return result.model_copy(update={"artifact": [normalized_artifact]})
 
     artifacts_by_type = {artifact.type: artifact for artifact in artifacts}
+    normalized_artifacts_by_type = {
+        _normalize_artifact_name(artifact.type): artifact
+        for artifact in artifacts
+    }
+    matched_artifact_types: set[str] = set()
     normalized_artifacts: list[Artifact] = []
     for output in planned_outputs:
-        artifact = artifacts_by_type.get(output.name)
+        artifact = _artifact_for_output(
+            output=output,
+            artifacts_by_type=artifacts_by_type,
+            normalized_artifacts_by_type=normalized_artifacts_by_type,
+        )
         if artifact is None:
             if _is_required_for_run(output):
                 raise ValueError(
                     f"Step {execution_config.step_count} did not produce planned output artifact={output.name}"
-                )
+            )
             continue
 
+        matched_artifact_types.add(artifact.type)
         normalized_artifact = _normalize_artifact_for_output(
             artifact=artifact,
             output=output,
@@ -412,7 +600,7 @@ def _record_step_artifacts(
     unexpected_artifact_types = [
         artifact.type
         for artifact in artifacts
-        if artifact.type not in {output.name for output in planned_outputs}
+        if artifact.type not in matched_artifact_types
     ]
     if unexpected_artifact_types:
         raise ValueError(
@@ -432,7 +620,7 @@ def _normalize_artifact_for_output(
     step_count: int | None,
 ) -> Artifact:
     output_name = _required_value(output.name, "executionPlan.steps.outputs.name")
-    output_format = _required_value(output.format, "executionPlan.steps.outputs.format")
+    output_format = output.format or artifact.format
 
     if _normalize_value(artifact.format) != _normalize_value(output_format):
         raise ValueError(
@@ -443,8 +631,44 @@ def _normalize_artifact_for_output(
         update={
             "type": output_name,
             "format": output_format,
+            "step_count": step_count,
+            "port_name": output_name,
         }
     )
+
+
+def _artifact_for_output(
+    output: ExperimentRunExecutionPlanOutput,
+    artifacts_by_type: dict[str, Artifact],
+    normalized_artifacts_by_type: dict[str, Artifact],
+) -> Artifact | None:
+    if output.name is None:
+        return None
+
+    artifact = artifacts_by_type.get(output.name)
+    if artifact is not None:
+        return artifact
+
+    normalized_output_name = _normalize_artifact_name(output.name)
+    artifact = normalized_artifacts_by_type.get(normalized_output_name)
+    if artifact is not None:
+        return artifact
+
+    alias = _PLANNED_OUTPUT_ALIASES.get(normalized_output_name)
+    if alias is None:
+        return None
+
+    return normalized_artifacts_by_type.get(alias)
+
+
+_PLANNED_OUTPUT_ALIASES = {
+    "cleanedtraindata": "cleaneddataset",
+    "trainingreport": "cleaningreport",
+}
+
+
+def _normalize_artifact_name(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", name.lower())
 
 
 def _index_artifact_if_connectable(

@@ -225,6 +225,31 @@
                             </configOptions>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>run-artifact-v1</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>
+                                ${project.basedir}/src/main/resources/run.artifact.openapi-v1.yml
+                            </inputSpec>
+                            <generatorName>spring</generatorName>
+                            <apiPackage>com.experimentops.run.artifact.api.v1</apiPackage>
+                            <modelPackage>com.experimentops.run.artifact.model.v1</modelPackage>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <configOptions>
+                                <oas3>true</oas3>
+                                <useSpringfox>false</useSpringfox>
+                                <reactive>false</reactive>
+                                <sourceFolder>src/main/java/</sourceFolder>
+                                <interfaceOnly>true</interfaceOnly>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <useTags>true</useTags>
+                            </configOptions>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>

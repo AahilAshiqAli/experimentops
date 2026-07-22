@@ -59,22 +59,31 @@ public class ExperimentConfigTransformer {
 
 
     public ExperimentConfigResponse transformExperimentConfigResponseFromEntity(
-            @NonNull List<ExperimentConfigWithTypeProjection> experimentConfigs,
+            @NonNull ExperimentConfigWithTypeProjection experimentConfig,
             @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "transforming the ExperimentConfig entity to ExperimentConfig Response Model");
 
         ExperimentConfigResponse responseModel = new ExperimentConfigResponse();
-
-        if (ExperimentOpsUtils.isEmpty(experimentConfigs)){
-            return responseModel;
-        }
-        ExperimentConfigWithTypeProjection experimentConfig = experimentConfigs.getFirst();
         responseModel.setUuid(experimentConfig.getExperimentConfigUuid());
         responseModel.setName(experimentConfig.getName());
         responseModel.setExperimentType(experimentConfig.getExperimentType());
         responseModel.setConfig(toConfigMap(experimentConfig.getConfig()));
         responseModel.setFormatMappings(toFormatMappings(experimentConfig.getFormatMappings()));
         return responseModel;
+    }
+
+    public List<ExperimentConfigResponse> transformExperimentConfigResponseFromEntity(
+            @NonNull List<ExperimentConfigWithTypeProjection> experimentConfigs,
+            @NonNull ExperimentOpsHeaders headers) {
+        log.info(headers, "transforming the ExperimentConfig entity to ExperimentConfig Response Model");
+
+        if (ExperimentOpsUtils.isEmpty(experimentConfigs)){
+            return List.of();
+        }
+        return experimentConfigs
+                .stream()
+                .map(experimentConfig -> transformExperimentConfigResponseFromEntity(experimentConfig, headers))
+                .toList();
     }
 
     public void updateExperimentConfigEntity(
