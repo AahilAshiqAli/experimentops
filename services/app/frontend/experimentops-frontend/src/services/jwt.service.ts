@@ -1,3 +1,5 @@
+import i18n from '../i18n'
+
 export type JwtTokenClaims = {
   email?: string
   exp?: number
@@ -42,7 +44,7 @@ export function decodeJwt(accessToken: string): JwtTokenClaims {
 
     return JSON.parse(new TextDecoder().decode(payloadBytes)) as JwtTokenClaims
   } catch {
-    throw new JwtTokenError('Your session is invalid. Please sign in again.')
+    throw new JwtTokenError(i18n.t('session.invalid'))
   }
 }
 
@@ -71,7 +73,7 @@ export function getApplicationRole(claims: JwtTokenClaims) {
 function requireClaim(value: string | undefined, claimName: string) {
   if (!value) {
     throw new JwtTokenError(
-      `Your session is missing ${claimName}. Please sign in again.`,
+      i18n.t('session.missingClaim', { claim: claimName }),
     )
   }
 
@@ -94,9 +96,7 @@ export function getAuthenticatedRequestHeaders(
   )
 
   if (!role) {
-    throw new JwtTokenError(
-      'Your session is missing an application role. Please sign in again.',
-    )
+    throw new JwtTokenError(i18n.t('session.missingRole'))
   }
 
   return {

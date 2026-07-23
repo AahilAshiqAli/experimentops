@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { setDatasetDragData } from '../../components/datasetDrag'
 import { PipelineBoard } from '../../components/PipelineBoard'
@@ -14,9 +15,10 @@ import { ExperimentConfigPickerDialog } from './ExperimentConfigPickerDialog'
 import { useExperimentRunContainer } from './useExperimentRunContainer'
 
 export function CreateExperimentRun() {
+  const { t } = useTranslation()
   const container = useExperimentRunContainer()
 
-  useDocumentTitle('Create experiment run')
+  useDocumentTitle(t('runs.create'))
 
   if (container.projectQuery.isLoading) return <PageSkeleton />
   if (container.projectQuery.error || !container.projectQuery.data) {
@@ -26,14 +28,14 @@ export function CreateExperimentRun() {
           container.projectQuery.error
             ? getErrorMessage(
                 container.projectQuery.error,
-                'Unable to load this project.',
+                t('datasets.errors.loadProject'),
               )
-            : 'This project is not available.'
+            : t('project.notAvailable')
         }
         title={
           container.projectQuery.error
-            ? 'Unable to load project'
-            : 'Project not found'
+            ? t('project.errors.loadTitle')
+            : t('project.errors.notFoundTitle')
         }
         tone={container.projectQuery.error ? 'error' : 'neutral'}
       />
@@ -51,10 +53,10 @@ export function CreateExperimentRun() {
             className="text-sm font-semibold text-primary hover:underline"
             to={`/projects/${container.projectUuid}/experiments/${container.experimentUuid}/experiment-runs`}
           >
-            ← Back to runs
+            ← {t('runs.back')}
           </Link>
           <h2 className="mt-4 font-heading text-2xl font-semibold text-secondary">
-            Add Experiment Run
+            {t('runs.add')}
           </h2>
 
           <section className="mt-6">
@@ -62,7 +64,7 @@ export function CreateExperimentRun() {
               className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
               id="experiment-run-name"
               onChange={(event) => container.setName(event.target.value)}
-              placeholder="Enter experiment run name"
+              placeholder={t('runs.namePlaceholder')}
               type="text"
               value={container.name}
             />
@@ -71,14 +73,14 @@ export function CreateExperimentRun() {
               onClick={() => container.setIsDatasetPickerOpen(true)}
               type="button"
             >
-              Find datasets
+              {t('runs.findDatasets')}
             </button>
 
             <div className="mt-3 rounded-lg border border-dashed border-slate-300 p-3">
               {container.selectedDatasets.length ? (
                 <div className="space-y-2">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Available datasets
+                    {t('runs.availableDatasets')}
                   </p>
                   {container.selectedDatasets.map(({ dataset, version }) => {
                     const bindingCount = container.datasetBindings.filter(
@@ -94,7 +96,7 @@ export function CreateExperimentRun() {
                         onDragStart={(event) =>
                           setDatasetDragData(event, version.datasetVersionUuid)
                         }
-                        title="Drag this dataset onto a compatible input port"
+                        title={t('runs.dragDataset')}
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-xs font-black text-primary">
                           D
@@ -108,11 +110,15 @@ export function CreateExperimentRun() {
                           </p>
                           <p className="truncate text-[10px] text-slate-500">
                             {dataset.name} · {version.format}
-                            {bindingCount ? ` · used ${bindingCount}×` : ''}
+                            {bindingCount
+                              ? ` · ${t('runs.usedCount', { count: bindingCount })}`
+                              : ''}
                           </p>
                         </div>
                         <button
-                          aria-label={`Remove ${version.originalFileName}`}
+                          aria-label={t('runs.removeDataset', {
+                            file: version.originalFileName,
+                          })}
                           className="px-1 text-xs font-bold text-red-500 opacity-70 hover:opacity-100"
                           onClick={() =>
                             container.handleRemoveSelectedDataset(
@@ -127,13 +133,12 @@ export function CreateExperimentRun() {
                     )
                   })}
                   <p className="text-[10px] leading-4 text-slate-500">
-                    Drag a dataset onto an input box, or click an empty input
-                    box to assign it.
+                    {t('runs.dragHint')}
                   </p>
                 </div>
               ) : (
                 <p className="text-sm text-slate-500">
-                  No dataset versions selected yet.
+                  {t('runs.noDatasetsSelected')}
                 </p>
               )}
             </div>
@@ -141,10 +146,10 @@ export function CreateExperimentRun() {
 
           <section className="mt-6 border-t border-slate-200 pt-5">
             <h3 className="text-sm font-semibold text-secondary">
-              Search for experiment configs
+              {t('runs.searchConfigsTitle')}
             </h3>
             <label className="mt-3 block text-sm font-medium text-secondary">
-              Experiment Type
+              {t('configs.experimentType')}
               <select
                 className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 disabled={container.experimentTypesQuery.isLoading}
@@ -155,8 +160,8 @@ export function CreateExperimentRun() {
               >
                 <option value="">
                   {container.experimentTypesQuery.isLoading
-                    ? 'Loading experiment types…'
-                    : 'Select an experiment type'}
+                    ? t('configs.loadingTypes')
+                    : t('configs.selectType')}
                 </option>
                 {(container.experimentTypesQuery.data?.data ?? []).map(
                   (type) => (
@@ -173,13 +178,13 @@ export function CreateExperimentRun() {
               onClick={() => container.setIsConfigPickerOpen(true)}
               type="button"
             >
-              Search configs
+              {t('runs.searchConfigs')}
             </button>
           </section>
 
           <section className="mt-6 border-t border-slate-200 pt-5">
             <h3 className="text-sm font-semibold text-secondary">
-              Available configs
+              {t('runs.availableConfigs')}
             </h3>
             {container.availableConfigs.length ? (
               <ol className="mt-3 space-y-2">
@@ -207,7 +212,7 @@ export function CreateExperimentRun() {
                         }
                         type="button"
                       >
-                        Move to board
+                        {t('runs.moveToBoard')}
                       </button>
                       <button
                         className="rounded-md px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
@@ -216,7 +221,7 @@ export function CreateExperimentRun() {
                         }
                         type="button"
                       >
-                        Remove
+                        {t('runs.remove')}
                       </button>
                     </div>
                   </li>
@@ -224,11 +229,11 @@ export function CreateExperimentRun() {
               </ol>
             ) : container.selectedConfigs.length === 0 ? (
               <p className="mt-3 text-sm text-slate-500">
-                Search configs and select rows from the popup.
+                {t('runs.searchConfigsDescription')}
               </p>
             ) : (
               <p className="mt-3 text-sm text-slate-500">
-                All selected configs are on the board.
+                {t('runs.noAvailableConfigs')}
               </p>
             )}
           </section>
@@ -245,13 +250,13 @@ export function CreateExperimentRun() {
             type="submit"
           >
             {container.createRunMutation.isPending
-              ? 'Creating run…'
-              : 'Create Experiment Run'}
+              ? t('runs.creating')
+              : t('runs.create')}
           </button>
         </aside>
 
         <main
-          aria-label="Pipeline builder board"
+          aria-label={t('runs.boardLabel')}
           className="flex min-h-[calc(100vh-12rem)] flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <PipelineBoard
@@ -271,7 +276,7 @@ export function CreateExperimentRun() {
 
           {!container.isPipelineReady && container.boardConfigs.length > 0 ? (
             <div className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              <p className="font-semibold">Pipeline needs attention</p>
+              <p className="font-semibold">{t('runs.pipeline.attention')}</p>
               <ul className="mt-1 list-disc space-y-1 pl-5">
                 {container.pipelineValidation.errors.map((error) => (
                   <li key={error}>{error}</li>
@@ -282,18 +287,18 @@ export function CreateExperimentRun() {
           {container.isPipelineReady ? (
             container.validateRunMutation.isPending ? (
               <p className="mt-4 rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-800">
-                Validating this port-level pipeline…
+                {t('runs.pipeline.validating')}
               </p>
             ) : container.validateRunMutation.error ? (
               <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
                 {getErrorMessage(
                   container.validateRunMutation.error,
-                  'This pipeline is not valid.',
+                  t('runs.errors.pipelineInvalid'),
                 )}
               </p>
             ) : container.validateRunMutation.isSuccess ? (
               <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                Pipeline validation passed.
+                {t('runs.pipeline.passed')}
               </p>
             ) : null
           ) : null}

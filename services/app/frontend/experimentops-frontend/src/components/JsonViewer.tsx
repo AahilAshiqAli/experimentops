@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const INLINE_CONTROL_CLASS =
   'inline-block rounded-sm border-none p-0 font-mono outline-none focus:ring-1 focus:ring-primary'
@@ -14,6 +15,8 @@ function JsonPrimitiveInput({
   onChange: (value: unknown) => void
   value: unknown
 }) {
+  const { t } = useTranslation()
+
   if (typeof value === 'boolean') {
     return (
       <select
@@ -21,8 +24,8 @@ function JsonPrimitiveInput({
         onChange={(event) => onChange(event.target.value === 'true')}
         value={String(value)}
       >
-        <option value="true">true</option>
-        <option value="false">false</option>
+        <option value="true">{t('common.boolean.true')}</option>
+        <option value="false">{t('common.boolean.false')}</option>
       </select>
     )
   }
@@ -184,6 +187,7 @@ export function JsonEditorDialog({
   title: string
   value: unknown
 }) {
+  const { t } = useTranslation()
   const [draft, setDraft] = useState(value)
   const validationErrors = useMemo(
     () => getValidationErrors?.(draft) ?? [],
@@ -214,7 +218,7 @@ export function JsonEditorDialog({
             {title}
           </h2>
           <button
-            aria-label="Close JSON editor"
+            aria-label={t('common.jsonEditor.close')}
             className="rounded-md p-2 text-slate-500 hover:bg-slate-100"
             disabled={isSubmitting}
             onClick={onClose}
@@ -228,13 +232,13 @@ export function JsonEditorDialog({
           <JsonEditor onChange={setDraft} value={draft} />
           {isValidationLoading ? (
             <p className="mt-3 rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-800">
-              Loading experiment type validation rules…
+              {t('common.jsonEditor.loadingValidation')}
             </p>
           ) : null}
           {hasValidationErrors ? (
             <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               <p className="font-semibold">
-                Fix config validation before submitting.
+                {t('common.jsonEditor.fixValidation')}
               </p>
               <ul className="mt-1 list-disc space-y-1 pl-5">
                 {validationErrors.map((error) => (
@@ -250,7 +254,7 @@ export function JsonEditorDialog({
               onClick={onClose}
               type="button"
             >
-              Cancel
+              {t('common.actions.cancel')}
             </button>
             <button
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -259,7 +263,9 @@ export function JsonEditorDialog({
               }
               type="submit"
             >
-              {isSubmitting ? 'Saving…' : 'Submit'}
+              {isSubmitting
+                ? t('common.jsonEditor.saving')
+                : t('common.actions.submit')}
             </button>
           </div>
         </form>

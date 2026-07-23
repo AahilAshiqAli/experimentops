@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import ApiService, { ApiServiceError } from '../utils/api.service'
 import { getAuthenticatedRequestHeaders } from './jwt.service'
 import { ServicesUrlEndpoints } from './servicesEndpointConstant'
@@ -192,7 +193,7 @@ export async function getExperimentTypes(
 
   if (!experimentTypes) {
     throw new ApiServiceError(
-      'The experiment type service returned an invalid response.',
+      i18n.t('serviceErrors.experimentTypeInvalid'),
       500,
       payload,
     )

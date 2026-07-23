@@ -5,6 +5,7 @@ import type {
   PipelineConnection,
   SelectedDatasetVersion,
 } from '../../components/pipeline.types'
+import i18n from '../../i18n'
 import type { ExperimentConfig } from '../../services/experimentConfig.service'
 import type {
   ExperimentRunStep,
@@ -232,7 +233,7 @@ export function getConnectionError(
   selectedDatasets: SelectedDatasetVersion[],
 ): string | null {
   if (draft.sourceConfigUuid === draft.targetConfigUuid) {
-    return 'A config cannot connect to itself.'
+    return i18n.t('runs.pipeline.errors.selfConnection')
   }
 
   const source = configs.find(
@@ -241,7 +242,9 @@ export function getConnectionError(
   const target = configs.find(
     (config) => config.uuid === draft.targetConfigUuid,
   )
-  if (!source || !target) return 'Both configs must be on the board.'
+  if (!source || !target) {
+    return i18n.t('runs.pipeline.errors.bothConfigsRequired')
+  }
 
   const output = getConfigOutputs(source).find(
     (candidate) => candidate.name === draft.sourceOutputName,
@@ -249,9 +252,11 @@ export function getConnectionError(
   const input = getConfigInputs(target).find(
     (candidate) => candidate.portName === draft.targetInputPortName,
   )
-  if (!output || !input) return 'The selected port is not available.'
+  if (!output || !input) return i18n.t('runs.pipeline.errors.portUnavailable')
   if (normalize(output.downStreamPolicy) !== 'CONNECTABLE') {
-    return `${output.name} is a terminal output.`
+    return i18n.t('runs.pipeline.errors.terminalOutput', {
+      output: output.name,
+    })
   }
 
   const existing = findInputBinding(
@@ -261,7 +266,9 @@ export function getConnectionError(
     datasetBindings,
   )
   if (existing.connection || existing.dataset) {
-    return `${input.portName} already has a binding.`
+    return i18n.t('runs.pipeline.errors.alreadyBound', {
+      port: input.portName,
+    })
   }
 
   const duplicate = connections.some(
@@ -271,10 +278,15 @@ export function getConnectionError(
       connection.targetConfigUuid === draft.targetConfigUuid &&
       connection.targetInputPortName === draft.targetInputPortName,
   )
-  if (duplicate) return 'This connection already exists.'
+  if (duplicate) return i18n.t('runs.pipeline.errors.connectionExists')
 
   if (normalize(output.dataKind) !== normalize(input.contract.dataKind)) {
-    return `${output.name} produces ${output.dataKind}, but ${input.portName} expects ${input.contract.dataKind}.`
+    return i18n.t('runs.pipeline.errors.incompatibleDataKind', {
+      actual: output.dataKind,
+      expected: input.contract.dataKind,
+      input: input.portName,
+      output: output.name,
+    })
   }
 
   const resolvedOutput = resolveOutput(
@@ -289,11 +301,14 @@ export function getConnectionError(
     resolvedOutput &&
     !formatsIntersect(resolvedOutput.formats, input.contract.acceptedFormats)
   ) {
-    return `${output.name} has an incompatible format for ${input.portName}.`
+    return i18n.t('runs.pipeline.errors.incompatibleFormat', {
+      input: input.portName,
+      output: output.name,
+    })
   }
 
   if (!getPipelineOrder(configs, [...connections, draft]).length) {
-    return 'This connection would create a cycle.'
+    return i18n.t('runs.pipeline.errors.connectionCycle')
   }
 
   return null
@@ -314,7 +329,9 @@ export function getDatasetBindingError(
         (candidate) => candidate.portName === target.targetInputPortName,
       )
     : null
-  if (!config || !input) return 'The selected input port is not available.'
+  if (!config || !input) {
+    return i18n.t('runs.pipeline.errors.inputUnavailable')
+  }
 
   const existing = findInputBinding(
     target.targetConfigUuid,
@@ -323,22 +340,29 @@ export function getDatasetBindingError(
     datasetBindings,
   )
   if (existing.connection || existing.dataset) {
-    return `${input.portName} already has a binding.`
+    return i18n.t('runs.pipeline.errors.alreadyBound', {
+      port: input.portName,
+    })
   }
   if (normalize(input.contract.dataKind) !== 'TABULAR_DATASET') {
-    return `${input.portName} does not accept datasets.`
+    return i18n.t('runs.pipeline.errors.inputNoDatasets', {
+      port: input.portName,
+    })
   }
   if (
     !input.contract.acceptedFormats
       .map(normalize)
       .includes(normalize(dataset.version.format))
   ) {
-    return `${input.portName} does not accept ${dataset.version.format}.`
+    return i18n.t('runs.pipeline.errors.inputNoFormat', {
+      format: dataset.version.format,
+      port: input.portName,
+    })
   }
 
   const order = getPipelineOrder(configs, connections)
   if (order.length && order[0]?.uuid !== config.uuid) {
-    return 'The backend currently allows datasets only on the first pipeline step.'
+    return i18n.t('runs.pipeline.errors.datasetFirstStep')
   }
 
   return null
@@ -458,15 +482,15 @@ export function validatePipeline(
   const order = getPipelineOrder(configs, connections)
   const matchingManifests = new Map<string, ExperimentTypeManifest>()
 
-  if (!configs.length) errors.push('Add at least one config to the board.')
+  if (!configs.length) errors.push(i18n.t('runs.pipeline.errors.mustAddConfig'))
   if (configs.length && !order.length) {
-    errors.push('The pipeline contains a cycle.')
+    errors.push(i18n.t('runs.pipeline.errors.pipelineCycle'))
   }
 
   const firstConfigUuid = order[0]?.uuid
   datasetBindings.forEach((binding) => {
     if (binding.targetConfigUuid !== firstConfigUuid) {
-      errors.push('Datasets can currently be bound only to the first step.')
+      errors.push(i18n.t('runs.pipeline.errors.datasetsFirstStep'))
     }
   })
 
@@ -484,9 +508,15 @@ export function validatePipeline(
     if (matches.length === 1) {
       matchingManifests.set(config.uuid, matches[0])
     } else if (matches.length === 0) {
-      errors.push(`${config.name} has missing or incompatible input bindings.`)
+      errors.push(
+        i18n.t('runs.pipeline.errors.configBindings', { config: config.name }),
+      )
     } else {
-      errors.push(`${config.name} matches more than one manifest.`)
+      errors.push(
+        i18n.t('runs.pipeline.errors.configManifestAmbiguous', {
+          config: config.name,
+        }),
+      )
     }
   })
 
@@ -497,7 +527,9 @@ export function validatePipeline(
     )
     if (!output || normalize(output.downStreamPolicy) !== 'CONNECTABLE') {
       errors.push(
-        `${connection.sourceOutputName} is not a connectable output for the resolved manifest.`,
+        i18n.t('runs.pipeline.errors.notConnectable', {
+          output: connection.sourceOutputName,
+        }),
       )
     }
   })

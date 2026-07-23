@@ -1,5 +1,6 @@
 import { QueryCache, QueryClient } from '@tanstack/react-query'
 
+import i18n from '../i18n'
 import { Toaster } from '../services/toaster.service'
 
 export const queryClient = new QueryClient({
@@ -13,9 +14,7 @@ export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {
       Toaster.error(
-        error instanceof Error
-          ? error.message
-          : 'Unable to load the requested data. Please try again.',
+        error instanceof Error ? error.message : i18n.t('serviceErrors.load'),
       )
     },
   }),

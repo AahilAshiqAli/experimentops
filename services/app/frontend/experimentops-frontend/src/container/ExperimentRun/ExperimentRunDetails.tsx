@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { useDocumentTitle } from '../../hooks'
 import type { ExperimentRunStatus } from '../../services/experimentRun.service'
-import { formatLabel } from '../ProjectDetails/projectDetails.utils'
 import { ExperimentRunArtifacts } from './ExperimentRunArtifacts'
 import { ExperimentRunLogs } from './ExperimentRunLogs'
 import {
@@ -18,13 +18,14 @@ import {
   SummaryCard,
 } from './ExperimentRunDetail.components'
 import { ExperimentRunSteps } from './ExperimentRunSteps'
+import { RUN_STATUS_TRANSLATION_KEYS } from './columns'
 import { useExperimentRunDetailsContainer } from './useExperimentRunDetailsContainer'
 
-function formatDateTime(value: string) {
+function formatDateTime(value: string, locale?: string) {
   const date = new Date(value)
   return Number.isNaN(date.getTime())
     ? value
-    : new Intl.DateTimeFormat(undefined, {
+    : new Intl.DateTimeFormat(locale, {
         dateStyle: 'medium',
         timeStyle: 'medium',
       }).format(date)
@@ -40,8 +41,9 @@ function statusTone(
 }
 
 function RunDetailsSkeleton() {
+  const { t } = useTranslation()
   return (
-    <section aria-label="Loading experiment run" className="animate-pulse">
+    <section aria-label={t('runs.details.loading')} className="animate-pulse">
       <div className="h-4 w-80 rounded bg-slate-200" />
       <div className="mt-7 h-10 w-2/5 rounded bg-slate-200" />
       <div className="mt-3 h-4 w-1/3 rounded bg-slate-100" />
@@ -79,17 +81,23 @@ function RunDetailsState({
 }
 
 export function ExperimentRunDetails() {
+  const { i18n, t } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
   const container = useExperimentRunDetailsContainer()
   const run = container.experimentRunQuery.data
   const runsPath = `/projects/${container.projectUuid}/experiments/${container.experimentUuid}/experiment-runs`
 
-  useDocumentTitle(run?.name ? `${run.name} run` : 'Experiment run')
+  useDocumentTitle(
+    run?.name
+      ? t('runs.details.titleWithName', { name: run.name })
+      : t('runs.details.title'),
+  )
 
   if (!container.canViewExperimentRun) {
     return (
       <RunDetailsState
-        message="You do not have permission to view experiment runs."
-        title="Experiment run unavailable"
+        message={t('runs.permissionDenied')}
+        title={t('runs.details.unavailableTitle')}
       />
     )
   }
@@ -100,17 +108,17 @@ export function ExperimentRunDetails() {
         message={
           container.experimentRunQuery.error instanceof Error
             ? container.experimentRunQuery.error.message
-            : 'Unable to load this experiment run.'
+            : t('runs.errors.load')
         }
-        title="Unable to load experiment run"
+        title={t('runs.errors.loadTitle')}
       />
     )
   }
   if (!run) {
     return (
       <RunDetailsState
-        message="This experiment run is not available."
-        title="Experiment run not found"
+        message={t('runs.details.notAvailable')}
+        title={t('runs.details.notFoundTitle')}
       />
     )
   }
@@ -118,35 +126,37 @@ export function ExperimentRunDetails() {
   return (
     <section>
       <nav
-        aria-label="Breadcrumb"
+        aria-label={t('common.navigation.breadcrumb')}
         className="flex flex-wrap items-center gap-2 text-sm text-slate-500"
       >
         <Link className="transition hover:text-primary" to={runsPath}>
-          Runs
+          {t('project.runs')}
         </Link>
         <span aria-hidden="true">›</span>
         <span>{run.experimentName}</span>
         <span aria-hidden="true">›</span>
-        <span className="font-semibold text-secondary">Run #{run.uuid}</span>
+        <span className="font-semibold text-secondary">
+          {t('runs.details.runLabel', { id: run.uuid })}
+        </span>
       </nav>
 
       <header className="mt-6">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="font-heading text-3xl font-semibold text-secondary">
-            {run.name} Run
+            {t('runs.details.runHeading', { name: run.name })}
           </h1>
           <RunStatusBadge status={run.status} />
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
           <span>
-            Experiment:{' '}
+            {t('runs.details.experiment')}:{' '}
             <span className="font-medium text-primary">
               {run.experimentName}
             </span>
           </span>
           <span aria-hidden="true">•</span>
           <span>
-            Project:{' '}
+            {t('runs.details.project')}:{' '}
             <Link
               className="font-medium text-primary hover:underline"
               to={`/projects/${run.projectUUID}`}
@@ -179,18 +189,18 @@ export function ExperimentRunDetails() {
                   <CheckIcon className="h-6 w-6" />
                 )
               }
-              label="Status"
+              label={t('runs.details.status')}
               tone={statusTone(run.status)}
-              value={formatLabel(run.status)}
+              value={t(RUN_STATUS_TRANSLATION_KEYS[run.status])}
             />
             <SummaryCard
               icon={<StepsIcon className="h-6 w-6" />}
-              label="Steps completed"
+              label={t('runs.details.stepsCompleted')}
               value={`${run.numSteps} / ${run.numSteps}`}
             />
             <SummaryCard
               icon={<ArtifactIcon className="h-6 w-6" />}
-              label="Artifacts"
+              label={t('runs.details.artifacts')}
               value={run.artifactCount}
             />
           </div>
@@ -240,17 +250,23 @@ export function ExperimentRunDetails() {
 
         <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-24">
           <h2 className="font-heading text-lg font-semibold text-secondary">
-            Run information
+            {t('runs.details.runInformation')}
           </h2>
           <dl className="mt-3 divide-y divide-slate-100">
-            <InfoRow label="Run ID" value={<CopyableRunId uuid={run.uuid} />} />
             <InfoRow
-              label="Status"
+              label={t('runs.details.runId')}
+              value={<CopyableRunId uuid={run.uuid} />}
+            />
+            <InfoRow
+              label={t('runs.details.status')}
               value={<RunStatusBadge status={run.status} />}
             />
-            <InfoRow label="Experiment" value={run.experimentName} />
             <InfoRow
-              label="Project"
+              label={t('runs.details.experiment')}
+              value={run.experimentName}
+            />
+            <InfoRow
+              label={t('runs.details.project')}
               value={
                 <Link
                   className="text-primary hover:underline"
@@ -260,16 +276,19 @@ export function ExperimentRunDetails() {
                 </Link>
               }
             />
-            <InfoRow label="Triggered by" value={run.createdBy} />
             <InfoRow
-              label="Started at"
-              value={formatDateTime(run.creationDate)}
+              label={t('runs.details.triggeredBy')}
+              value={run.createdBy}
             />
             <InfoRow
-              label="Completed at"
+              label={t('runs.details.startedAt')}
+              value={formatDateTime(run.creationDate, language)}
+            />
+            <InfoRow
+              label={t('runs.details.completedAt')}
               value={
                 run.status === 'SUCCEEDED' || run.status === 'FAILED'
-                  ? formatDateTime(run.lastUpdated)
+                  ? formatDateTime(run.lastUpdated, language)
                   : '—'
               }
             />

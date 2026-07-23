@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import ApiService, { ApiServiceError } from '../utils/api.service'
 import { getAuthenticatedRequestHeaders, JwtTokenError } from './jwt.service'
 import { ServicesUrlEndpoints } from './servicesEndpointConstant'
@@ -70,7 +71,7 @@ export async function getUsers(
     throw new ApiServiceError(
       error instanceof JwtTokenError
         ? error.message
-        : 'Your session is invalid. Please sign in again.',
+        : i18n.t('session.invalid'),
       401,
     )
   }
@@ -85,11 +86,7 @@ export async function getUsers(
   const users = toUserListResponse(payload)
 
   if (!users) {
-    throw new ApiServiceError(
-      'The user service returned an invalid response.',
-      500,
-      payload,
-    )
+    throw new ApiServiceError(i18n.t('serviceErrors.userInvalid'), 500, payload)
   }
 
   return users
@@ -107,7 +104,7 @@ export async function createUser(
     throw new ApiServiceError(
       error instanceof JwtTokenError
         ? error.message
-        : 'Your session is invalid. Please sign in again.',
+        : i18n.t('session.invalid'),
       401,
     )
   }
@@ -124,11 +121,7 @@ export async function createUser(
   )
 
   if (!isUser(payload)) {
-    throw new ApiServiceError(
-      'The user service returned an invalid response.',
-      500,
-      payload,
-    )
+    throw new ApiServiceError(i18n.t('serviceErrors.userInvalid'), 500, payload)
   }
 
   return payload

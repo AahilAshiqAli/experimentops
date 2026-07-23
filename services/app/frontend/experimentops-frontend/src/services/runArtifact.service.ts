@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import ApiService from '../utils/api.service'
 import { getAuthenticatedRequestHeaders } from './jwt.service'
 import { ServicesUrlEndpoints } from './servicesEndpointConstant'
@@ -64,7 +65,7 @@ export async function getRunArtifacts(
   const artifacts = normalizeRunArtifacts(payload)
 
   if (!artifacts) {
-    throw new Error('The run artifact service returned an invalid response.')
+    throw new Error(i18n.t('serviceErrors.runArtifactInvalid'))
   }
 
   return artifacts
@@ -83,9 +84,7 @@ export async function getRunArtifactDownloadUrl(
   )
 
   if (typeof payload !== 'object' || payload === null) {
-    throw new Error(
-      'The artifact download service returned an invalid response.',
-    )
+    throw new Error(i18n.t('serviceErrors.artifactDownloadInvalid'))
   }
 
   const response = payload as {
@@ -95,9 +94,7 @@ export async function getRunArtifactDownloadUrl(
   }
   const url = response.url ?? response.downloadUrl
   if (typeof url !== 'string' || typeof response.expiresAt !== 'string') {
-    throw new Error(
-      'The artifact download service returned an invalid response.',
-    )
+    throw new Error(i18n.t('serviceErrors.artifactDownloadInvalid'))
   }
 
   return { expiresAt: response.expiresAt, url }

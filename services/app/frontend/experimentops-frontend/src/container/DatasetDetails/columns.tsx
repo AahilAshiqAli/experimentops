@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 import type { DataTableColumn } from '../../components/DataTable'
 import type { DatasetVersion } from '../../services/dataset.service'
 import {
@@ -13,6 +15,7 @@ export function getDatasetVersionColumns({
   selectedVersionUuid,
   selectedVersionUuids,
   totalElements,
+  t,
 }: {
   onPreview: (version: DatasetVersion) => void
   onSelect?: (version: DatasetVersion) => void
@@ -21,6 +24,7 @@ export function getDatasetVersionColumns({
   selectedVersionUuid?: string
   selectedVersionUuids?: string[]
   totalElements: number
+  t: TFunction
 }): DataTableColumn<DatasetVersion>[] {
   const columns: DataTableColumn<DatasetVersion>[] = [
     {
@@ -35,12 +39,12 @@ export function getDatasetVersionColumns({
           type="button"
         >
           {pendingUuid === version.datasetVersionUuid
-            ? `Opening ${version.originalFileName}…`
+            ? t('datasets.openingFile', { file: version.originalFileName })
             : version.originalFileName}
         </button>
       ),
       className: 'min-w-64 text-sm',
-      header: 'File',
+      header: t('datasets.columns.file'),
       key: 'file',
       sort: true,
       value: (version) => version.originalFileName,
@@ -51,13 +55,13 @@ export function getDatasetVersionColumns({
           v{totalElements - index}
         </span>
       ),
-      header: 'Version',
+      header: t('datasets.columns.version'),
       key: 'version',
     },
     {
       cell: (version) => formatLabel(version.format),
       filter: true,
-      header: 'Format',
+      header: t('datasets.columns.format'),
       key: 'format',
       sort: true,
       value: (version) => version.format,
@@ -65,7 +69,7 @@ export function getDatasetVersionColumns({
     {
       cell: (version) => formatBytes(version.size),
       className: 'whitespace-nowrap text-sm text-slate-600',
-      header: 'Size',
+      header: t('datasets.columns.size'),
       key: 'size',
       sort: true,
       value: (version) => version.size,
@@ -74,14 +78,14 @@ export function getDatasetVersionColumns({
       cell: (version) => formatLabel(version.scanStatus ?? 'NOT_STARTED'),
       className: 'whitespace-nowrap text-sm text-slate-600',
       filter: true,
-      header: 'Scan Status',
+      header: t('datasets.columns.scanStatus'),
       key: 'scanStatus',
       sort: true,
       value: (version) => version.scanStatus ?? 'NOT_STARTED',
     },
     {
       className: 'min-w-56 max-w-md text-sm text-slate-600',
-      header: 'Scan Message',
+      header: t('datasets.columns.scanMessage'),
       key: 'scanMessage',
       value: (version) => version.scanMessage,
     },
@@ -109,11 +113,11 @@ export function getDatasetVersionColumns({
             }}
             type="button"
           >
-            {isSelected ? 'Selected' : 'Select'}
+            {isSelected ? t('datasets.selected') : t('datasets.select')}
           </button>
         )
       },
-      header: 'Select',
+      header: t('datasets.columns.select'),
       key: 'select',
     },
     ...columns,

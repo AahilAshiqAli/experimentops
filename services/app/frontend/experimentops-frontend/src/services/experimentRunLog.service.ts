@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import ApiService from '../utils/api.service'
 import { getAuthenticatedRequestHeaders } from './jwt.service'
 import { ServicesUrlEndpoints } from './servicesEndpointConstant'
@@ -91,9 +92,7 @@ export async function getExperimentRunLogs(
   )
 
   if (!isPaginatedExperimentRunLogs(payload)) {
-    throw new Error(
-      'The experiment run log service returned an invalid response.',
-    )
+    throw new Error(i18n.t('serviceErrors.logsInvalid'))
   }
 
   return payload
@@ -112,9 +111,7 @@ export async function getExperimentRunLogDownloadUrl(
   )
 
   if (!isExperimentRunLogDownloadUrl(payload)) {
-    throw new Error(
-      'The experiment run log download service returned an invalid response.',
-    )
+    throw new Error(i18n.t('serviceErrors.logDownloadInvalid'))
   }
 
   return payload

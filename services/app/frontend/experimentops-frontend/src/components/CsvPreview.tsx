@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 export type CsvPreviewData = {
   columns: string[]
   format?: string
@@ -31,6 +33,8 @@ function formatCellValue(value: unknown) {
 
 /** A read-only, dependency-free spreadsheet view for a parsed CSV response. */
 export function CsvPreview({ className = '', data }: CsvPreviewProps) {
+  const { i18n, t } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
   const displayedRowCount = data.rows.length
   const reportedRowCount = data.sampleRowCount ?? displayedRowCount
 
@@ -38,13 +42,22 @@ export function CsvPreview({ className = '', data }: CsvPreviewProps) {
     <div className={className}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
         <span>
-          {displayedRowCount.toLocaleString()} row
-          {displayedRowCount === 1 ? '' : 's'} ×{' '}
-          {data.columns.length.toLocaleString()} column
-          {data.columns.length === 1 ? '' : 's'}
+          {t('common.csv.rows', {
+            count: displayedRowCount,
+            formattedCount: displayedRowCount.toLocaleString(language),
+          })}{' '}
+          ×{' '}
+          {t('common.csv.columns', {
+            count: data.columns.length,
+            formattedCount: data.columns.length.toLocaleString(language),
+          })}
         </span>
         {reportedRowCount > displayedRowCount ? (
-          <span>Showing the first {displayedRowCount.toLocaleString()} rows</span>
+          <span>
+            {t('common.csv.showingFirstRows', {
+              count: displayedRowCount.toLocaleString(language),
+            })}
+          </span>
         ) : null}
       </div>
 
@@ -53,7 +66,7 @@ export function CsvPreview({ className = '', data }: CsvPreviewProps) {
           <thead className="sticky top-0 z-20">
             <tr>
               <th
-                aria-label="Row numbers"
+                aria-label={t('common.csv.rowNumbers')}
                 className="sticky left-0 z-30 min-w-12 border-b border-r border-slate-300 bg-slate-100 px-3 py-1.5 text-center font-medium text-slate-400"
               />
               {data.columns.map((column, index) => (
@@ -63,7 +76,10 @@ export function CsvPreview({ className = '', data }: CsvPreviewProps) {
                   scope="col"
                 >
                   <span className="block">{getColumnLabel(index)}</span>
-                  <span className="mt-0.5 block truncate text-slate-700" title={column}>
+                  <span
+                    className="mt-0.5 block truncate text-slate-700"
+                    title={column}
+                  >
                     {column}
                   </span>
                 </th>
@@ -88,7 +104,9 @@ export function CsvPreview({ className = '', data }: CsvPreviewProps) {
                       key={`${column}-${columnIndex}`}
                       title={value}
                     >
-                      <span className="block max-w-96 truncate">{value || '\u00a0'}</span>
+                      <span className="block max-w-96 truncate">
+                        {value || '\u00a0'}
+                      </span>
                     </td>
                   )
                 })}

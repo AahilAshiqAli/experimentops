@@ -1,17 +1,16 @@
 import type { ExperimentType } from '../../services/experimentType.service'
+import i18n from '../../i18n'
 
 export function getExperimentConfigValidationErrors(
   config: unknown,
   experimentType: ExperimentType | null,
 ) {
   if (!experimentType) {
-    return [
-      'Unable to validate config because experiment type rules are not available.',
-    ]
+    return [i18n.t('configs.errors.rulesUnavailable')]
   }
 
   if (typeof config !== 'object' || config === null || Array.isArray(config)) {
-    return ['Config must be a JSON object.']
+    return [i18n.t('configs.errors.mustBeObject')]
   }
 
   const configObject = config as Record<string, unknown>
@@ -22,17 +21,27 @@ export function getExperimentConfigValidationErrors(
     const value = configObject[field.name]
 
     if (typeof value !== 'string') {
-      return [`${field.name} must be a string.`]
+      return [i18n.t('configs.errors.mustBeString', { field: field.name })]
     }
 
     try {
       const regex = new RegExp(field.regex)
 
       if (!regex.test(value)) {
-        return [`${field.name} must match regex ${field.regex}.`]
+        return [
+          i18n.t('configs.errors.mustMatchRegex', {
+            field: field.name,
+            regex: field.regex,
+          }),
+        ]
       }
     } catch {
-      return [`${field.name} has an invalid validation regex: ${field.regex}.`]
+      return [
+        i18n.t('configs.errors.invalidRegex', {
+          field: field.name,
+          regex: field.regex,
+        }),
+      ]
     }
 
     return []

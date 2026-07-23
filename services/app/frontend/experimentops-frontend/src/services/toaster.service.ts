@@ -1,3 +1,5 @@
+import i18n from '../i18n'
+
 export const TOAST_TYPES = {
   SUCCESS: 'success',
   ERROR: 'error',
@@ -78,7 +80,7 @@ function open({
   const closeButton = document.createElement('button')
   closeButton.className = 'toast-notification-close-x'
   closeButton.type = 'button'
-  closeButton.setAttribute('aria-label', 'Close notification')
+  closeButton.setAttribute('aria-label', i18n.t('common.notifications.close'))
   closeButton.innerHTML = '&times;'
 
   const content = document.createElement('div')

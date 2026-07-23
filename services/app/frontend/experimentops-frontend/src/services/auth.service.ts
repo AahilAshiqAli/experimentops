@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import ApiService, { ApiServiceError } from '../utils/api.service'
 import { ServicesUrlEndpoints } from './servicesEndpointConstant'
 
@@ -78,7 +79,7 @@ export async function login(credentials: LoginCredentials) {
 
   if (!authResponse.access_token) {
     throw new ApiServiceError(
-      'The login service did not return an access token.',
+      i18n.t('serviceErrors.authTokenMissing'),
       500,
       authResponse,
     )

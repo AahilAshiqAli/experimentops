@@ -12,12 +12,12 @@ export function formatLabel(value: string) {
     .join(' ')
 }
 
-export function formatDate(value: string) {
+export function formatDate(value: string, locale?: string) {
   const date = new Date(value)
 
   return Number.isNaN(date.getTime())
     ? value
-    : new Intl.DateTimeFormat(undefined, {
+    : new Intl.DateTimeFormat(locale, {
         day: 'numeric',
         month: 'short',
         year: 'numeric',

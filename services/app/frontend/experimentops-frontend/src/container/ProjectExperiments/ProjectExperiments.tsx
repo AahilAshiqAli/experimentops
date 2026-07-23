@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { DataTable } from '../../components/DataTable'
 import { TableSkeleton } from '../../components/TableSkeleton'
@@ -24,6 +25,8 @@ import { getExperimentColumns } from './columns'
 const EXPERIMENTS_PER_PAGE = 8
 
 export function ProjectExperiments() {
+  const { i18n, t } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
   const { projectUuid } = useParams<{ projectUuid: string }>()
   const { hasPermission } = useLogin()
   const projectQuery = useQueryProject(projectUuid)
@@ -47,7 +50,9 @@ export function ProjectExperiments() {
   const activePage = Math.min(page, totalPages)
 
   useDocumentTitle(
-    projectQuery.data ? `${projectQuery.data.name} experiments` : 'Experiments',
+    projectQuery.data
+      ? t('experiments.titleWithProject', { project: projectQuery.data.name })
+      : t('experiments.title'),
   )
 
   if (projectQuery.isLoading) return <PageSkeleton />
@@ -56,9 +61,9 @@ export function ProjectExperiments() {
       <PageState
         message={getErrorMessage(
           projectQuery.error,
-          'Unable to load this project.',
+          t('datasets.errors.loadProject'),
         )}
-        title="Unable to load project"
+        title={t('project.errors.loadTitle')}
         tone="error"
       />
     )
@@ -66,8 +71,8 @@ export function ProjectExperiments() {
   if (!projectQuery.data) {
     return (
       <PageState
-        message="This project is not available."
-        title="Project not found"
+        message={t('project.notAvailable')}
+        title={t('project.errors.notFoundTitle')}
       />
     )
   }
@@ -76,27 +81,31 @@ export function ProjectExperiments() {
     <ProjectFrame activeTab="experiments" project={projectQuery.data}>
       <div className="mb-2">
         <h2 className="font-heading text-xl font-semibold text-secondary">
-          Experiments
+          {t('experiments.title')}
         </h2>
       </div>
       <div>
         {!canListExperiments ? (
-          <SectionState message="You do not have permission to view experiments." />
+          <SectionState message={t('experiments.permissionDenied')} />
         ) : experimentsQuery.isLoading ? (
           <TableSkeleton />
         ) : experimentsQuery.error ? (
           <SectionState
             message={getErrorMessage(
               experimentsQuery.error,
-              'Unable to load experiments. Please try again.',
+              t('experiments.errors.load'),
             )}
             tone="error"
           />
         ) : (
           <DataTable
-            columns={getExperimentColumns(projectQuery.data.projectUuid)}
+            columns={getExperimentColumns(
+              projectQuery.data.projectUuid,
+              t,
+              language,
+            )}
             data={experimentsQuery.data?.data ?? []}
-            emptyMessage="No experiments have been created yet."
+            emptyMessage={t('experiments.empty')}
             getRowKey={(experiment) => experiment.experimentUuid}
             pagination={{
               onPageChange: setPage,
@@ -104,14 +113,14 @@ export function ProjectExperiments() {
               totalItems: totalExperiments,
               totalPages,
             }}
-            searchPlaceholder="Search experiments..."
+            searchPlaceholder={t('experiments.search')}
             toolbarEnd={
               <button
                 className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90"
                 onClick={() => setIsCreateOpen(true)}
                 type="button"
               >
-                + Add Experiment
+                + {t('experiments.add')}
               </button>
             }
           />
@@ -128,12 +137,12 @@ export function ProjectExperiments() {
                 Toaster.error(
                   error instanceof Error
                     ? error.message
-                    : 'Unable to create the experiment.',
+                    : t('experiments.errors.create'),
                 )
               },
               onSuccess: () => {
                 setIsCreateOpen(false)
-                Toaster.success('Experiment created successfully.')
+                Toaster.success(t('experiments.created'))
               },
             })
           }}
@@ -152,6 +161,7 @@ function CreateExperimentDialog({
   onClose: () => void
   onSubmit: (input: { description: string; name: string }) => void
 }) {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
 
@@ -176,10 +186,10 @@ function CreateExperimentDialog({
             className="font-heading text-2xl font-semibold text-secondary"
             id="create-experiment-title"
           >
-            Add Experiment
+            {t('experiments.add')}
           </h2>
           <button
-            aria-label="Close add experiment dialog"
+            aria-label={t('experiments.closeDialog')}
             className="rounded-md p-2 text-slate-500 hover:bg-slate-100"
             disabled={isPending}
             onClick={onClose}
@@ -191,7 +201,7 @@ function CreateExperimentDialog({
 
         <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium text-secondary">
-            Name
+            {t('experiments.name')}
             <input
               autoFocus
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
@@ -202,7 +212,7 @@ function CreateExperimentDialog({
             />
           </label>
           <label className="block text-sm font-medium text-secondary">
-            Description
+            {t('experiments.description')}
             <textarea
               className="mt-1 min-h-24 w-full resize-y rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               disabled={isPending}
@@ -218,14 +228,14 @@ function CreateExperimentDialog({
               onClick={onClose}
               type="button"
             >
-              Cancel
+              {t('common.actions.cancel')}
             </button>
             <button
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isPending}
               type="submit"
             >
-              {isPending ? 'Creating…' : 'Create experiment'}
+              {isPending ? t('experiments.creating') : t('experiments.create')}
             </button>
           </div>
         </form>

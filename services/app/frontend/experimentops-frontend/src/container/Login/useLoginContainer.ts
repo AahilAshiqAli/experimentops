@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { useLogin } from '../../context-api/logincontext'
 import { useMutationForgotPassword, useMutationLogin } from '../../queries'
@@ -11,6 +12,7 @@ import { ApiServiceError } from '../../utils/api.service'
 import { unAuthenticatedRoutesConstant } from '../../routes'
 
 export function useLoginContainer() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { login } = useLogin()
   const { isPending: isSubmitting, mutateAsync: loginRequest } =
@@ -41,25 +43,25 @@ export function useLoginContainer() {
       Toaster.error(
         error instanceof ApiServiceError
           ? error.message
-          : 'Unable to sign in. Please try again.',
+          : t('auth.messages.signInFailed'),
       )
     }
   }
 
   const handleForgotPassword = async (email: string) => {
     if (!email) {
-      Toaster.error('Enter your email address to reset your password.')
+      Toaster.error(t('auth.messages.enterResetEmail'))
       return
     }
 
     try {
       await requestPassword(email)
-      Toaster.success('Please check your email.')
+      Toaster.success(t('auth.messages.checkEmail'))
     } catch (error) {
       Toaster.error(
         error instanceof ApiServiceError
           ? error.message
-          : 'Unable to request a password reset. Please try again.',
+          : t('auth.messages.requestFailed'),
       )
     }
   }

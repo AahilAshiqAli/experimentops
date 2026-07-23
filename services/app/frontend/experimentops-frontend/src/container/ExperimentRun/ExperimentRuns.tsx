@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import { DataTable } from '../../components/DataTable'
 import { TableSkeleton } from '../../components/TableSkeleton'
 import { useDocumentTitle } from '../../hooks'
@@ -8,13 +10,14 @@ import {
 } from '../ProjectDetails/projectDetails.shared'
 import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
 import { ExperimentRunsPanel } from './ExperimentRunsPanel'
-import { getExperimentRunColumns } from './columns'
+import { getExperimentRunColumns, RUN_STATUS_TRANSLATION_KEYS } from './columns'
 import { useExperimentRunsContainer } from './useExperimentRunsContainer'
 
 export function ExperimentRuns() {
+  const { t } = useTranslation()
   const container = useExperimentRunsContainer()
 
-  useDocumentTitle('Experiment runs')
+  useDocumentTitle(t('runs.title'))
 
   if (container.projectQuery.isLoading) return <PageSkeleton />
   if (container.projectQuery.error) {
@@ -22,9 +25,9 @@ export function ExperimentRuns() {
       <PageState
         message={getErrorMessage(
           container.projectQuery.error,
-          'Unable to load this project.',
+          t('datasets.errors.loadProject'),
         )}
-        title="Unable to load project"
+        title={t('project.errors.loadTitle')}
         tone="error"
       />
     )
@@ -32,8 +35,8 @@ export function ExperimentRuns() {
   if (!container.projectQuery.data) {
     return (
       <PageState
-        message="This project is not available."
-        title="Project not found"
+        message={t('project.notAvailable')}
+        title={t('project.errors.notFoundTitle')}
       />
     )
   }
@@ -43,8 +46,8 @@ export function ExperimentRuns() {
       <ExperimentRunsPanel onAdd={container.handleAddRun}>
         {!container.canListExperimentRuns ? (
           <PageState
-            message="You do not have permission to view experiment runs."
-            title="Experiment runs unavailable"
+            message={t('runs.permissionDenied')}
+            title={t('runs.unavailableTitle')}
           />
         ) : container.experimentRunsQuery.isLoading ? (
           <TableSkeleton />
@@ -52,16 +55,16 @@ export function ExperimentRuns() {
           <PageState
             message={getErrorMessage(
               container.experimentRunsQuery.error,
-              'Unable to load experiment runs.',
+              t('runs.errors.load'),
             )}
-            title="Unable to load experiment runs"
+            title={t('runs.errors.loadTitle')}
             tone="error"
           />
         ) : (
           <DataTable
-            columns={getExperimentRunColumns()}
+            columns={getExperimentRunColumns(t)}
             data={container.experimentRunsQuery.data?.data ?? []}
-            emptyMessage="No experiment runs match the current filters."
+            emptyMessage={t('runs.empty')}
             getRowKey={(run) => run.uuid}
             onRowClick={(run) => container.handleOpenRun(run.uuid)}
             pagination={{
@@ -74,20 +77,20 @@ export function ExperimentRuns() {
             toolbarStart={
               <div className="flex flex-wrap items-center gap-4">
                 <label className="block min-w-56 sm:w-72">
-                  <span className="sr-only">Search experiment runs</span>
+                  <span className="sr-only">{t('runs.searchLabel')}</span>
                   <input
                     className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
                     onChange={(event) =>
                       container.handleNameChange(event.target.value)
                     }
-                    placeholder="Search runs by name..."
+                    placeholder={t('runs.search')}
                     type="search"
                     value={container.name}
                   />
                 </label>
                 <fieldset className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <legend className="sr-only">
-                    Filter experiment runs by status
+                    {t('runs.filterByStatus')}
                   </legend>
                   {container.experimentRunStatuses.map((status) => (
                     <label
@@ -105,7 +108,7 @@ export function ExperimentRuns() {
                         }
                         type="checkbox"
                       />
-                      {status}
+                      {t(RUN_STATUS_TRANSLATION_KEYS[status])}
                     </label>
                   ))}
                 </fieldset>

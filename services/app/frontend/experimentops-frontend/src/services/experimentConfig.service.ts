@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import ApiService, { ApiServiceError } from '../utils/api.service'
 import { getAuthenticatedRequestHeaders } from './jwt.service'
 import { ServicesUrlEndpoints } from './servicesEndpointConstant'
@@ -174,7 +175,7 @@ export async function getExperimentConfigs(
 
   if (!experimentConfigs) {
     throw new ApiServiceError(
-      'The experiment config service returned an invalid response.',
+      i18n.t('serviceErrors.configInvalid'),
       500,
       payload,
     )
@@ -216,7 +217,7 @@ export async function getExperimentConfigsByUuids(
     )
   ) {
     throw new ApiServiceError(
-      'The experiment config detail service returned an invalid response.',
+      i18n.t('serviceErrors.configDetailInvalid'),
       500,
       payload,
     )

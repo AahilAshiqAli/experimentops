@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import type {
   ConnectionDraft,
@@ -29,6 +30,7 @@ import {
 } from './pipeline'
 
 export function useExperimentRunContainer() {
+  const { t } = useTranslation()
   const { experimentUuid, projectUuid } = useParams<{
     experimentUuid: string
     projectUuid: string
@@ -154,7 +156,7 @@ export function useExperimentRunContainer() {
         (detail) => detail.uuid === config.uuid,
       )
       if (!matchingDetails) {
-        throw new Error('The selected experiment config was not returned.')
+        throw new Error(t('runs.errors.configMissing'))
       }
       const hydratedConfig: ExperimentConfig = {
         ...config,
@@ -170,9 +172,7 @@ export function useExperimentRunContainer() {
       setIsConfigPickerOpen(false)
     } catch (error) {
       Toaster.error(
-        error instanceof Error
-          ? error.message
-          : 'Unable to load the experiment config details.',
+        error instanceof Error ? error.message : t('runs.errors.configDetails'),
       )
     }
   }
@@ -288,7 +288,7 @@ export function useExperimentRunContainer() {
       (item) => item.version.datasetVersionUuid === datasetVersionUuid,
     )
     if (!selected) {
-      Toaster.error('Select this dataset version before binding it.')
+      Toaster.error(t('runs.pipeline.errors.selectDatasetFirst'))
       return
     }
     const error = getDatasetBindingError(
@@ -344,13 +344,11 @@ export function useExperimentRunContainer() {
       {
         onError: (error) => {
           Toaster.error(
-            error instanceof Error
-              ? error.message
-              : 'Unable to create the experiment run.',
+            error instanceof Error ? error.message : t('runs.errors.create'),
           )
         },
         onSuccess: () => {
-          Toaster.success('Experiment run created successfully.')
+          Toaster.success(t('runs.created'))
           navigate(
             `/projects/${projectUuid}/experiments/${experimentUuid}/experiment-runs`,
           )

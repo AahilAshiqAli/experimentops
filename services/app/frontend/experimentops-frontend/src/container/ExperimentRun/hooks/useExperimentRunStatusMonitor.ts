@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 
 import { useQueryExperimentRunStatuses } from '../../../queries'
 import type { PaginatedExperimentRuns } from '../../../services/experimentRun.service'
@@ -13,6 +14,7 @@ import { Toaster } from '../../../services/toaster.service'
 const TERMINAL_STATUSES = new Set(['SUCCEEDED', 'FAILED'])
 
 export function useExperimentRunStatusMonitor() {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [experimentRunUuids, setExperimentRunUuids] = useState(
     getTrackedExperimentRuns,
@@ -63,12 +65,15 @@ export function useExperimentRunStatusMonitor() {
 
       untrackExperimentRun(run.experimentRunUuid)
       Toaster[run.status === 'SUCCEEDED' ? 'success' : 'error'](
-        `Experiment run ${run.experimentRunUuid} ${
-          run.status === 'SUCCEEDED' ? 'succeeded.' : 'failed.'
-        }`,
+        t(
+          run.status === 'SUCCEEDED'
+            ? 'runs.notifications.succeeded'
+            : 'runs.notifications.failed',
+          { id: run.experimentRunUuid },
+        ),
       )
     })
-  }, [queryClient, statusQuery.data])
+  }, [queryClient, statusQuery.data, t])
 
   return statusQuery
 }

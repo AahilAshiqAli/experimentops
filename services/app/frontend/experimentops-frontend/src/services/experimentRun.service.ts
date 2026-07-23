@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import ApiService from '../utils/api.service'
 import { getAuthenticatedRequestHeaders } from './jwt.service'
 import { ServicesUrlEndpoints } from './servicesEndpointConstant'
@@ -319,7 +320,7 @@ export async function getExperimentRuns(
   )
 
   if (!isPaginatedExperimentRuns(payload)) {
-    throw new Error('The experiment run service returned an invalid response.')
+    throw new Error(i18n.t('serviceErrors.runInvalid'))
   }
 
   return payload
@@ -338,9 +339,7 @@ export async function getExperimentRun(
   )
 
   if (!isExperimentRunDetail(payload)) {
-    throw new Error(
-      'The experiment run detail service returned an invalid response.',
-    )
+    throw new Error(i18n.t('serviceErrors.runDetailInvalid'))
   }
 
   return payload
@@ -368,9 +367,7 @@ export async function getExperimentRunStatuses(
     !Array.isArray(payload) ||
     !payload.every(isExperimentRunStatusResponse)
   ) {
-    throw new Error(
-      'The experiment run status service returned an invalid response.',
-    )
+    throw new Error(i18n.t('serviceErrors.runStatusInvalid'))
   }
 
   return payload

@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { JsonEditor } from '../../components/JsonViewer'
 import type { ExperimentType } from '../../services/experimentType.service'
@@ -30,6 +31,7 @@ export function CreateExperimentConfigDialog({
     name: string
   }) => void
 }) {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [selectedTypeUuid, setSelectedTypeUuid] = useState('')
   const [configDraft, setConfigDraft] = useState<Record<
@@ -77,10 +79,10 @@ export function CreateExperimentConfigDialog({
             className="font-heading text-2xl font-semibold text-secondary"
             id="create-experiment-config-title"
           >
-            Add Config
+            {t('configs.add')}
           </h2>
           <button
-            aria-label="Close add config dialog"
+            aria-label={t('configs.closeDialog')}
             className="rounded-md p-2 text-slate-500 hover:bg-slate-100"
             disabled={isPending}
             onClick={onClose}
@@ -92,7 +94,7 @@ export function CreateExperimentConfigDialog({
 
         <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium text-secondary">
-            Name
+            {t('configs.name')}
             <input
               autoFocus
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
@@ -104,7 +106,7 @@ export function CreateExperimentConfigDialog({
           </label>
 
           <label className="block text-sm font-medium text-secondary">
-            Experiment type
+            {t('configs.experimentTypeLabel')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               disabled={isPending || isLoadingExperimentTypes}
@@ -114,8 +116,8 @@ export function CreateExperimentConfigDialog({
             >
               <option disabled value="">
                 {isLoadingExperimentTypes
-                  ? 'Loading experiment types…'
-                  : 'Select an experiment type'}
+                  ? t('configs.loadingTypes')
+                  : t('configs.selectType')}
               </option>
               {experimentTypes.map((experimentType) => (
                 <option key={experimentType.uuid} value={experimentType.uuid}>
@@ -128,7 +130,7 @@ export function CreateExperimentConfigDialog({
           {selectedType ? (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               <span className="block text-sm font-semibold text-secondary">
-                Supported formats
+                {t('configs.supportedFormats')}
               </span>
               {selectedType.formatMappings.length ? (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -145,7 +147,7 @@ export function CreateExperimentConfigDialog({
                 </div>
               ) : (
                 <p className="mt-1 text-sm text-slate-500">
-                  No format restrictions configured.
+                  {t('configs.noFormatRestrictions')}
                 </p>
               )}
             </div>
@@ -154,7 +156,7 @@ export function CreateExperimentConfigDialog({
           {configDraft ? (
             <div>
               <span className="block text-sm font-medium text-secondary">
-                Config
+                {t('configs.config')}
               </span>
               <div className="mt-1">
                 <JsonEditor
@@ -166,9 +168,7 @@ export function CreateExperimentConfigDialog({
               </div>
               {hasValidationErrors ? (
                 <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  <p className="font-semibold">
-                    Fix config validation before creating this config.
-                  </p>
+                  <p className="font-semibold">{t('configs.fixValidation')}</p>
                   <ul className="mt-1 list-disc space-y-1 pl-5">
                     {regexValidationErrors.map((error) => (
                       <li key={error}>{error}</li>
@@ -186,7 +186,7 @@ export function CreateExperimentConfigDialog({
               onClick={onClose}
               type="button"
             >
-              Cancel
+              {t('common.actions.cancel')}
             </button>
             <button
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
@@ -195,7 +195,7 @@ export function CreateExperimentConfigDialog({
               }
               type="submit"
             >
-              {isPending ? 'Creating…' : 'Create config'}
+              {isPending ? t('configs.creating') : t('configs.create')}
             </button>
           </div>
         </form>

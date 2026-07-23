@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
+import { LanguageSelector } from '../../components/LanguageSelector'
 import { useLogin } from '../../context-api/logincontext'
 import { useDocumentTitle } from '../../hooks'
 import { useMutationResetPassword } from '../../queries'
@@ -35,7 +37,8 @@ function EyeIcon({ visible }: { visible: boolean }) {
 }
 
 export function ResetPassword() {
-  useDocumentTitle('Reset password')
+  const { t } = useTranslation()
+  useDocumentTitle(t('auth.resetPassword'))
 
   const { logout } = useLogin()
   const navigate = useNavigate()
@@ -48,10 +51,13 @@ export function ResetPassword() {
   const resetPasswordMutation = useMutationResetPassword()
 
   const requirements = [
-    { label: 'At least 8 characters', met: password.length >= 8 },
-    { label: 'At least one uppercase letter', met: /[A-Z]/.test(password) },
+    { label: t('auth.reset.requirementLength'), met: password.length >= 8 },
     {
-      label: 'At least one special character',
+      label: t('auth.reset.requirementUppercase'),
+      met: /[A-Z]/.test(password),
+    },
+    {
+      label: t('auth.reset.requirementSpecial'),
       met: /[^A-Za-z0-9]/.test(password),
     },
   ]
@@ -62,19 +68,15 @@ export function ResetPassword() {
     event.preventDefault()
 
     if (!token) {
-      Toaster.error(
-        'This reset link is missing its token. Request a new password reset email.',
-      )
+      Toaster.error(t('auth.reset.missingToken'))
       return
     }
     if (!isPasswordValid) {
-      Toaster.error(
-        'Choose a password that meets all of the requirements below.',
-      )
+      Toaster.error(t('auth.reset.invalidRequirements'))
       return
     }
     if (!passwordsMatch) {
-      Toaster.error('Your password confirmation does not match.')
+      Toaster.error(t('auth.reset.confirmationMismatch'))
       return
     }
 
@@ -86,9 +88,7 @@ export function ResetPassword() {
           navigate(unAuthenticatedRoutesConstant.LOGIN, { replace: true })
         },
         onError: () => {
-          Toaster.error(
-            "Invalid password. Please make sure your password is strong and hasn't been used before.",
-          )
+          Toaster.error(t('auth.reset.invalidPassword'))
         },
       },
     )
@@ -97,26 +97,27 @@ export function ResetPassword() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-8 text-secondary">
       <section className="w-full max-w-lg rounded-2xl border border-slate-200 bg-surface p-8 shadow-card sm:p-10">
+        <div className="mb-5 flex justify-end">
+          <LanguageSelector />
+        </div>
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary">
-          ExperimentOps
+          {t('app.name')}
         </p>
         <h1 className="mt-4 font-heading text-3xl font-semibold text-secondary">
-          Set a new password
+          {t('auth.reset.setNewPassword')}
         </h1>
-        <p className="mt-3 text-slate-600">
-          Choose a strong password to regain access to your workspace.
-        </p>
+        <p className="mt-3 text-slate-600">{t('auth.chooseStrongPassword')}</p>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <PasswordField
-            label="New password"
+            label={t('auth.newPassword')}
             onToggle={() => setIsPasswordVisible((visible) => !visible)}
             onChange={setPassword}
             visible={isPasswordVisible}
             value={password}
           />
           <PasswordField
-            label="Confirm new password"
+            label={t('auth.confirmPassword')}
             onToggle={() => setIsConfirmationVisible((visible) => !visible)}
             onChange={setConfirmation}
             visible={isConfirmationVisible}
@@ -133,8 +134,8 @@ export function ResetPassword() {
             type="submit"
           >
             {resetPasswordMutation.isPending
-              ? 'Updating password…'
-              : 'Update password'}
+              ? t('auth.reset.updating')
+              : t('auth.reset.update')}
           </button>
 
           <PasswordRequirements
@@ -147,7 +148,7 @@ export function ResetPassword() {
           className="mt-7 inline-block text-sm font-medium text-primary underline underline-offset-2 hover:text-secondary"
           to={authenticatedRoutesConstant.HOME}
         >
-          Back to sign in
+          {t('auth.backToSignIn')}
         </Link>
       </section>
     </main>
@@ -167,6 +168,7 @@ function PasswordField({
   value: string
   visible: boolean
 }) {
+  const { t } = useTranslation()
   return (
     <label className="block text-sm font-medium text-slate-700">
       {label}
@@ -184,8 +186,8 @@ function PasswordField({
         <button
           aria-label={
             visible
-              ? `Hide ${label.toLowerCase()}`
-              : `Show ${label.toLowerCase()}`
+              ? t('auth.reset.hideField', { field: label.toLowerCase() })
+              : t('auth.reset.showField', { field: label.toLowerCase() })
           }
           className="absolute inset-y-0 right-0 px-4 text-slate-500 hover:text-primary"
           onClick={onToggle}
@@ -205,10 +207,11 @@ function PasswordRequirements({
   passwordsMatch: boolean
   requirements: { label: string; met: boolean }[]
 }) {
+  const { t } = useTranslation()
   return (
     <div className="rounded-lg bg-slate-50 p-4">
       <p className="text-sm font-semibold text-secondary">
-        Password requirements
+        {t('auth.reset.requirements')}
       </p>
       <ul className="mt-3 space-y-2 text-sm text-slate-600">
         {requirements.map((requirement) => (
@@ -229,7 +232,7 @@ function PasswordRequirements({
           >
             {passwordsMatch ? '✓' : '•'}
           </span>
-          Passwords match
+          {t('auth.reset.passwordsMatch')}
         </li>
       </ul>
     </div>

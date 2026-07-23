@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 import type { DataTableColumn } from '../../components/DataTable'
 import type { ExperimentConfig } from '../../services/experimentConfig.service'
 
@@ -6,23 +8,25 @@ export function getExperimentConfigColumns({
   onSelect,
   selectable = false,
   selectedConfigUuids = [],
+  t,
 }: {
   onEdit?: (config: ExperimentConfig) => void
   onSelect?: (config: ExperimentConfig) => void
   selectable?: boolean
   selectedConfigUuids?: string[]
+  t: TFunction
 }): DataTableColumn<ExperimentConfig>[] {
   const columns: DataTableColumn<ExperimentConfig>[] = [
     {
       className: 'text-sm font-semibold text-secondary',
-      header: 'Name',
+      header: t('configs.name'),
       key: 'name',
       sort: true,
       value: (config) => config.name,
     },
     {
       filter: true,
-      header: 'Experiment Type',
+      header: t('configs.experimentType'),
       key: 'experimentType',
       sort: true,
       value: (config) => config.experimentType,
@@ -43,7 +47,7 @@ export function getExperimentConfigColumns({
         </button>
       ),
       className: 'min-w-72 max-w-md',
-      header: 'Config',
+      header: t('configs.config'),
       key: 'config',
       value: (config) => JSON.stringify(config.config),
     },
@@ -69,11 +73,11 @@ export function getExperimentConfigColumns({
             }}
             type="button"
           >
-            {isSelected ? 'Selected' : 'Select'}
+            {isSelected ? t('datasets.selected') : t('datasets.select')}
           </button>
         )
       },
-      header: 'Select',
+      header: t('datasets.columns.select'),
       key: 'select',
     },
     ...columns,
