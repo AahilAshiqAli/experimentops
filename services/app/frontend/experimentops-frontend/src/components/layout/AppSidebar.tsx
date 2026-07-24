@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { authenticatedRoutesConstant } from '../../routes'
 import { useLogin } from '../../context-api/logincontext'
@@ -17,12 +18,13 @@ export function AppSidebar({
   onNavigate,
   onToggle,
 }: AppSidebarProps) {
+  const { t } = useTranslation()
   const { hasPermission } = useLogin()
   const canListUsers = hasPermission(PERMISSIONS_KEYS.USER.GET_USER)
 
   return (
     <aside
-      aria-label="Primary navigation"
+      aria-label={t('common.navigation.primary')}
       className={`fixed bottom-0 left-0 top-20 z-40 flex w-64 flex-col border-r border-slate-200 bg-white transition-all duration-200 lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] lg:translate-x-0 ${
         collapsed ? 'lg:w-20' : 'lg:w-64'
       } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
@@ -31,10 +33,14 @@ export function AppSidebar({
         <span
           className={`text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 ${collapsed ? 'lg:hidden' : ''}`}
         >
-          Navigation
+          {t('navigation.heading')}
         </span>
         <button
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={
+            collapsed
+              ? t('common.navigation.expandSidebar')
+              : t('common.navigation.collapseSidebar')
+          }
           className="hidden rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-primary lg:inline-flex"
           onClick={onToggle}
           type="button"
@@ -79,7 +85,9 @@ export function AppSidebar({
               fill="currentColor"
             />
           </svg>
-          <span className={collapsed ? 'lg:hidden' : ''}>Dashboard</span>
+          <span className={collapsed ? 'lg:hidden' : ''}>
+            {t('navigation.dashboard')}
+          </span>
         </NavLink>
         <NavLink
           className={({ isActive }) =>
@@ -106,7 +114,9 @@ export function AppSidebar({
               strokeWidth="1.8"
             />
           </svg>
-          <span className={collapsed ? 'lg:hidden' : ''}>Projects</span>
+          <span className={collapsed ? 'lg:hidden' : ''}>
+            {t('navigation.projects')}
+          </span>
         </NavLink>
         {canListUsers ? (
           <NavLink
@@ -134,7 +144,9 @@ export function AppSidebar({
                 strokeWidth="1.8"
               />
             </svg>
-            <span className={collapsed ? 'lg:hidden' : ''}>Users</span>
+            <span className={collapsed ? 'lg:hidden' : ''}>
+              {t('navigation.users')}
+            </span>
           </NavLink>
         ) : null}
       </nav>

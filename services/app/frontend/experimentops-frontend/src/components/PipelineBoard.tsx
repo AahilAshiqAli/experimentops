@@ -5,6 +5,7 @@ import {
   useState,
   type PointerEvent,
 } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { ExperimentConfig } from '../services/experimentConfig.service'
 import type {
@@ -79,6 +80,7 @@ function inputBindingDetails(
   connections: PipelineConnection[],
   datasetBindings: DatasetBinding[],
   selectedDatasets: SelectedDatasetVersion[],
+  datasetVersionLabel: string,
 ) {
   const datasetBinding = datasetBindings.find(
     (binding) =>
@@ -98,7 +100,7 @@ function inputBindingDetails(
         inputType: 'DATASET',
       },
       datasetBinding,
-      label: selected?.version.originalFileName ?? 'Dataset version',
+      label: selected?.version.originalFileName ?? datasetVersionLabel,
     }
   }
 
@@ -155,6 +157,7 @@ export function PipelineBoard({
   pipelineOrder: ExperimentConfig[]
   selectedDatasets: SelectedDatasetVersion[]
 }) {
+  const { t } = useTranslation()
   const boardRef = useRef<HTMLDivElement | null>(null)
   const cardRefs = useRef(new Map<string, HTMLDivElement>())
   const anchorRefs = useRef(new Map<string, HTMLElement>())
@@ -373,7 +376,7 @@ export function PipelineBoard({
                     strokeLinecap="round"
                     strokeWidth="16"
                   >
-                    <title>Double-click to remove connection</title>
+                    <title>{t('runs.pipeline.removeConnection')}</title>
                   </path>
                   <path
                     d={path}
@@ -466,7 +469,9 @@ export function PipelineBoard({
                       </span>
                     ) : null}
                     <button
-                      aria-label={`Remove ${config.name} from board`}
+                      aria-label={t('runs.pipeline.removeConfig', {
+                        config: config.name,
+                      })}
                       className="rounded-full px-2 py-1 text-xs font-bold leading-none text-red-600 hover:bg-red-50"
                       onClick={() => onRemoveFromBoard(config.uuid)}
                       type="button"
@@ -479,7 +484,7 @@ export function PipelineBoard({
                 <div className="grid grid-cols-2 gap-4 p-3">
                   <div>
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Inputs
+                      {t('runs.pipeline.inputs')}
                     </p>
                     <div className="space-y-1.5">
                       {inputs.map((input) => {
@@ -497,6 +502,7 @@ export function PipelineBoard({
                           connections,
                           datasetBindings,
                           selectedDatasets,
+                          t('runs.pipeline.datasetVersion'),
                         )
                         const draft = drawingConnection
                           ? {
@@ -522,7 +528,10 @@ export function PipelineBoard({
                           >
                             <div className="group relative -ml-6 shrink-0">
                               <button
-                                aria-label={`${config.name} input ${input.portName}`}
+                                aria-label={t('runs.pipeline.inputAria', {
+                                  config: config.name,
+                                  input: input.portName,
+                                })}
                                 className={`flex h-7 w-7 items-center justify-center rounded border-2 text-[10px] font-black shadow-sm transition ${
                                   bindingDetails
                                     ? 'border-emerald-600 bg-emerald-600 text-white'
@@ -603,7 +612,9 @@ export function PipelineBoard({
                             </div>
                             {bindingDetails?.datasetBinding ? (
                               <button
-                                aria-label={`Remove dataset from ${input.portName}`}
+                                aria-label={t('runs.pipeline.removeDataset', {
+                                  input: input.portName,
+                                })}
                                 className="text-xs font-bold text-red-500 hover:text-red-700"
                                 onClick={() =>
                                   onRemoveDatasetBinding(
@@ -623,7 +634,7 @@ export function PipelineBoard({
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <p className="text-xs font-semibold text-secondary">
-                                    Bind a selected dataset
+                                    {t('runs.pipeline.bindDataset')}
                                   </p>
                                   <button
                                     className="px-1 text-slate-400 hover:text-slate-700"
@@ -671,8 +682,7 @@ export function PipelineBoard({
                                   </div>
                                 ) : (
                                   <p className="mt-2 text-xs text-slate-500">
-                                    Select dataset versions from the sidebar
-                                    first.
+                                    {t('runs.pipeline.selectDatasetsFirst')}
                                   </p>
                                 )}
                               </div>
@@ -685,7 +695,7 @@ export function PipelineBoard({
 
                   <div>
                     <p className="mb-2 text-right text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Outputs
+                      {t('runs.pipeline.outputs')}
                     </p>
                     <div className="space-y-1.5">
                       {outputs.map((output) => {
@@ -712,12 +722,22 @@ export function PipelineBoard({
                                 ) : null}
                               </p>
                               <p className="truncate text-[10px] text-slate-400">
-                                {isConnectable ? output.dataKind : 'Terminal'}
+                                {isConnectable
+                                  ? output.dataKind
+                                  : t('runs.pipeline.terminal')}
                               </p>
                             </div>
                             <div className="group relative -mr-6 shrink-0">
                               <button
-                                aria-label={`${config.name} output ${output.name}${isConnectable ? '' : ', terminal'}`}
+                                aria-label={t(
+                                  isConnectable
+                                    ? 'runs.pipeline.outputAria'
+                                    : 'runs.pipeline.terminalOutputAria',
+                                  {
+                                    config: config.name,
+                                    output: output.name,
+                                  },
+                                )}
                                 className={`flex h-7 w-7 items-center justify-center rounded border-2 text-[10px] font-black shadow-sm transition ${
                                   isConnectable
                                     ? 'border-primary bg-primary text-white hover:scale-110 hover:bg-primary/90'
@@ -761,15 +781,15 @@ export function PipelineBoard({
         </>
       ) : (
         <div className="flex h-full min-h-[36rem] items-center justify-center px-6 text-center text-sm text-slate-500">
-          Move configs from Available configs to begin building the workflow.
-          Drag cards to arrange them, then connect an output box to a compatible
-          input box.
+          {t('runs.pipeline.emptyBoard')}
         </div>
       )}
 
       <div className="sr-only" aria-live="polite">
         {drawingConnection
-          ? `Drawing from ${drawingConnection.sourceOutputName}`
+          ? t('runs.pipeline.drawingFrom', {
+              output: drawingConnection.sourceOutputName,
+            })
           : ''}
       </div>
     </div>

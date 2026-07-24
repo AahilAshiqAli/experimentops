@@ -1,10 +1,13 @@
 import { useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 
+import { LanguageSelector } from '../../components/LanguageSelector'
 import { useDocumentTitle } from '../../hooks'
 import { useLoginContainer } from './useLoginContainer'
 
 export function Login() {
-  useDocumentTitle('Login')
+  const { t } = useTranslation()
+  useDocumentTitle(t('auth.signIn'))
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -23,27 +26,30 @@ export function Login() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-8 text-secondary">
       <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-surface p-8 shadow-card">
+        <div className="mb-5 flex justify-end">
+          <LanguageSelector />
+        </div>
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary">
           ExperimentOps
         </p>
-        <h1 className="mt-4 font-heading text-3xl font-semibold text-secondary">Welcome back</h1>
-        <p className="mt-3 text-slate-600">
-          Sign in to access the ExperimentOps dashboard.
-        </p>
+        <h1 className="mt-4 font-heading text-3xl font-semibold text-secondary">
+          {t('auth.welcomeBack')}
+        </h1>
+        <p className="mt-3 text-slate-600">{t('auth.loginDescription')}</p>
         <form className="mt-8 space-y-5" onSubmit={onSubmit}>
           <div>
             <label
               className="mb-2 block text-sm font-medium text-slate-700"
               htmlFor="username"
             >
-              Email or username
+              {t('auth.emailOrUsername')}
             </label>
             <input
               autoComplete="username"
               className="w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/30"
               id="username"
               onChange={(event) => setUsername(event.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('auth.emailPlaceholder')}
               required
               type="text"
               value={username}
@@ -54,7 +60,9 @@ export function Login() {
               onClick={() => void handleForgotPassword(username.trim())}
               type="button"
             >
-              {isRequestingPassword ? 'Requesting password reset…' : 'Forgot Password'}
+              {isRequestingPassword
+                ? t('auth.forgotPasswordRequesting')
+                : t('auth.forgotPassword')}
             </button>
           </div>
 
@@ -63,7 +71,7 @@ export function Login() {
               className="mb-2 block text-sm font-medium text-slate-700"
               htmlFor="password"
             >
-              Password
+              {t('auth.password')}
             </label>
             <input
               autoComplete="current-password"
@@ -71,7 +79,7 @@ export function Login() {
               id="password"
               minLength={1}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="Enter your password"
+              placeholder={t('auth.passwordPlaceholder')}
               required
               type="password"
               value={password}
@@ -83,7 +91,7 @@ export function Login() {
             disabled={isSubmitting}
             type="submit"
           >
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
+            {isSubmitting ? t('auth.signingIn') : t('auth.signIn')}
           </button>
         </form>
       </section>

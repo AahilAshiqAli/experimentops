@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import {
   useCallback,
   createContext,
@@ -11,6 +12,7 @@ import {
   type ReactNode,
 } from 'react'
 
+import i18n from '../i18n'
 import type { AuthLoginResponse } from '../services/auth.service'
 import {
   decodeJwt,
@@ -18,16 +20,10 @@ import {
   isJwtExpired,
   type JwtTokenClaims,
 } from '../services/jwt.service'
-import {
-  getRoles,
-  type Permission,
-} from '../services/role.service'
+import { getRoles, type Permission } from '../services/role.service'
 import { Toaster } from '../services/toaster.service'
 import { ApiServiceError } from '../utils/api.service'
-import {
-  clearPermissionStore,
-  setPermissionStore,
-} from '../utils/permission'
+import { clearPermissionStore, setPermissionStore } from '../utils/permission'
 
 export type LoginUser = {
   email: string
@@ -105,7 +101,7 @@ async function initializeRequests(
   const permissionByRole = roles.find((item) => item.roleName === role)
 
   if (!permissionByRole) {
-    throw new ApiServiceError(`No permissions were returned for role ${role}.`, 403)
+    throw new ApiServiceError(i18n.t('session.noPermissions', { role }), 403)
   }
 
   return permissionByRole.permissionList
@@ -116,6 +112,7 @@ type LoginProviderProps = {
 }
 
 export function LoginProvider({ children }: LoginProviderProps) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [session, setSession] = useState<LoginSession | null>(getStoredSession)
   const [tokenParsed, setTokenParsed] = useState<JwtTokenClaims | null>(null)
@@ -169,13 +166,11 @@ export function LoginProvider({ children }: LoginProviderProps) {
         const parsedRole = getApplicationRole(parsedToken)
 
         if (isJwtExpired(parsedToken)) {
-          throw new Error('Your session has expired. Please sign in again.')
+          throw new Error(t('session.expired'))
         }
 
         if (!parsedRole) {
-          throw new Error(
-            'Your session does not include an application role. Please sign in again.',
-          )
+          throw new Error(t('session.noRole'))
         }
 
         const permissionList = await initializeRequests(
@@ -205,9 +200,7 @@ export function LoginProvider({ children }: LoginProviderProps) {
         }
 
         Toaster.error(
-          error instanceof Error
-            ? error.message
-            : 'Unable to initialize your session.',
+          error instanceof Error ? error.message : t('session.initialize'),
         )
         logout()
       }
@@ -216,7 +209,7 @@ export function LoginProvider({ children }: LoginProviderProps) {
     void initializeSession()
 
     return () => abortController.abort()
-  }, [logout, session])
+  }, [logout, session, t])
 
   const user = useMemo<LoginUser | null>(() => {
     if (!session) {
@@ -232,12 +225,14 @@ export function LoginProvider({ children }: LoginProviderProps) {
         tokenParsed?.name ??
         ([tokenParsed?.given_name, tokenParsed?.family_name]
           .filter(Boolean)
-          .join(' ') || session.user.name),
+          .join(' ') ||
+          session.user.name),
     }
   }, [session, tokenParsed])
 
   const hasPermission = useCallback(
-    (code: string) => permissions.some((permission) => permission.code === code),
+    (code: string) =>
+      permissions.some((permission) => permission.code === code),
     [permissions],
   )
 

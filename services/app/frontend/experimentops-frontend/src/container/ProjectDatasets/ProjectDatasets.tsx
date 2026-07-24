@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { useLogin } from '../../context-api/logincontext'
 import { useDocumentTitle } from '../../hooks'
@@ -18,6 +19,7 @@ import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
 const DATASETS_PER_PAGE = 9
 
 export function ProjectDatasets() {
+  const { t } = useTranslation()
   const { projectUuid } = useParams<{ projectUuid: string }>()
   const { hasPermission } = useLogin()
   const projectQuery = useQueryProject(projectUuid)
@@ -48,7 +50,9 @@ export function ProjectDatasets() {
     : filteredDatasets
 
   useDocumentTitle(
-    projectQuery.data ? `${projectQuery.data.name} datasets` : 'Datasets',
+    projectQuery.data
+      ? t('datasets.titleWithProject', { project: projectQuery.data.name })
+      : t('datasets.titleShort'),
   )
 
   if (projectQuery.isLoading) return <PageSkeleton />
@@ -57,9 +61,9 @@ export function ProjectDatasets() {
       <PageState
         message={getErrorMessage(
           projectQuery.error,
-          'Unable to load this project.',
+          t('datasets.errors.loadProject'),
         )}
-        title="Unable to load project"
+        title={t('project.errors.loadTitle')}
         tone="error"
       />
     )
@@ -67,8 +71,8 @@ export function ProjectDatasets() {
   if (!projectQuery.data) {
     return (
       <PageState
-        message="This project is not available."
-        title="Project not found"
+        message={t('datasets.projectNotAvailable')}
+        title={t('project.errors.notFoundTitle')}
       />
     )
   }
@@ -78,21 +82,21 @@ export function ProjectDatasets() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="font-heading text-2xl font-semibold text-secondary">
-            Dataset folders
+            {t('datasets.title')}
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Open a folder to inspect its uploaded dataset versions.
+            {t('datasets.description')}
           </p>
         </div>
         <label className="block sm:w-72">
-          <span className="sr-only">Search dataset folders</span>
+          <span className="sr-only">{t('datasets.searchLabel')}</span>
           <input
             className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
             onChange={(event) => {
               setSearch(event.target.value)
               setPage(1)
             }}
-            placeholder="Search dataset folders..."
+            placeholder={t('datasets.search')}
             type="search"
             value={search}
           />
@@ -101,14 +105,14 @@ export function ProjectDatasets() {
 
       <div className="mt-4">
         {!canListDatasets ? (
-          <SectionState message="You do not have permission to view datasets." />
+          <SectionState message={t('datasets.permissionDenied')} />
         ) : datasetsQuery.isLoading ? (
           <FolderSkeleton />
         ) : datasetsQuery.error ? (
           <SectionState
             message={getErrorMessage(
               datasetsQuery.error,
-              'Unable to load dataset folders. Please try again.',
+              t('datasets.errors.loadFolders'),
             )}
             tone="error"
           />
@@ -134,9 +138,7 @@ export function ProjectDatasets() {
         ) : (
           <SectionState
             message={
-              search
-                ? 'No dataset folders match your search.'
-                : 'No dataset folders have been created yet.'
+              search ? t('datasets.noSearchResults') : t('datasets.empty')
             }
           />
         )}
@@ -146,6 +148,7 @@ export function ProjectDatasets() {
 }
 
 function FolderSkeleton() {
+  const { t } = useTranslation()
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status">
       {[1, 2, 3].map((item) => (
@@ -154,7 +157,7 @@ function FolderSkeleton() {
           key={item}
         />
       ))}
-      <span className="sr-only">Loading dataset folders</span>
+      <span className="sr-only">{t('datasets.loadingFolders')}</span>
     </div>
   )
 }

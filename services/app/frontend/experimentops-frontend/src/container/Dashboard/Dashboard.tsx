@@ -1,15 +1,18 @@
+import { useTranslation } from 'react-i18next'
+
 import { useDocumentTitle } from '../../hooks'
 
 export function Dashboard() {
-  useDocumentTitle('Dashboard')
+  const { t } = useTranslation()
+  useDocumentTitle(t('dashboard.title'))
 
   return (
     <section>
       <h1 className="font-heading text-2xl font-semibold text-secondary">
-        Dashboard
+        {t('dashboard.title')}
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-slate-600">
-        This protected screen is ready for authenticated ExperimentOps features.
+        {t('dashboard.description')}
       </p>
     </section>
   )

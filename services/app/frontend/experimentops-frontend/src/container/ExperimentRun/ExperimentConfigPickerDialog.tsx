@@ -1,5 +1,6 @@
 import { DataTable } from '../../components/DataTable'
 import { TableSkeleton } from '../../components/TableSkeleton'
+import { useTranslation } from 'react-i18next'
 import type { ExperimentConfig } from '../../services/experimentConfig.service'
 import { getExperimentConfigColumns } from '../ExperimentConfigs/columns'
 import { SectionState } from '../ProjectDetails/projectDetails.shared'
@@ -24,6 +25,7 @@ export function ExperimentConfigPickerDialog({
   onSelect: (config: ExperimentConfig) => void
   selectedConfigUuids: string[]
 }) {
+  const { t } = useTranslation()
   return (
     <div
       aria-labelledby="config-picker-title"
@@ -38,14 +40,14 @@ export function ExperimentConfigPickerDialog({
               className="font-heading text-2xl font-semibold text-secondary"
               id="config-picker-title"
             >
-              Experiment Configs
+              {t('runs.picker.configsTitle')}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Select a config for {experimentType}.
+              {t('runs.picker.configDescription', { experimentType })}
             </p>
           </div>
           <button
-            aria-label="Close experiment config picker"
+            aria-label={t('runs.picker.closeConfig')}
             className="rounded-md p-2 text-slate-500 hover:bg-slate-100"
             onClick={onClose}
             type="button"
@@ -59,10 +61,7 @@ export function ExperimentConfigPickerDialog({
             <TableSkeleton />
           ) : error ? (
             <SectionState
-              message={getErrorMessage(
-                error,
-                'Unable to load experiment configs. Please try again.',
-              )}
+              message={getErrorMessage(error, t('configs.errors.load'))}
               tone="error"
             />
           ) : (
@@ -72,7 +71,7 @@ export function ExperimentConfigPickerDialog({
             >
               {isSelecting ? (
                 <p className="mb-3 rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-700">
-                  Loading config inputs and outputs…
+                  {t('runs.picker.loadingConfigDetails')}
                 </p>
               ) : null}
               <DataTable
@@ -80,12 +79,13 @@ export function ExperimentConfigPickerDialog({
                   onSelect,
                   selectable: true,
                   selectedConfigUuids,
+                  t,
                 })}
                 data={configs}
-                emptyMessage="No configs were found for this experiment type."
+                emptyMessage={t('runs.picker.configsEmpty')}
                 getRowKey={(config) => config.uuid}
                 onRowClick={onSelect}
-                searchPlaceholder="Search returned configs..."
+                searchPlaceholder={t('runs.picker.searchConfigs')}
               />
             </div>
           )}

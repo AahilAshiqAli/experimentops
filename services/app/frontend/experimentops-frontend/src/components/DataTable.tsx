@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export type DataTableColumn<T> = {
   align?: 'left' | 'center' | 'right'
@@ -65,18 +66,20 @@ const alignmentClasses = {
 export function DataTable<T>({
   columns,
   data,
-  emptyMessage = 'No data available.',
+  emptyMessage,
   getRowKey,
   isLoading = false,
-  loadingLabel = 'Loading data',
+  loadingLabel,
   onQueryChange,
   onRowClick,
   pagination,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder,
   searchable = true,
   toolbarEnd,
   toolbarStart,
 }: DataTableProps<T>) {
+  const { i18n, t } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<Record<string, string>>({})
   const [sort, setSort] = useState<DataTableSort>(null)
@@ -94,10 +97,10 @@ export function DataTable<T>({
             column.key,
             [...new Set(data.map((row) => displayValue(column.value?.(row))))]
               .filter((value) => value !== '—')
-              .sort((left, right) => left.localeCompare(right)),
+              .sort((left, right) => left.localeCompare(right, language)),
           ]),
       ),
-    [columns, data],
+    [columns, data, language],
   )
 
   const visibleData = useMemo(() => {
@@ -125,12 +128,12 @@ export function DataTable<T>({
       const result =
         typeof leftValue === 'number' && typeof rightValue === 'number'
           ? leftValue - rightValue
-          : String(leftValue).localeCompare(String(rightValue), undefined, {
+          : String(leftValue).localeCompare(String(rightValue), language, {
               numeric: true,
             })
       return sort.direction === 'asc' ? result : -result
     })
-  }, [columns, data, filters, search, sort])
+  }, [columns, data, filters, language, search, sort])
 
   const hasFilters = columns.some((column) => column.filter)
 
@@ -149,7 +152,9 @@ export function DataTable<T>({
                   .filter((column) => column.filter)
                   .map((column) => (
                     <label className="min-w-40" key={column.key}>
-                      <span className="sr-only">Filter table column</span>
+                      <span className="sr-only">
+                        {t('common.table.filterColumn')}
+                      </span>
                       <select
                         className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                         onChange={(event) =>
@@ -160,7 +165,11 @@ export function DataTable<T>({
                         }
                         value={filters[column.key] ?? ''}
                       >
-                        <option value="">All {String(column.header)}</option>
+                        <option value="">
+                          {t('common.table.allColumn', {
+                            column: String(column.header),
+                          })}
+                        </option>
                         {(filterOptions[column.key] ?? []).map((option) => (
                           <option key={option} value={option}>
                             {option}
@@ -172,11 +181,13 @@ export function DataTable<T>({
               : null}
             {searchable ? (
               <label className="block min-w-56 sm:w-72">
-                <span className="sr-only">Search table</span>
+                <span className="sr-only">{t('common.table.search')}</span>
                 <input
                   className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder={searchPlaceholder}
+                  placeholder={
+                    searchPlaceholder ?? t('common.table.searchPlaceholder')
+                  }
                   type="search"
                   value={search}
                 />
@@ -276,19 +287,30 @@ export function DataTable<T>({
         {!isLoading && visibleData.length === 0 ? (
           <p className="px-6 py-12 text-center text-sm text-slate-500">
             {search || Object.values(filters).some(Boolean)
-              ? 'No rows match the current search or filters.'
-              : emptyMessage}
+              ? t('common.table.noMatches')
+              : (emptyMessage ?? t('common.table.empty'))}
           </p>
         ) : null}
-        {isLoading ? <span className="sr-only">{loadingLabel}</span> : null}
+        {isLoading ? (
+          <span className="sr-only">
+            {loadingLabel ?? t('common.table.loadingData')}
+          </span>
+        ) : null}
       </div>
 
       {pagination && pagination.totalPages > 1 ? (
         <div className="mt-5 flex items-center justify-between gap-4 text-sm text-slate-600">
           <span>
-            Page {pagination.page} of {pagination.totalPages}
+            {t('common.table.pageOf', {
+              page: pagination.page,
+              totalPages: pagination.totalPages,
+            })}
             {pagination.totalItems !== undefined
-              ? ` · ${pagination.totalItems.toLocaleString()} items`
+              ? ` · ${t('common.table.items', {
+                  count: pagination.totalItems,
+                  formattedCount:
+                    pagination.totalItems.toLocaleString(language),
+                })}`
               : ''}
           </span>
           <div className="flex gap-2">
@@ -298,7 +320,7 @@ export function DataTable<T>({
               onClick={() => pagination.onPageChange(pagination.page - 1)}
               type="button"
             >
-              Previous
+              {t('common.table.previous')}
             </button>
             <button
               className="rounded-md border border-slate-300 px-3 py-2 font-medium disabled:opacity-50"
@@ -306,7 +328,7 @@ export function DataTable<T>({
               onClick={() => pagination.onPageChange(pagination.page + 1)}
               type="button"
             >
-              Next
+              {t('common.table.next')}
             </button>
           </div>
         </div>

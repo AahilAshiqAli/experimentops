@@ -1,5 +1,6 @@
 import { DataTable } from '../../components/DataTable'
 import { TableSkeleton } from '../../components/TableSkeleton'
+import { useTranslation } from 'react-i18next'
 import type { Dataset, DatasetVersion } from '../../services/dataset.service'
 import { getDatasetVersionColumns } from '../DatasetDetails/columns'
 import {
@@ -49,6 +50,7 @@ export function DatasetVersionPickerDialog({
   selectedVersionUuids: string[]
   totalDatasetVersions: number
 }) {
+  const { t } = useTranslation()
   return (
     <div
       aria-labelledby="dataset-picker-title"
@@ -63,26 +65,27 @@ export function DatasetVersionPickerDialog({
               className="font-heading text-2xl font-semibold text-secondary"
               id="dataset-picker-title"
             >
-              Find Dataset
+              {t('runs.picker.title')}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Select completed dataset versions, then bind them to config input
-              ports on the board.
+              {t('runs.picker.datasetDescription')}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              {selectedVersionUuids.length} selected
+              {t('runs.picker.selected', {
+                count: selectedVersionUuids.length,
+              })}
             </span>
             <button
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
               onClick={onClose}
               type="button"
             >
-              Done
+              {t('runs.picker.done')}
             </button>
             <button
-              aria-label="Close dataset picker"
+              aria-label={t('runs.picker.closeDataset')}
               className="rounded-md p-2 text-slate-500 hover:bg-slate-100"
               onClick={onClose}
               type="button"
@@ -100,7 +103,7 @@ export function DatasetVersionPickerDialog({
                 onClick={() => onOpenDataset(null)}
                 type="button"
               >
-                ← Dataset folders
+                ← {t('datasets.title')}
               </button>
               <div className="mt-5 flex items-center gap-4">
                 <FolderIcon className="h-12 w-12" />
@@ -109,7 +112,7 @@ export function DatasetVersionPickerDialog({
                     {openedDataset.name}
                   </h3>
                   <p className="mt-1 text-sm text-slate-500">
-                    Select a completed dataset version.
+                    {t('runs.picker.completedDescription')}
                   </p>
                 </div>
               </div>
@@ -121,7 +124,7 @@ export function DatasetVersionPickerDialog({
                   <SectionState
                     message={getErrorMessage(
                       datasetVersionsError,
-                      'Unable to load dataset versions. Please try again.',
+                      t('datasets.errors.loadVersions'),
                     )}
                     tone="error"
                   />
@@ -134,12 +137,13 @@ export function DatasetVersionPickerDialog({
                       selectable: true,
                       selectedVersionUuids,
                       totalElements: totalDatasetVersions,
+                      t,
                     })}
                     data={datasetVersions}
-                    emptyMessage="No completed versions are available in this dataset folder."
+                    emptyMessage={t('runs.picker.datasetsEmpty')}
                     getRowKey={(version) => version.datasetVersionUuid}
                     onRowClick={(version) => onToggle(openedDataset, version)}
-                    searchPlaceholder="Search completed dataset versions..."
+                    searchPlaceholder={t('runs.picker.searchVersions')}
                   />
                 )}
               </div>
@@ -149,20 +153,20 @@ export function DatasetVersionPickerDialog({
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <h3 className="font-heading text-xl font-semibold text-secondary">
-                    Dataset folders
+                    {t('datasets.title')}
                   </h3>
                   <p className="mt-1 text-sm text-slate-600">
-                    Open a folder to inspect its completed dataset versions.
+                    {t('runs.picker.datasetsDescription')}
                   </p>
                 </div>
                 <label className="block sm:w-72">
-                  <span className="sr-only">Search dataset folders</span>
+                  <span className="sr-only">{t('datasets.searchLabel')}</span>
                   <input
                     className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
                     onChange={(event) =>
                       onDatasetPickerSearchChange(event.target.value)
                     }
-                    placeholder="Search dataset folders..."
+                    placeholder={t('datasets.search')}
                     type="search"
                     value={datasetPickerSearch}
                   />
@@ -181,13 +185,15 @@ export function DatasetVersionPickerDialog({
                         key={item}
                       />
                     ))}
-                    <span className="sr-only">Loading dataset folders</span>
+                    <span className="sr-only">
+                      {t('datasets.loadingFolders')}
+                    </span>
                   </div>
                 ) : datasetsError ? (
                   <SectionState
                     message={getErrorMessage(
                       datasetsError,
-                      'Unable to load dataset folders. Please try again.',
+                      t('datasets.errors.loadFolders'),
                     )}
                     tone="error"
                   />
@@ -218,8 +224,8 @@ export function DatasetVersionPickerDialog({
                   <SectionState
                     message={
                       datasetPickerSearch
-                        ? 'No dataset folders match your search.'
-                        : 'No dataset folders have been created yet.'
+                        ? t('datasets.noSearchResults')
+                        : t('datasets.empty')
                     }
                   />
                 )}

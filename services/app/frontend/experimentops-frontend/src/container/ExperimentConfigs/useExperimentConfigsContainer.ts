@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { useLogin } from '../../context-api/logincontext'
 import {
@@ -17,6 +18,7 @@ import { getExperimentConfigValidationErrors } from './configValidation'
 const CONFIGS_PER_PAGE = 20
 
 export function useExperimentConfigsContainer() {
+  const { t } = useTranslation()
   const { experimentUuid, projectUuid } = useParams<{
     experimentUuid: string
     projectUuid: string
@@ -60,14 +62,12 @@ export function useExperimentConfigsContainer() {
     createConfigMutation.mutate(input, {
       onError: (error) => {
         Toaster.error(
-          error instanceof Error
-            ? error.message
-            : 'Unable to create the experiment config.',
+          error instanceof Error ? error.message : t('configs.errors.create'),
         )
       },
       onSuccess: () => {
         setIsCreateOpen(false)
-        Toaster.success('Experiment config created successfully.')
+        Toaster.success(t('configs.created'))
       },
     })
   }
@@ -100,14 +100,12 @@ export function useExperimentConfigsContainer() {
       {
         onError: (error) => {
           Toaster.error(
-            error instanceof Error
-              ? error.message
-              : 'Unable to update the experiment config.',
+            error instanceof Error ? error.message : t('configs.errors.update'),
           )
         },
         onSuccess: () => {
           setEditingConfig(null)
-          Toaster.success('Experiment config updated successfully.')
+          Toaster.success(t('configs.updated'))
         },
       },
     )

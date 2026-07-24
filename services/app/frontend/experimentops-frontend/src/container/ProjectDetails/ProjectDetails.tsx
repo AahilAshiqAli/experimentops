@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { useLogin } from '../../context-api/logincontext'
 import { useDocumentTitle } from '../../hooks'
@@ -19,6 +20,7 @@ import {
 import { getErrorMessage } from './projectDetails.utils'
 
 export function ProjectDetails() {
+  const { t } = useTranslation()
   const { projectUuid } = useParams<{ projectUuid: string }>()
   const { hasPermission } = useLogin()
   const projectQuery = useQueryProject(projectUuid)
@@ -36,17 +38,14 @@ export function ProjectDetails() {
     PERMISSIONS_KEYS.EXPERIMENT.GET_EXPERIMENT,
   )
 
-  useDocumentTitle(project?.name ?? 'Project overview')
+  useDocumentTitle(project?.name ?? t('project.overviewTitle'))
 
   if (projectQuery.isLoading) return <PageSkeleton />
   if (projectQuery.error) {
     return (
       <PageState
-        message={getErrorMessage(
-          projectQuery.error,
-          'Unable to load this project. Please try again.',
-        )}
-        title="Unable to load project"
+        message={getErrorMessage(projectQuery.error, t('project.errors.load'))}
+        title={t('project.errors.loadTitle')}
         tone="error"
       />
     )
@@ -54,26 +53,38 @@ export function ProjectDetails() {
   if (!project) {
     return (
       <PageState
-        message="This project is not available."
-        title="Project not found"
+        message={t('project.notAvailable')}
+        title={t('project.errors.notFoundTitle')}
       />
     )
   }
 
   const metrics = [
-    { label: 'Dataset folders', value: project.datasetCount, icon: 'folder' },
     {
-      label: 'Dataset versions',
+      label: t('project.datasetFolders'),
+      value: project.datasetCount,
+      icon: 'folder',
+    },
+    {
+      label: t('project.datasetVersions'),
       value: project.datasetVersionCount,
       icon: 'database',
     },
-    { label: 'Experiments', value: project.experimentCount, icon: 'flask' },
     {
-      label: 'Configs',
+      label: t('project.experiments'),
+      value: project.experimentCount,
+      icon: 'flask',
+    },
+    {
+      label: t('project.configs'),
       value: project.experimentConfigCount,
       icon: 'settings',
     },
-    { label: 'Runs', value: project.experimentRunCount, icon: 'play' },
+    {
+      label: t('project.runs'),
+      value: project.experimentRunCount,
+      icon: 'play',
+    },
   ] as const
 
   return (
@@ -87,47 +98,46 @@ export function ProjectDetails() {
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <PreviewPanel
           link={`/projects/${project.projectUuid}/experiments`}
-          title="Recent experiments"
+          title={t('project.recentExperiments')}
         >
           {!canListExperiments ? (
-            <SectionState message="You do not have permission to view experiments." />
+            <SectionState message={t('experiments.permissionDenied')} />
           ) : experimentsQuery.isLoading ? (
             <PreviewSkeleton />
           ) : experimentsQuery.error ? (
             <SectionState
               message={getErrorMessage(
                 experimentsQuery.error,
-                'Unable to load experiments.',
+                t('experiments.errors.loadShort'),
               )}
               tone="error"
             />
           ) : experimentsQuery.data?.data.length ? (
-            experimentsQuery.data.data
-              .map((experiment) => (
-                <ExperimentPreview
-                  experiment={experiment}
-                  key={experiment.experimentUuid}
-                  projectUuid={project.projectUuid}
-                />
-              ))
+            experimentsQuery.data.data.map((experiment) => (
+              <ExperimentPreview
+                experiment={experiment}
+                key={experiment.experimentUuid}
+                projectUuid={project.projectUuid}
+              />
+            ))
           ) : (
-            <SectionState message="No experiments have been created yet." />
+            <SectionState message={t('experiments.empty')} />
           )}
         </PreviewPanel>
 
         <PreviewPanel
           link={`/projects/${project.projectUuid}/datasets`}
-          title="Dataset folders"
+          title={t('project.datasetFolders')}
         >
           {!canListDatasets ? (
-            <SectionState message="You do not have permission to view datasets." />
+            <SectionState message={t('datasets.permissionDenied')} />
           ) : datasetsQuery.isLoading ? (
             <PreviewSkeleton />
           ) : datasetsQuery.error ? (
             <SectionState
               message={getErrorMessage(
                 datasetsQuery.error,
-                'Unable to load dataset folders.',
+                t('datasets.errors.loadFolders'),
               )}
               tone="error"
             />
@@ -143,7 +153,7 @@ export function ProjectDetails() {
             </div>
           ) : (
             <div className="p-4">
-              <SectionState message="No dataset folders have been created yet." />
+              <SectionState message={t('datasets.empty')} />
             </div>
           )}
         </PreviewPanel>
@@ -204,6 +214,7 @@ function PreviewPanel({
   link: string
   title: string
 }) {
+  const { t } = useTranslation()
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
       <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
@@ -214,7 +225,7 @@ function PreviewPanel({
           className="text-sm font-semibold text-primary hover:underline"
           to={link}
         >
-          View all
+          {t('project.viewAll')}
         </Link>
       </header>
       {children}
@@ -223,11 +234,12 @@ function PreviewPanel({
 }
 
 function PreviewSkeleton() {
+  const { t } = useTranslation()
   return (
     <div className="space-y-3 p-4" role="status">
       <div className="h-24 animate-pulse rounded-lg bg-slate-100" />
       <div className="h-24 animate-pulse rounded-lg bg-slate-100" />
-      <span className="sr-only">Loading preview</span>
+      <span className="sr-only">{t('experiments.loadingPreview')}</span>
     </div>
   )
 }

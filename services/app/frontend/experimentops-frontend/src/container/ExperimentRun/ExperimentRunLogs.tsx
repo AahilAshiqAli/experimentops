@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import {
   EXPERIMENT_RUN_LOG_LEVELS,
@@ -8,6 +9,12 @@ import {
 import { formatLabel } from '../ProjectDetails/projectDetails.utils'
 
 type LogLevelFilter = 'ALL' | ExperimentRunLogLevel
+
+const logLevelKeys = {
+  ALL: 'runs.logList.all',
+  ERROR: 'runs.logList.error',
+  INFO: 'runs.logList.info',
+} as const
 
 function SearchIcon() {
   return (
@@ -97,11 +104,11 @@ function ChevronIcon({ direction }: { direction: 'left' | 'right' }) {
   )
 }
 
-function formatLogTimestamp(value: string) {
+function formatLogTimestamp(value: string, locale?: string) {
   const date = new Date(value)
   return Number.isNaN(date.getTime())
     ? value
-    : new Intl.DateTimeFormat(undefined, {
+    : new Intl.DateTimeFormat(locale, {
         dateStyle: 'medium',
         timeStyle: 'medium',
       }).format(date)
@@ -144,6 +151,8 @@ export function ExperimentRunLogs({
   pageSize: number
   totalElements: number
 }) {
+  const { i18n, t } = useTranslation()
+  const language = i18n.resolvedLanguage ?? i18n.language
   const [level, setLevel] = useState<LogLevelFilter>('ALL')
   const [search, setSearch] = useState('')
   const totalPages = Math.max(1, Math.ceil(totalElements / pageSize))
@@ -169,21 +178,21 @@ export function ExperimentRunLogs({
     <div className="mt-4" role="tabpanel">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <label className="relative block min-w-0 flex-1 lg:max-w-md">
-          <span className="sr-only">Search logs on this page</span>
+          <span className="sr-only">{t('runs.logList.searchLabel')}</span>
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
             <SearchIcon />
           </span>
           <input
             className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search logs on this page..."
+            placeholder={t('runs.logList.search')}
             type="search"
             value={search}
           />
         </label>
 
         <div
-          aria-label="Filter logs by level"
+          aria-label={t('runs.logList.filterLevel')}
           className="inline-flex w-fit overflow-hidden rounded-lg border border-slate-300 bg-white"
           role="group"
         >
@@ -199,18 +208,18 @@ export function ExperimentRunLogs({
               onClick={() => setLevel(option)}
               type="button"
             >
-              {formatLabel(option)}
+              {t(logLevelKeys[option])}
             </button>
           ))}
         </div>
 
         <div className="flex items-center gap-2 lg:ml-auto">
           <button
-            aria-label="Refresh logs"
+            aria-label={t('runs.logList.refresh')}
             className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-primary hover:text-primary disabled:cursor-wait disabled:opacity-60"
             disabled={isFetching}
             onClick={onRefresh}
-            title="Refresh logs"
+            title={t('runs.logList.refresh')}
             type="button"
           >
             <RefreshIcon isLoading={isFetching} />
@@ -222,14 +231,16 @@ export function ExperimentRunLogs({
             type="button"
           >
             <DownloadIcon isLoading={isDownloading} />
-            {isDownloading ? 'Preparing...' : 'Download logs'}
+            {isDownloading
+              ? t('runs.logList.preparing')
+              : t('runs.logList.download')}
           </button>
         </div>
       </div>
 
       {isLoading ? (
         <div
-          aria-label="Loading experiment run logs"
+          aria-label={t('runs.logList.loading')}
           className="mt-4 space-y-2 rounded-xl border border-slate-200 bg-white p-4"
         >
           {[0, 1, 2, 3].map((row) => (
@@ -241,9 +252,7 @@ export function ExperimentRunLogs({
         </div>
       ) : filteredLogs.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-500">
-          {logs.length
-            ? 'No logs on this page match the current search or level.'
-            : 'No logs are available for this run.'}
+          {logs.length ? t('runs.logList.noMatches') : t('runs.logList.none')}
         </div>
       ) : (
         <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -252,19 +261,19 @@ export function ExperimentRunLogs({
               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="w-20 px-4 py-3 font-semibold" scope="col">
-                    Seq.
+                    {t('runs.logList.sequence')}
                   </th>
                   <th className="min-w-52 px-4 py-3 font-semibold" scope="col">
-                    Timestamp
+                    {t('runs.logList.timestamp')}
                   </th>
                   <th className="w-24 px-4 py-3 font-semibold" scope="col">
-                    Level
+                    {t('runs.logList.level')}
                   </th>
                   <th className="min-w-48 px-4 py-3 font-semibold" scope="col">
-                    Experiment type
+                    {t('runs.logList.experimentType')}
                   </th>
                   <th className="min-w-96 px-4 py-3 font-semibold" scope="col">
-                    Message
+                    {t('runs.logList.message')}
                   </th>
                 </tr>
               </thead>
@@ -280,7 +289,7 @@ export function ExperimentRunLogs({
                       {log.sequence}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">
-                      {formatLogTimestamp(log.timestamp)}
+                      {formatLogTimestamp(log.timestamp, language)}
                     </td>
                     <td className="px-4 py-3">
                       <LogLevelBadge level={log.level} />
@@ -302,14 +311,20 @@ export function ExperimentRunLogs({
       {!isLoading && totalElements > 0 ? (
         <div className="mt-3 flex flex-col gap-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
           <p aria-live="polite">
-            Showing {visibleStart}–{visibleEnd} of {totalElements} logs
+            {t('runs.logList.showing', {
+              end: visibleEnd,
+              start: visibleStart,
+              total: totalElements,
+            })}
             {filteredLogs.length !== logs.length
-              ? ` · ${filteredLogs.length} match${filteredLogs.length === 1 ? '' : 'es'} on this page`
+              ? ` · ${t('runs.logList.matches', {
+                  count: filteredLogs.length,
+                })}`
               : ''}
           </p>
           <div className="flex items-center gap-2">
             <button
-              aria-label="Previous log page"
+              aria-label={t('runs.logList.previousPage')}
               className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
               disabled={page === 0 || isFetching}
               onClick={() => onPageChange(page - 1)}
@@ -318,10 +333,10 @@ export function ExperimentRunLogs({
               <ChevronIcon direction="left" />
             </button>
             <span className="min-w-24 text-center font-medium text-slate-600">
-              Page {page + 1} of {totalPages}
+              {t('common.table.pageOf', { page: page + 1, totalPages })}
             </span>
             <button
-              aria-label="Next log page"
+              aria-label={t('runs.logList.nextPage')}
               className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
               disabled={page >= totalPages - 1 || isFetching}
               onClick={() => onPageChange(page + 1)}

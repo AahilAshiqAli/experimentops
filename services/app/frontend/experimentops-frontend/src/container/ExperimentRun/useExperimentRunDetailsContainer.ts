@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { useLogin } from '../../context-api/logincontext'
 import {
@@ -13,6 +14,7 @@ import { Toaster } from '../../services/toaster.service'
 import { PERMISSIONS_KEYS } from '../../utils'
 
 export function useExperimentRunDetailsContainer() {
+  const { t } = useTranslation()
   const { experimentRunUuid, experimentUuid, projectUuid } = useParams<{
     experimentRunUuid: string
     experimentUuid: string
@@ -56,9 +58,9 @@ export function useExperimentRunDetailsContainer() {
     Toaster.error(
       experimentRunLogsQuery.error instanceof Error
         ? experimentRunLogsQuery.error.message
-        : 'Unable to load logs for this run.',
+        : t('runs.logErrors.load'),
     )
-  }, [experimentRunLogsQuery.error])
+  }, [experimentRunLogsQuery.error, t])
 
   const handleDownloadLogs = async () => {
     if (!experimentRunUuid) return
@@ -74,9 +76,7 @@ export function useExperimentRunDetailsContainer() {
       anchor.remove()
     } catch (error) {
       Toaster.error(
-        error instanceof Error
-          ? error.message
-          : 'Unable to download logs for this run.',
+        error instanceof Error ? error.message : t('runs.logErrors.download'),
       )
     }
   }

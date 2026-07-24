@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import ApiService, { ApiServiceError } from '../utils/api.service'
 import {
   getAuthenticatedRequestHeaders,
@@ -46,17 +47,16 @@ export async function getRoles(
   role: string,
   signal?: AbortSignal,
 ) {
-  const payload = await ApiService.get<unknown>(ServicesUrlEndpoints.GET_ROLES, {
-    headers: getAuthenticatedRequestHeaders(accessToken, tokenParsed, role),
-    signal,
-  })
+  const payload = await ApiService.get<unknown>(
+    ServicesUrlEndpoints.GET_ROLES,
+    {
+      headers: getAuthenticatedRequestHeaders(accessToken, tokenParsed, role),
+      signal,
+    },
+  )
 
   if (!Array.isArray(payload)) {
-    throw new ApiServiceError(
-      'The role service returned an invalid response.',
-      500,
-      payload,
-    )
+    throw new ApiServiceError(i18n.t('serviceErrors.roleInvalid'), 500, payload)
   }
 
   return payload.map(toRole).filter((item): item is Role => item !== null)

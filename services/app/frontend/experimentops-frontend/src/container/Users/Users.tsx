@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { DataTable } from '../../components/DataTable'
 import { useLogin } from '../../context-api/logincontext'
@@ -9,13 +10,14 @@ import { Toaster } from '../../services/toaster.service'
 import { PERMISSIONS_KEYS } from '../../utils'
 import { SectionState } from '../ProjectDetails/projectDetails.shared'
 import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
-import { userColumns } from './columns'
+import { getUserColumns } from './columns'
 import { CreateUserDialog } from './CreateUserDialog'
 
 const USERS_PER_PAGE = 20
 
 export function Users() {
-  useDocumentTitle('Users')
+  const { t } = useTranslation()
+  useDocumentTitle(t('users.title'))
 
   const { hasPermission } = useLogin()
   const [page, setPage] = useState(1)
@@ -32,12 +34,10 @@ export function Users() {
     createUserMutation.mutate(input, {
       onSuccess: () => {
         setIsCreateOpen(false)
-        Toaster.success('User created successfully.')
+        Toaster.success(t('users.created'))
       },
       onError: (error) => {
-        Toaster.error(
-          getErrorMessage(error, 'Unable to create user. Please try again.'),
-        )
+        Toaster.error(getErrorMessage(error, t('users.errors.create')))
       },
     })
   }
@@ -46,24 +46,21 @@ export function Users() {
     <section>
       <div className="mb-3 border-b border-slate-200 pb-3">
         <h1 className="font-heading text-2xl font-semibold text-secondary">
-          Users
+          {t('users.title')}
         </h1>
       </div>
 
       {!canListUsers ? (
-        <SectionState message="You do not have permission to view users." />
+        <SectionState message={t('users.permissionDenied')} />
       ) : usersQuery.error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-          {getErrorMessage(
-            usersQuery.error,
-            'Unable to load users. Please try again.',
-          )}
+          {getErrorMessage(usersQuery.error, t('users.errors.load'))}
         </div>
       ) : (
         <DataTable
-          columns={userColumns}
+          columns={getUserColumns(t)}
           data={usersQuery.data?.data ?? []}
-          emptyMessage="No users have been added to this workspace yet."
+          emptyMessage={t('users.empty')}
           getRowKey={(user) => user.uuid}
           isLoading={usersQuery.isLoading}
           pagination={{
@@ -72,7 +69,7 @@ export function Users() {
             totalItems: totalUsers,
             totalPages,
           }}
-          searchPlaceholder="Search users..."
+          searchPlaceholder={t('users.search')}
           toolbarEnd={
             canAddUser ? (
               <button
@@ -80,7 +77,7 @@ export function Users() {
                 onClick={() => setIsCreateOpen(true)}
                 type="button"
               >
-                + Add User
+                + {t('users.add')}
               </button>
             ) : null
           }

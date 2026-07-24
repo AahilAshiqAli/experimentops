@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 import { DataTable } from '../../components/DataTable'
 import { JsonEditorDialog } from '../../components/JsonViewer'
 import { TableSkeleton } from '../../components/TableSkeleton'
@@ -14,9 +16,10 @@ import { getExperimentConfigColumns } from './columns'
 import { useExperimentConfigsContainer } from './useExperimentConfigsContainer'
 
 export function ExperimentConfigs() {
+  const { t } = useTranslation()
   const container = useExperimentConfigsContainer()
 
-  useDocumentTitle('Experiment configs')
+  useDocumentTitle(t('configs.title'))
 
   if (container.projectQuery.isLoading) return <PageSkeleton />
   if (container.projectQuery.error) {
@@ -24,9 +27,9 @@ export function ExperimentConfigs() {
       <PageState
         message={getErrorMessage(
           container.projectQuery.error,
-          'Unable to load this project.',
+          t('datasets.errors.loadProject'),
         )}
-        title="Unable to load project"
+        title={t('project.errors.loadTitle')}
         tone="error"
       />
     )
@@ -34,8 +37,8 @@ export function ExperimentConfigs() {
   if (!container.projectQuery.data) {
     return (
       <PageState
-        message="This project is not available."
-        title="Project not found"
+        message={t('project.notAvailable')}
+        title={t('project.errors.notFoundTitle')}
       />
     )
   }
@@ -44,19 +47,19 @@ export function ExperimentConfigs() {
     <ProjectFrame activeTab="experiments" project={container.projectQuery.data}>
       <div className="mb-2">
         <h2 className="font-heading text-xl font-semibold text-secondary">
-          Experiment configs
+          {t('configs.title')}
         </h2>
       </div>
       <div>
         {!container.canListConfigs ? (
-          <SectionState message="You do not have permission to view experiment configs." />
+          <SectionState message={t('configs.permissionDenied')} />
         ) : container.configsQuery.isLoading ? (
           <TableSkeleton />
         ) : container.configsQuery.error ? (
           <SectionState
             message={getErrorMessage(
               container.configsQuery.error,
-              'Unable to load experiment configs. Please try again.',
+              t('configs.errors.load'),
             )}
             tone="error"
           />
@@ -64,9 +67,10 @@ export function ExperimentConfigs() {
           <DataTable
             columns={getExperimentConfigColumns({
               onEdit: container.setEditingConfig,
+              t,
             })}
             data={container.configsQuery.data?.data ?? []}
-            emptyMessage="No configs have been added to this experiment yet."
+            emptyMessage={t('configs.empty')}
             getRowKey={(config) => config.uuid}
             pagination={{
               onPageChange: container.setPage,
@@ -74,7 +78,7 @@ export function ExperimentConfigs() {
               totalItems: container.configsQuery.data?.totalElements ?? 0,
               totalPages: container.totalPages,
             }}
-            searchPlaceholder="Search configs..."
+            searchPlaceholder={t('configs.search')}
             toolbarEnd={
               <>
                 {container.canAddConfig ? (
@@ -83,7 +87,7 @@ export function ExperimentConfigs() {
                     onClick={() => container.setIsCreateOpen(true)}
                     type="button"
                   >
-                    + Add Config
+                    + {t('configs.add')}
                   </button>
                 ) : null}
               </>

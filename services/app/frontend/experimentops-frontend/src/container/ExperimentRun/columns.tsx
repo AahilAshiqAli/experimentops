@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 import type { DataTableColumn } from '../../components/DataTable'
 import type { ExperimentRun } from '../../services/experimentRun.service'
 
@@ -8,10 +10,19 @@ function statusClassName(status: ExperimentRun['status']) {
   return 'bg-amber-100 text-amber-700'
 }
 
-export function getExperimentRunColumns(): DataTableColumn<ExperimentRun>[] {
+export const RUN_STATUS_TRANSLATION_KEYS = {
+  FAILED: 'runs.status.failed',
+  PENDING: 'runs.status.pending',
+  RUNNING: 'runs.status.running',
+  SUCCEEDED: 'runs.status.succeeded',
+} as const
+
+export function getExperimentRunColumns(
+  t: TFunction,
+): DataTableColumn<ExperimentRun>[] {
   return [
     {
-      header: 'Name',
+      header: t('runs.columns.name'),
       key: 'name',
       value: (run) => run.name,
     },
@@ -23,10 +34,10 @@ export function getExperimentRunColumns(): DataTableColumn<ExperimentRun>[] {
             run.status,
           )}`}
         >
-          {run.status}
+          {t(RUN_STATUS_TRANSLATION_KEYS[run.status])}
         </span>
       ),
-      header: 'Status',
+      header: t('runs.columns.status'),
       key: 'status',
       value: (run) => run.status,
     },
@@ -44,18 +55,18 @@ export function getExperimentRunColumns(): DataTableColumn<ExperimentRun>[] {
           </div>
         </div>
       ),
-      header: 'Progress',
+      header: t('runs.columns.progress'),
       key: 'progress',
       value: (run) => run.progress,
     },
     {
       align: 'center',
-      header: 'Datasets',
+      header: t('runs.columns.datasets'),
       key: 'datasetCount',
       value: (run) => run.datasetCount,
     },
     {
-      header: 'Duration',
+      header: t('runs.columns.duration'),
       key: 'duration',
       value: (run) => run.duration,
     },

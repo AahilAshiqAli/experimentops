@@ -1,5 +1,6 @@
 import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { CsvPreview, type CsvPreviewData } from '../../components/CsvPreview'
 import { DataTable } from '../../components/DataTable'
@@ -27,6 +28,7 @@ import { getDatasetVersionColumns } from './columns'
 const VERSIONS_PER_PAGE = 20
 
 export function DatasetDetails() {
+  const { t } = useTranslation()
   const { datasetUuid, projectUuid } = useParams<{
     datasetUuid: string
     projectUuid: string
@@ -55,7 +57,7 @@ export function DatasetDetails() {
     Math.ceil((versionsQuery.data?.totalElements ?? 0) / VERSIONS_PER_PAGE),
   )
 
-  useDocumentTitle('Dataset versions')
+  useDocumentTitle(t('datasets.breadcrumbVersions'))
 
   const handlePreview = async (
     datasetVersionUuid: string,
@@ -72,9 +74,7 @@ export function DatasetDetails() {
       )
       setPreview({ data, fileName: originalFileName })
     } catch (error) {
-      Toaster.error(
-        getErrorMessage(error, 'Unable to preview this dataset version.'),
-      )
+      Toaster.error(getErrorMessage(error, t('datasets.errors.preview')))
     } finally {
       setPreviewingVersionUuid(null)
     }
@@ -102,13 +102,10 @@ export function DatasetDetails() {
         'ACTIVE',
       )
       setIsAddOpen(false)
-      Toaster.success('Dataset version uploaded successfully.')
+      Toaster.success(t('datasets.uploaded'))
       void versionsQuery.refetch()
     } catch (error) {
-      const failureMessage = getErrorMessage(
-        error,
-        'Unable to upload this dataset version.',
-      )
+      const failureMessage = getErrorMessage(error, t('datasets.errors.upload'))
 
       if (uploadedVersionUuid) {
         try {
@@ -138,12 +135,14 @@ export function DatasetDetails() {
           projectQuery.error
             ? getErrorMessage(
                 projectQuery.error,
-                'Unable to load this project.',
+                t('datasets.errors.loadProject'),
               )
-            : 'This project is not available.'
+            : t('project.notAvailable')
         }
         title={
-          projectQuery.error ? 'Unable to load project' : 'Project not found'
+          projectQuery.error
+            ? t('project.errors.loadTitle')
+            : t('project.errors.notFoundTitle')
         }
         tone={projectQuery.error ? 'error' : 'neutral'}
       />
@@ -153,32 +152,35 @@ export function DatasetDetails() {
   return (
     <ProjectFrame activeTab="datasets" project={projectQuery.data}>
       {!canGetDataset ? (
-        <SectionState message="You do not have permission to view this dataset." />
+        <SectionState message={t('datasets.permissionDeniedSingle')} />
       ) : versionsQuery.isLoading ? (
         <div
           className="h-64 animate-pulse rounded-xl bg-slate-100"
           role="status"
         >
-          <span className="sr-only">Loading dataset</span>
+          <span className="sr-only">{t('datasets.loadingFolders')}</span>
         </div>
       ) : versionsQuery.error ? (
         <SectionState
           message={getErrorMessage(
             versionsQuery.error,
-            'Unable to load dataset versions. Please try again.',
+            t('datasets.errors.loadVersions'),
           )}
           tone="error"
         />
       ) : versionsQuery.data ? (
         <>
-          <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
+          <nav
+            aria-label={t('common.navigation.breadcrumb')}
+            className="text-sm text-slate-500"
+          >
             <Link
               className="font-medium text-primary hover:underline"
               to={`/projects/${projectQuery.data.projectUuid}/datasets`}
             >
-              Dataset folders
+              {t('datasets.title')}
             </Link>{' '}
-            <span aria-hidden="true">/</span> Dataset versions
+            <span aria-hidden="true">/</span> {t('datasets.breadcrumbVersions')}
           </nav>
           <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
@@ -188,7 +190,9 @@ export function DatasetDetails() {
                   {versionsQuery.data.name}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {versionsQuery.data.totalElements} versions
+                  {t('datasets.versions', {
+                    count: versionsQuery.data.totalElements,
+                  })}
                 </p>
               </div>
             </div>
@@ -204,9 +208,10 @@ export function DatasetDetails() {
                   ),
                 pendingUuid: previewingVersionUuid,
                 totalElements: versionsQuery.data.totalElements,
+                t,
               })}
               data={versionsQuery.data.versions}
-              emptyMessage="No versions have been uploaded to this dataset folder."
+              emptyMessage={t('datasets.versionsEmpty')}
               getRowKey={(version) => version.datasetVersionUuid}
               pagination={{
                 onPageChange: setPage,
@@ -214,7 +219,7 @@ export function DatasetDetails() {
                 totalItems: versionsQuery.data.totalElements,
                 totalPages,
               }}
-              searchPlaceholder="Search dataset versions..."
+              searchPlaceholder={t('datasets.searchVersions')}
               toolbarEnd={
                 <>
                   {canAddDataset ? (
@@ -223,7 +228,7 @@ export function DatasetDetails() {
                       onClick={() => setIsAddOpen(true)}
                       type="button"
                     >
-                      + Add Dataset
+                      + {t('datasets.add')}
                     </button>
                   ) : null}
                 </>
@@ -232,7 +237,7 @@ export function DatasetDetails() {
           </div>
         </>
       ) : (
-        <SectionState message="This dataset is not available." />
+        <SectionState message={t('datasets.unavailable')} />
       )}
 
       {isAddOpen && (
@@ -266,6 +271,7 @@ function DatasetPreviewDialog({
   fileName: string
   onClose: () => void
 }) {
+  const { t } = useTranslation()
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
@@ -292,10 +298,12 @@ function DatasetPreviewDialog({
             >
               {fileName}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">Read-only CSV preview</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {t('datasets.previewDescription')}
+            </p>
           </div>
           <button
-            aria-label="Close dataset preview"
+            aria-label={t('datasets.closePreview')}
             className="rounded-md p-2 text-xl leading-none text-slate-500 hover:bg-slate-100"
             onClick={onClose}
             type="button"
@@ -320,12 +328,13 @@ function AddDatasetVersionDialog({
   onSubmit: (file: File) => void
   uploadProgress: number
 }) {
+  const { t } = useTranslation()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null
 
     if (file && !file.name.toLowerCase().endsWith('.csv')) {
-      Toaster.error('Only CSV files are supported.')
+      Toaster.error(t('datasets.errors.csvOnly'))
       setSelectedFile(null)
       return
     }
@@ -353,10 +362,10 @@ function AddDatasetVersionDialog({
             className="font-heading text-2xl font-semibold text-secondary"
             id="add-dataset-version-title"
           >
-            Add Dataset
+            {t('datasets.add')}
           </h2>
           <button
-            aria-label="Close add dataset dialog"
+            aria-label={t('datasets.closeAddDialog')}
             className="rounded-md p-2 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isUploading}
             onClick={onClose}
@@ -368,7 +377,7 @@ function AddDatasetVersionDialog({
 
         <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium text-secondary">
-            CSV file
+            {t('datasets.csvFile')}
             <input
               accept=".csv,text/csv"
               className="mt-1 block w-full text-sm text-slate-600 file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
@@ -388,7 +397,7 @@ function AddDatasetVersionDialog({
                 />
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                Uploading… {uploadProgress}%
+                {t('datasets.uploadProgress', { progress: uploadProgress })}
               </p>
             </div>
           ) : null}
@@ -400,14 +409,14 @@ function AddDatasetVersionDialog({
               onClick={onClose}
               type="button"
             >
-              Cancel
+              {t('common.actions.cancel')}
             </button>
             <button
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isUploading || !selectedFile}
               type="submit"
             >
-              {isUploading ? 'Uploading…' : 'Upload'}
+              {isUploading ? t('datasets.uploading') : t('datasets.upload')}
             </button>
           </div>
         </form>

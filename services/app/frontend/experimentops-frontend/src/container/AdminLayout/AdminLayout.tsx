@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { AppHeader } from '../../components/layout/AppHeader'
 import { AppSidebar } from '../../components/layout/AppSidebar'
@@ -9,6 +10,7 @@ import { useExperimentRunStatusMonitor } from '../ExperimentRun/hooks/useExperim
 // AdminLayout is the shared frame for authenticated pages. It contains the parts that should remain visible while a user moves between screens—header, sidebar, user controls—and its <Outlet /> is the changing page area.
 
 export function AdminLayout() {
+  const { t } = useTranslation()
   const { user, role, logout } = useLogin()
   useExperimentRunStatusMonitor()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true)
@@ -23,7 +25,7 @@ export function AdminLayout() {
       />
       {isMobileSidebarOpen && (
         <button
-          aria-label="Close navigation"
+          aria-label={t('common.navigation.close')}
           className="fixed inset-0 top-20 z-30 bg-secondary/20 lg:hidden"
           onClick={() => setIsMobileSidebarOpen(false)}
           type="button"

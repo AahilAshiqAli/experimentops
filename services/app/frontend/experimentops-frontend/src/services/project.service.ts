@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import ApiService, { ApiServiceError } from '../utils/api.service'
 import { getAuthenticatedRequestHeaders, JwtTokenError } from './jwt.service'
 import { ServicesUrlEndpoints } from './servicesEndpointConstant'
@@ -94,7 +95,7 @@ export async function getProjects(
     throw new ApiServiceError(
       error instanceof JwtTokenError
         ? error.message
-        : 'Your session is invalid. Please sign in again.',
+        : i18n.t('session.invalid'),
       401,
     )
   }
@@ -111,7 +112,7 @@ export async function getProjects(
 
   if (!projects) {
     throw new ApiServiceError(
-      'The project service returned an invalid response.',
+      i18n.t('serviceErrors.projectInvalid'),
       500,
       payload,
     )
@@ -134,7 +135,7 @@ export async function getProjectSummary(
 
   if (!isProjectSummary(payload)) {
     throw new ApiServiceError(
-      'The project service returned an invalid response.',
+      i18n.t('serviceErrors.projectInvalid'),
       500,
       payload,
     )

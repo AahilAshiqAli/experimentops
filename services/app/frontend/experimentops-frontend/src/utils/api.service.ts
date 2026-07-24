@@ -1,5 +1,6 @@
 import axios, { type AxiosRequestConfig, type Method } from 'axios'
 
+import i18n from '../i18n'
 import { BASE_URL } from './environment'
 
 type ApiErrorResponse = {
@@ -52,8 +53,8 @@ export async function handleApiRequest<TResponse, TRequest = unknown>(
     if (axios.isAxiosError(error)) {
       const responseData: unknown = error.response?.data
       const fallbackMessage = error.response
-        ? 'The request could not be completed.'
-        : 'Unable to connect to the service. Please try again.'
+        ? i18n.t('serviceErrors.request')
+        : i18n.t('serviceErrors.connect')
 
       throw new ApiServiceError(
         getErrorMessage(responseData, fallbackMessage),

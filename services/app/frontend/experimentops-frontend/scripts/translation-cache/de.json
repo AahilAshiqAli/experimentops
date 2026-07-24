@@ -1,0 +1,2327 @@
+{
+  "app.loadingWorkspace": {
+    "generatorVersion": 2,
+    "source": "Loading your workspace…",
+    "translation": "Lade Ihren Arbeitsbereich…"
+  },
+  "app.name": {
+    "generatorVersion": 2,
+    "source": "ExperimentOps",
+    "translation": "ExperimentOps"
+  },
+  "app.studioSuffix": {
+    "generatorVersion": 2,
+    "source": ".studio",
+    "translation": ".studio"
+  },
+  "common.actions.add": {
+    "generatorVersion": 2,
+    "source": "Add",
+    "translation": "Hinzufügen"
+  },
+  "common.actions.back": {
+    "generatorVersion": 2,
+    "source": "Back",
+    "translation": "Zurück"
+  },
+  "common.actions.cancel": {
+    "generatorVersion": 2,
+    "source": "Cancel",
+    "translation": "Abbrechen"
+  },
+  "common.actions.close": {
+    "generatorVersion": 2,
+    "source": "Close",
+    "translation": "Schließen"
+  },
+  "common.actions.confirm": {
+    "generatorVersion": 2,
+    "source": "Confirm",
+    "translation": "Bestätigen"
+  },
+  "common.actions.continue": {
+    "generatorVersion": 2,
+    "source": "Continue",
+    "translation": "Fortfahren"
+  },
+  "common.actions.copy": {
+    "generatorVersion": 2,
+    "source": "Copy",
+    "translation": "Kopieren"
+  },
+  "common.actions.create": {
+    "generatorVersion": 2,
+    "source": "Create",
+    "translation": "Erstellen"
+  },
+  "common.actions.delete": {
+    "generatorVersion": 2,
+    "source": "Delete",
+    "translation": "Löschen"
+  },
+  "common.actions.edit": {
+    "generatorVersion": 2,
+    "source": "Edit",
+    "translation": "Bearbeiten"
+  },
+  "common.actions.next": {
+    "generatorVersion": 2,
+    "source": "Next",
+    "translation": "Weiter"
+  },
+  "common.actions.refresh": {
+    "generatorVersion": 2,
+    "source": "Refresh",
+    "translation": "Aktualisieren"
+  },
+  "common.actions.retry": {
+    "generatorVersion": 2,
+    "source": "Retry",
+    "translation": "Wiederholen"
+  },
+  "common.actions.save": {
+    "generatorVersion": 2,
+    "source": "Save",
+    "translation": "Speichern"
+  },
+  "common.actions.select": {
+    "generatorVersion": 2,
+    "source": "Select",
+    "translation": "Auswählen"
+  },
+  "common.actions.submit": {
+    "generatorVersion": 2,
+    "source": "Submit",
+    "translation": "Absenden"
+  },
+  "common.actions.update": {
+    "generatorVersion": 2,
+    "source": "Update",
+    "translation": "Aktualisieren"
+  },
+  "common.boolean.false": {
+    "generatorVersion": 2,
+    "source": "false",
+    "translation": "falsch"
+  },
+  "common.boolean.true": {
+    "generatorVersion": 2,
+    "source": "true",
+    "translation": "wahr"
+  },
+  "common.errors.generic": {
+    "generatorVersion": 2,
+    "source": "Something went wrong. Please try again.",
+    "translation": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+  },
+  "common.errors.notAvailable": {
+    "generatorVersion": 2,
+    "source": "Not available",
+    "translation": "Nicht verfügbar"
+  },
+  "common.errors.unableToLoad": {
+    "generatorVersion": 2,
+    "source": "Unable to load data",
+    "translation": "Daten konnten nicht geladen werden"
+  },
+  "common.language.de": {
+    "generatorVersion": 2,
+    "source": "Deutsch",
+    "translation": "Deutsch"
+  },
+  "common.language.en": {
+    "generatorVersion": 2,
+    "source": "English",
+    "translation": "Englisch"
+  },
+  "common.language.label": {
+    "generatorVersion": 2,
+    "source": "Language",
+    "translation": "Sprache"
+  },
+  "common.loading": {
+    "generatorVersion": 2,
+    "source": "Loading…",
+    "translation": "Lade…"
+  },
+  "common.navigation.breadcrumb": {
+    "generatorVersion": 2,
+    "source": "Breadcrumb",
+    "translation": "Brotkrümelnavigation"
+  },
+  "common.navigation.close": {
+    "generatorVersion": 2,
+    "source": "Close navigation",
+    "translation": "Navigation schließen"
+  },
+  "common.navigation.collapseSidebar": {
+    "generatorVersion": 2,
+    "source": "Collapse sidebar",
+    "translation": "Seitenleiste einklappen"
+  },
+  "common.navigation.expandSidebar": {
+    "generatorVersion": 2,
+    "source": "Expand sidebar",
+    "translation": "Seitenleiste ausklappen"
+  },
+  "common.navigation.open": {
+    "generatorVersion": 2,
+    "source": "Open navigation",
+    "translation": "Navigation öffnen"
+  },
+  "common.navigation.pagination": {
+    "generatorVersion": 2,
+    "source": "Pagination",
+    "translation": "Paginierung"
+  },
+  "common.navigation.primary": {
+    "generatorVersion": 2,
+    "source": "Primary navigation",
+    "translation": "Hauptnavigation"
+  },
+  "common.notifications.close": {
+    "generatorVersion": 2,
+    "source": "Close notification",
+    "translation": "Benachrichtigung schließen"
+  },
+  "common.table.allColumn": {
+    "generatorVersion": 2,
+    "source": "All {{column}}",
+    "translation": "Alle {{column}}-Spalten"
+  },
+  "common.table.empty": {
+    "generatorVersion": 2,
+    "source": "No data available.",
+    "translation": "Keine Daten verfügbar."
+  },
+  "common.table.filterColumn": {
+    "generatorVersion": 2,
+    "source": "Filter table column",
+    "translation": "Tabellenspalte filtern"
+  },
+  "common.table.items_one": {
+    "generatorVersion": 2,
+    "source": "{{formattedCount}} item",
+    "translation": "{{formattedCount}} Element"
+  },
+  "common.table.items_other": {
+    "generatorVersion": 2,
+    "source": "{{formattedCount}} items",
+    "translation": "{{formattedCount}} Elemente"
+  },
+  "common.table.loadingData": {
+    "generatorVersion": 2,
+    "source": "Loading data",
+    "translation": "Lade Daten..."
+  },
+  "common.table.loadingRows": {
+    "generatorVersion": 2,
+    "source": "Loading rows",
+    "translation": "Zeilen werden geladen..."
+  },
+  "common.table.next": {
+    "generatorVersion": 2,
+    "source": "Next",
+    "translation": "Weiter"
+  },
+  "common.table.noMatches": {
+    "generatorVersion": 2,
+    "source": "No rows match the current search or filters.",
+    "translation": "Keine Zeilen entsprechen der aktuellen Suche oder Filterung."
+  },
+  "common.table.pageOf": {
+    "generatorVersion": 2,
+    "source": "Page {{page}} of {{totalPages}}",
+    "translation": "Seite {{page}} von {{totalPages}}"
+  },
+  "common.table.previous": {
+    "generatorVersion": 2,
+    "source": "Previous",
+    "translation": "Zurück"
+  },
+  "common.table.search": {
+    "generatorVersion": 2,
+    "source": "Search table",
+    "translation": "Tabelle durchsuchen"
+  },
+  "common.table.searchPlaceholder": {
+    "generatorVersion": 2,
+    "source": "Search...",
+    "translation": "Suchen..."
+  },
+  "common.csv.columns_one": {
+    "generatorVersion": 2,
+    "source": "{{formattedCount}} column",
+    "translation": "{{formattedCount}} Spalte"
+  },
+  "common.csv.columns_other": {
+    "generatorVersion": 2,
+    "source": "{{formattedCount}} columns",
+    "translation": "{{formattedCount}} Spalten"
+  },
+  "common.csv.rowNumbers": {
+    "generatorVersion": 2,
+    "source": "Row numbers",
+    "translation": "Zeilennummern"
+  },
+  "common.csv.rows_one": {
+    "generatorVersion": 2,
+    "source": "{{formattedCount}} row",
+    "translation": "{{formattedCount}} Zeile"
+  },
+  "common.csv.rows_other": {
+    "generatorVersion": 2,
+    "source": "{{formattedCount}} rows",
+    "translation": "{{formattedCount}} Zeilen"
+  },
+  "common.csv.showingFirstRows": {
+    "generatorVersion": 2,
+    "source": "Showing the first {{count}} rows",
+    "translation": "Anzeige der ersten {{count}} Zeilen"
+  },
+  "common.jsonEditor.close": {
+    "generatorVersion": 2,
+    "source": "Close JSON editor",
+    "translation": "JSON-Editor schließen"
+  },
+  "common.jsonEditor.fixValidation": {
+    "generatorVersion": 2,
+    "source": "Fix config validation before submitting.",
+    "translation": "Korrigieren Sie die Konfigurationsvalidierung vor dem Absenden."
+  },
+  "common.jsonEditor.loadingValidation": {
+    "generatorVersion": 2,
+    "source": "Loading experiment type validation rules…",
+    "translation": "Lade Validierungsregeln für Experimenttyp..."
+  },
+  "common.jsonEditor.saving": {
+    "generatorVersion": 2,
+    "source": "Saving…",
+    "translation": "Speichern…"
+  },
+  "common.unknownRole": {
+    "generatorVersion": 2,
+    "source": "Unknown role",
+    "translation": "Unbekannte Rolle"
+  },
+  "common.unknownUser": {
+    "generatorVersion": 2,
+    "source": "Unknown user",
+    "translation": "Unbekannter Benutzer"
+  },
+  "serviceErrors.artifactDownloadInvalid": {
+    "generatorVersion": 2,
+    "source": "The artifact download service returned an invalid response.",
+    "translation": "Der Artefakt-Download-Dienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.authTokenMissing": {
+    "generatorVersion": 2,
+    "source": "The login service did not return an access token.",
+    "translation": "Der Anmelde-Dienst hat keinen Zugriffstoken zurückgegeben."
+  },
+  "serviceErrors.configDetailInvalid": {
+    "generatorVersion": 2,
+    "source": "The experiment config detail service returned an invalid response.",
+    "translation": "Die Experiment-Konfigurationsdetaildienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.configInvalid": {
+    "generatorVersion": 2,
+    "source": "The experiment config service returned an invalid response.",
+    "translation": "Der Experiment-Konfigurationsservice hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.connect": {
+    "generatorVersion": 2,
+    "source": "Unable to connect to the service. Please try again.",
+    "translation": "Verbindung zum Dienst nicht möglich. Bitte versuchen Sie es erneut."
+  },
+  "serviceErrors.datasetInvalid": {
+    "generatorVersion": 2,
+    "source": "The dataset service returned an invalid response.",
+    "translation": "Der Datensatz-Dienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.datasetPreviewInvalid": {
+    "generatorVersion": 2,
+    "source": "The dataset version returned an invalid CSV preview.",
+    "translation": "Die angegebene Datensatzversion lieferte keine gültige CSV-Vorschau."
+  },
+  "serviceErrors.datasetUploadInvalid": {
+    "generatorVersion": 2,
+    "source": "The dataset service returned an invalid upload response.",
+    "translation": "Der Datensatz-Dienst hat eine ungültige Upload-Antwort zurückgegeben."
+  },
+  "serviceErrors.experimentInvalid": {
+    "generatorVersion": 2,
+    "source": "The experiment service returned an invalid response.",
+    "translation": "Der Experimentdienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.experimentTypeInvalid": {
+    "generatorVersion": 2,
+    "source": "The experiment type service returned an invalid response.",
+    "translation": "Der Experiment-Typendienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.load": {
+    "generatorVersion": 2,
+    "source": "Unable to load the requested data. Please try again.",
+    "translation": "Die angeforderten Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut."
+  },
+  "serviceErrors.logDownloadInvalid": {
+    "generatorVersion": 2,
+    "source": "The experiment run log download service returned an invalid response.",
+    "translation": "Das Protokoll-Download-Dienst für den Experimentlauf hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.logsInvalid": {
+    "generatorVersion": 2,
+    "source": "The experiment run log service returned an invalid response.",
+    "translation": "Der Logdienst für den Experimentlauf hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.projectInvalid": {
+    "generatorVersion": 2,
+    "source": "The project service returned an invalid response.",
+    "translation": "Der Projektdienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.request": {
+    "generatorVersion": 2,
+    "source": "The request could not be completed.",
+    "translation": "Die Anforderung konnte nicht abgeschlossen werden."
+  },
+  "serviceErrors.roleInvalid": {
+    "generatorVersion": 2,
+    "source": "The role service returned an invalid response.",
+    "translation": "Der Rolledienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.runArtifactInvalid": {
+    "generatorVersion": 2,
+    "source": "The run artifact service returned an invalid response.",
+    "translation": "Der Lauf-Artefakt-Dienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.runDetailInvalid": {
+    "generatorVersion": 2,
+    "source": "The experiment run detail service returned an invalid response.",
+    "translation": "Der Experimentlauf-Detailsdienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.runInvalid": {
+    "generatorVersion": 2,
+    "source": "The experiment run service returned an invalid response.",
+    "translation": "Der ExperimentlaufsDienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.runStatusInvalid": {
+    "generatorVersion": 2,
+    "source": "The experiment run status service returned an invalid response.",
+    "translation": "Der Statusdienst für den Experimentlauf hat eine ungültige Antwort zurückgegeben."
+  },
+  "serviceErrors.userInvalid": {
+    "generatorVersion": 2,
+    "source": "The user service returned an invalid response.",
+    "translation": "Der Benutzer-Dienst hat eine ungültige Antwort zurückgegeben."
+  },
+  "session.expired": {
+    "generatorVersion": 2,
+    "source": "Your session has expired. Please sign in again.",
+    "translation": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
+  },
+  "session.initialize": {
+    "generatorVersion": 2,
+    "source": "Unable to initialize your session.",
+    "translation": "Die Initialisierung Ihrer Sitzung war nicht möglich."
+  },
+  "session.invalid": {
+    "generatorVersion": 2,
+    "source": "Your session is invalid. Please sign in again.",
+    "translation": "Ihre Sitzung ist ungültig. Bitte melden Sie sich erneut an."
+  },
+  "session.missingClaim": {
+    "generatorVersion": 2,
+    "source": "Your session is missing {{claim}}. Please sign in again.",
+    "translation": "Ihre Sitzung fehlt den Anspruch {{claim}}. Bitte melden Sie sich erneut an."
+  },
+  "session.missingRole": {
+    "generatorVersion": 2,
+    "source": "Your session is missing an application role. Please sign in again.",
+    "translation": "Ihre Sitzung verfügt über keine Anwendungsrolle. Bitte melden Sie sich erneut an."
+  },
+  "session.noPermissions": {
+    "generatorVersion": 2,
+    "source": "No permissions were returned for role {{role}}.",
+    "translation": "Für die Rolle {{role}} wurden keine Berechtigungen zurückgegeben."
+  },
+  "session.noRole": {
+    "generatorVersion": 2,
+    "source": "Your session does not include an application role. Please sign in again.",
+    "translation": "Ihre Sitzung enthält keine Anwendungsrolle. Bitte melden Sie sich erneut an."
+  },
+  "navigation.dashboard": {
+    "generatorVersion": 2,
+    "source": "Dashboard",
+    "translation": "Dashboard"
+  },
+  "navigation.heading": {
+    "generatorVersion": 2,
+    "source": "Navigation",
+    "translation": "Navigation"
+  },
+  "navigation.projects": {
+    "generatorVersion": 2,
+    "source": "Projects",
+    "translation": "Projekte"
+  },
+  "navigation.users": {
+    "generatorVersion": 2,
+    "source": "Users",
+    "translation": "Benutzer"
+  },
+  "dashboard.description": {
+    "generatorVersion": 2,
+    "source": "This protected screen is ready for authenticated ExperimentOps features.",
+    "translation": "Dieser geschützte Bildschirm ist für authentifizierte ExperimentOps-Funktionen bereit."
+  },
+  "dashboard.title": {
+    "generatorVersion": 2,
+    "source": "Dashboard",
+    "translation": "Übersicht"
+  },
+  "projects.descriptionColumn": {
+    "generatorVersion": 2,
+    "source": "Description",
+    "translation": "Beschreibung"
+  },
+  "projects.empty": {
+    "generatorVersion": 2,
+    "source": "Projects created for this workspace will appear here.",
+    "translation": "Für diesen Arbeitsbereich erstellte Projekte werden hier angezeigt."
+  },
+  "projects.projectColumn": {
+    "generatorVersion": 2,
+    "source": "Project",
+    "translation": "Projekt"
+  },
+  "projects.search": {
+    "generatorVersion": 2,
+    "source": "Search projects...",
+    "translation": "Projekte suchen..."
+  },
+  "projects.title": {
+    "generatorVersion": 2,
+    "source": "Projects",
+    "translation": "Projekte"
+  },
+  "project.actions.editDescription": {
+    "generatorVersion": 2,
+    "source": "Double-click to edit project description",
+    "translation": "Doppelklicken, um die Projektbeschreibung zu bearbeiten"
+  },
+  "project.actions.editName": {
+    "generatorVersion": 2,
+    "source": "Double-click to edit project name",
+    "translation": "Doppelklick zum Bearbeiten des Projektnamens"
+  },
+  "project.configs": {
+    "generatorVersion": 2,
+    "source": "Configs",
+    "translation": "Konfigurationen"
+  },
+  "project.datasetFolders": {
+    "generatorVersion": 2,
+    "source": "Dataset folders",
+    "translation": "Datensatzordner"
+  },
+  "project.datasetVersions": {
+    "generatorVersion": 2,
+    "source": "Dataset versions",
+    "translation": "Datensatzversionen"
+  },
+  "project.errors.descriptionEmpty": {
+    "generatorVersion": 2,
+    "source": "Project description cannot be empty.",
+    "translation": "Die Projektbeschreibung darf nicht leer sein."
+  },
+  "project.errors.load": {
+    "generatorVersion": 2,
+    "source": "Unable to load this project. Please try again.",
+    "translation": "Dieses Projekt konnte nicht geladen werden. Bitte versuchen Sie es erneut."
+  },
+  "project.errors.loadTitle": {
+    "generatorVersion": 2,
+    "source": "Unable to load project",
+    "translation": "Projekt kann nicht geladen werden"
+  },
+  "project.errors.nameEmpty": {
+    "generatorVersion": 2,
+    "source": "Project name cannot be empty.",
+    "translation": "Der Projektname darf nicht leer sein."
+  },
+  "project.errors.notFoundTitle": {
+    "generatorVersion": 2,
+    "source": "Project not found",
+    "translation": "Projekt nicht gefunden"
+  },
+  "project.errors.update": {
+    "generatorVersion": 2,
+    "source": "Unable to update the project.",
+    "translation": "Das Projekt konnte nicht aktualisiert werden."
+  },
+  "project.experimentActions": {
+    "generatorVersion": 2,
+    "source": "Experiment actions",
+    "translation": "Experiment-Aktionen"
+  },
+  "project.experiments": {
+    "generatorVersion": 2,
+    "source": "Experiments",
+    "translation": "Experimente"
+  },
+  "project.loading": {
+    "generatorVersion": 2,
+    "source": "Loading project",
+    "translation": "Lade Projekt"
+  },
+  "project.name": {
+    "generatorVersion": 2,
+    "source": "Project name",
+    "translation": "Projektnamen"
+  },
+  "project.description": {
+    "generatorVersion": 2,
+    "source": "Project description",
+    "translation": "Projektbeschreibung"
+  },
+  "project.navigation": {
+    "generatorVersion": 2,
+    "source": "Project navigation",
+    "translation": "Projektnavigation"
+  },
+  "project.noDescription": {
+    "generatorVersion": 2,
+    "source": "No description provided.",
+    "translation": "Keine Beschreibung angegeben."
+  },
+  "project.notAvailable": {
+    "generatorVersion": 2,
+    "source": "This project is not available.",
+    "translation": "Dieses Projekt ist nicht verfügbar."
+  },
+  "project.overview": {
+    "generatorVersion": 2,
+    "source": "Overview",
+    "translation": "Übersicht"
+  },
+  "project.overviewTitle": {
+    "generatorVersion": 2,
+    "source": "Project overview",
+    "translation": "Projektübersicht"
+  },
+  "project.recentExperiments": {
+    "generatorVersion": 2,
+    "source": "Recent experiments",
+    "translation": "Letzte Experimente"
+  },
+  "project.runs": {
+    "generatorVersion": 2,
+    "source": "Runs",
+    "translation": "Läufe"
+  },
+  "project.tabs.datasets": {
+    "generatorVersion": 2,
+    "source": "Datasets",
+    "translation": "Datensätze"
+  },
+  "project.tabs.experiments": {
+    "generatorVersion": 2,
+    "source": "Experiments",
+    "translation": "Experimente"
+  },
+  "project.tabs.overview": {
+    "generatorVersion": 2,
+    "source": "Overview",
+    "translation": "Übersicht"
+  },
+  "project.updated": {
+    "generatorVersion": 2,
+    "source": "Project updated successfully.",
+    "translation": "Projekt erfolgreich aktualisiert."
+  },
+  "project.versions_one": {
+    "generatorVersion": 2,
+    "source": "{{count}} version",
+    "translation": "{{count}} Version"
+  },
+  "project.versions_other": {
+    "generatorVersion": 2,
+    "source": "{{count}} versions",
+    "translation": "{{count}} Versionen"
+  },
+  "project.viewAll": {
+    "generatorVersion": 2,
+    "source": "View all",
+    "translation": "Alle anzeigen"
+  },
+  "experiments.actions": {
+    "generatorVersion": 2,
+    "source": "Actions",
+    "translation": "Aktionen"
+  },
+  "experiments.add": {
+    "generatorVersion": 2,
+    "source": "Add Experiment",
+    "translation": "Experiment hinzufügen"
+  },
+  "experiments.closeDialog": {
+    "generatorVersion": 2,
+    "source": "Close add experiment dialog",
+    "translation": "Hinzufügen-Dialog schließen"
+  },
+  "experiments.configs": {
+    "generatorVersion": 2,
+    "source": "Configs",
+    "translation": "Konfigurationen"
+  },
+  "experiments.create": {
+    "generatorVersion": 2,
+    "source": "Create experiment",
+    "translation": "Experiment erstellen"
+  },
+  "experiments.created": {
+    "generatorVersion": 2,
+    "source": "Experiment created successfully.",
+    "translation": "Experiment erfolgreich erstellt."
+  },
+  "experiments.createdColumn": {
+    "generatorVersion": 2,
+    "source": "Created",
+    "translation": "Erstellt"
+  },
+  "experiments.creating": {
+    "generatorVersion": 2,
+    "source": "Creating…",
+    "translation": "Wird erstellt…"
+  },
+  "experiments.description": {
+    "generatorVersion": 2,
+    "source": "Description",
+    "translation": "Beschreibung"
+  },
+  "experiments.empty": {
+    "generatorVersion": 2,
+    "source": "No experiments have been created yet.",
+    "translation": "Noch keine Experimente erstellt."
+  },
+  "experiments.errors.create": {
+    "generatorVersion": 2,
+    "source": "Unable to create the experiment.",
+    "translation": "Das Experiment konnte nicht erstellt werden."
+  },
+  "experiments.errors.load": {
+    "generatorVersion": 2,
+    "source": "Unable to load experiments. Please try again.",
+    "translation": "Die Experimente konnten nicht geladen werden. Bitte versuchen Sie es erneut."
+  },
+  "experiments.errors.loadShort": {
+    "generatorVersion": 2,
+    "source": "Unable to load experiments.",
+    "translation": "Die Experimente konnten nicht geladen werden."
+  },
+  "experiments.experiment": {
+    "generatorVersion": 2,
+    "source": "Experiment",
+    "translation": "Experiment"
+  },
+  "experiments.loadingPreview": {
+    "generatorVersion": 2,
+    "source": "Loading preview",
+    "translation": "Vorschau wird geladen"
+  },
+  "experiments.name": {
+    "generatorVersion": 2,
+    "source": "Name",
+    "translation": "Name"
+  },
+  "experiments.permissionDenied": {
+    "generatorVersion": 2,
+    "source": "You do not have permission to view experiments.",
+    "translation": "Sie haben keine Berechtigung, die Experimente anzuzeigen."
+  },
+  "experiments.runs": {
+    "generatorVersion": 2,
+    "source": "Runs",
+    "translation": "Läufe"
+  },
+  "experiments.runsCount_one": {
+    "generatorVersion": 2,
+    "source": "{{count}} run",
+    "translation": "{{count}} Lauf"
+  },
+  "experiments.runsCount_other": {
+    "generatorVersion": 2,
+    "source": "{{count}} runs",
+    "translation": "{{count}} Läufe"
+  },
+  "experiments.configsCount_one": {
+    "generatorVersion": 2,
+    "source": "{{count}} config",
+    "translation": "{{count}} Konfiguration"
+  },
+  "experiments.configsCount_other": {
+    "generatorVersion": 2,
+    "source": "{{count}} configs",
+    "translation": "{{count}} Konfigurationen"
+  },
+  "experiments.search": {
+    "generatorVersion": 2,
+    "source": "Search experiments...",
+    "translation": "Experimente suchen..."
+  },
+  "experiments.title": {
+    "generatorVersion": 2,
+    "source": "Experiments",
+    "translation": "Experimente"
+  },
+  "experiments.titleWithProject": {
+    "generatorVersion": 2,
+    "source": "{{project}} experiments",
+    "translation": "{{project}} Experimente"
+  },
+  "configs.add": {
+    "generatorVersion": 2,
+    "source": "Add Config",
+    "translation": "Konfiguration hinzufügen"
+  },
+  "configs.closeDialog": {
+    "generatorVersion": 2,
+    "source": "Close add config dialog",
+    "translation": "Hinzufügen-Konfigurationsdialog schließen"
+  },
+  "configs.config": {
+    "generatorVersion": 2,
+    "source": "Config",
+    "translation": "Konfiguration"
+  },
+  "configs.create": {
+    "generatorVersion": 2,
+    "source": "Create config",
+    "translation": "Konfiguration erstellen"
+  },
+  "configs.created": {
+    "generatorVersion": 2,
+    "source": "Experiment config created successfully.",
+    "translation": "Experimentkonfiguration erfolgreich erstellt."
+  },
+  "configs.creating": {
+    "generatorVersion": 2,
+    "source": "Creating…",
+    "translation": "Erstellen…"
+  },
+  "configs.empty": {
+    "generatorVersion": 2,
+    "source": "No configs have been added to this experiment yet.",
+    "translation": "Bisher wurden noch keine Konfigurationen zu diesem Experiment hinzugefügt."
+  },
+  "configs.errors.create": {
+    "generatorVersion": 2,
+    "source": "Unable to create the experiment config.",
+    "translation": "Die Erstellung der Experimentkonfiguration ist fehlgeschlagen."
+  },
+  "configs.errors.load": {
+    "generatorVersion": 2,
+    "source": "Unable to load experiment configs. Please try again.",
+    "translation": "Das Laden von Experimentkonfigurationen ist fehlgeschlagen. Bitte versuchen Sie es erneut."
+  },
+  "configs.errors.update": {
+    "generatorVersion": 2,
+    "source": "Unable to update the experiment config.",
+    "translation": "Das Aktualisieren der Experimentkonfiguration ist fehlgeschlagen."
+  },
+  "configs.errors.rulesUnavailable": {
+    "generatorVersion": 2,
+    "source": "Unable to validate config because experiment type rules are not available.",
+    "translation": "Konfigurationsvalidierung nicht möglich, da Regeln für den Experimenttyp nicht verfügbar sind."
+  },
+  "configs.errors.mustBeObject": {
+    "generatorVersion": 2,
+    "source": "Config must be a JSON object.",
+    "translation": "Die Konfiguration muss ein JSON-Objekt sein."
+  },
+  "configs.errors.mustBeString": {
+    "generatorVersion": 2,
+    "source": "{{field}} must be a string.",
+    "translation": "{{field}} muss eine Zeichenfolge sein."
+  },
+  "configs.errors.mustMatchRegex": {
+    "generatorVersion": 2,
+    "source": "{{field}} must match regex {{regex}}.",
+    "translation": "{{field}} muss dem regulären Ausdruck {{regex}} entsprechen."
+  },
+  "configs.errors.invalidRegex": {
+    "generatorVersion": 2,
+    "source": "{{field}} has an invalid validation regex: {{regex}}.",
+    "translation": "Der Validierungsreguläre Ausdruck für {{field}} ist ungültig: {{regex}}."
+  },
+  "configs.experimentType": {
+    "generatorVersion": 2,
+    "source": "Experiment Type",
+    "translation": "Experimenttyp"
+  },
+  "configs.experimentTypeLabel": {
+    "generatorVersion": 2,
+    "source": "Experiment type",
+    "translation": "Experimenttyp"
+  },
+  "configs.fixValidation": {
+    "generatorVersion": 2,
+    "source": "Fix config validation before creating this config.",
+    "translation": "Validierung der Konfiguration vor Erstellen beheben."
+  },
+  "configs.loadingTypes": {
+    "generatorVersion": 2,
+    "source": "Loading experiment types…",
+    "translation": "Lade Experimenttypen…"
+  },
+  "configs.name": {
+    "generatorVersion": 2,
+    "source": "Name",
+    "translation": "Name"
+  },
+  "configs.noFormatRestrictions": {
+    "generatorVersion": 2,
+    "source": "No format restrictions configured.",
+    "translation": "Keine Formatbeschränkungen konfiguriert."
+  },
+  "configs.permissionDenied": {
+    "generatorVersion": 2,
+    "source": "You do not have permission to view experiment configs.",
+    "translation": "Sie haben keine Berechtigung, um Experimentkonfigurationen anzuzeigen."
+  },
+  "configs.search": {
+    "generatorVersion": 2,
+    "source": "Search configs...",
+    "translation": "Konfigurationen suchen..."
+  },
+  "configs.selectType": {
+    "generatorVersion": 2,
+    "source": "Select an experiment type",
+    "translation": "Wählen Sie einen Experimenttyp"
+  },
+  "configs.supportedFormats": {
+    "generatorVersion": 2,
+    "source": "Supported formats",
+    "translation": "Unterstützte Formate"
+  },
+  "configs.title": {
+    "generatorVersion": 2,
+    "source": "Experiment configs",
+    "translation": "Experiment-Konfigurationen"
+  },
+  "configs.updated": {
+    "generatorVersion": 2,
+    "source": "Experiment config updated successfully.",
+    "translation": "Experiment-Konfiguration erfolgreich aktualisiert."
+  },
+  "runs.add": {
+    "generatorVersion": 2,
+    "source": "Add Experiment Run",
+    "translation": "Experimentlauf hinzufügen"
+  },
+  "runs.artifacts": {
+    "generatorVersion": 2,
+    "source": "Artifacts",
+    "translation": "Artefakte"
+  },
+  "runs.availableConfigs": {
+    "generatorVersion": 2,
+    "source": "Available configs",
+    "translation": "Verfügbare Konfigurationen"
+  },
+  "runs.availableDatasets": {
+    "generatorVersion": 2,
+    "source": "Available datasets",
+    "translation": "Verfügbare Datensätze"
+  },
+  "runs.back": {
+    "generatorVersion": 2,
+    "source": "Back to runs",
+    "translation": "Zurück zu Läufen"
+  },
+  "runs.boardLabel": {
+    "generatorVersion": 2,
+    "source": "Pipeline builder board",
+    "translation": "Pipeline-Baukasten-Board"
+  },
+  "runs.columns.datasets": {
+    "generatorVersion": 2,
+    "source": "Datasets",
+    "translation": "Datensätze"
+  },
+  "runs.columns.duration": {
+    "generatorVersion": 2,
+    "source": "Duration",
+    "translation": "Dauer"
+  },
+  "runs.columns.name": {
+    "generatorVersion": 2,
+    "source": "Name",
+    "translation": "Name"
+  },
+  "runs.columns.progress": {
+    "generatorVersion": 2,
+    "source": "Progress",
+    "translation": "Fortschritt"
+  },
+  "runs.columns.status": {
+    "generatorVersion": 2,
+    "source": "Status",
+    "translation": "Status"
+  },
+  "runs.create": {
+    "generatorVersion": 2,
+    "source": "Create Experiment Run",
+    "translation": "Experimentlauf erstellen"
+  },
+  "runs.created": {
+    "generatorVersion": 2,
+    "source": "Experiment run created successfully.",
+    "translation": "Experimentlauf erfolgreich erstellt."
+  },
+  "runs.creating": {
+    "generatorVersion": 2,
+    "source": "Creating run…",
+    "translation": "Erstelle Lauf…"
+  },
+  "runs.dragDataset": {
+    "generatorVersion": 2,
+    "source": "Drag this dataset onto a compatible input port",
+    "translation": "Ziehen Sie diesen Datensatz auf einen kompatiblen Eingangsanschluss"
+  },
+  "runs.dragHint": {
+    "generatorVersion": 2,
+    "source": "Drag a dataset onto an input box, or click an empty input box to assign it.",
+    "translation": "Ziehen Sie einen Datensatz in ein Eingabefeld oder klicken Sie auf ein leeres Eingabefeld, um es zuzuweisen."
+  },
+  "runs.empty": {
+    "generatorVersion": 2,
+    "source": "No experiment runs match the current filters.",
+    "translation": "Keine Experimentläufe entsprechen den aktuellen Filtern."
+  },
+  "runs.errors.configDetails": {
+    "generatorVersion": 2,
+    "source": "Unable to load the experiment config details.",
+    "translation": "Die Details der Experiment-Konfiguration konnten nicht geladen werden."
+  },
+  "runs.errors.configMissing": {
+    "generatorVersion": 2,
+    "source": "The selected experiment config was not returned.",
+    "translation": "Die ausgewählte Experiment-Konfiguration wurde nicht zurückgegeben."
+  },
+  "runs.errors.create": {
+    "generatorVersion": 2,
+    "source": "Unable to create the experiment run.",
+    "translation": "Der Experimentlauf konnte nicht erstellt werden."
+  },
+  "runs.errors.load": {
+    "generatorVersion": 2,
+    "source": "Unable to load experiment runs.",
+    "translation": "Experimentläufe konnten nicht geladen werden."
+  },
+  "runs.errors.loadTitle": {
+    "generatorVersion": 2,
+    "source": "Unable to load experiment runs",
+    "translation": "Experimentläufe konnten nicht geladen werden"
+  },
+  "runs.errors.pipelineInvalid": {
+    "generatorVersion": 2,
+    "source": "This pipeline is not valid.",
+    "translation": "Diese Pipeline ist ungültig."
+  },
+  "runs.filterByStatus": {
+    "generatorVersion": 2,
+    "source": "Filter experiment runs by status",
+    "translation": "Filtern Sie Experimentläufe nach Status"
+  },
+  "runs.findDatasets": {
+    "generatorVersion": 2,
+    "source": "Find datasets",
+    "translation": "Datensätze finden"
+  },
+  "runs.picker.closeConfig": {
+    "generatorVersion": 2,
+    "source": "Close experiment config picker",
+    "translation": "Experiment-Konfigurationsauswahl schließen"
+  },
+  "runs.picker.closeDataset": {
+    "generatorVersion": 2,
+    "source": "Close dataset picker",
+    "translation": "Datensatz-Auswahl schließen"
+  },
+  "runs.picker.completedDescription": {
+    "generatorVersion": 2,
+    "source": "Select a completed dataset version.",
+    "translation": "Wählen Sie eine abgeschlossene Datensatzversion."
+  },
+  "runs.picker.configDescription": {
+    "generatorVersion": 2,
+    "source": "Select a config for {{experimentType}}.",
+    "translation": "Wählen Sie eine Konfiguration für {{experimentType}}."
+  },
+  "runs.picker.configsEmpty": {
+    "generatorVersion": 2,
+    "source": "No configs were found for this experiment type.",
+    "translation": "Für diesen Experimenttyp wurden keine Konfigurationen gefunden."
+  },
+  "runs.picker.configsTitle": {
+    "generatorVersion": 2,
+    "source": "Experiment Configs",
+    "translation": "Experiment-Konfigurationen"
+  },
+  "runs.picker.datasetDescription": {
+    "generatorVersion": 2,
+    "source": "Select completed dataset versions, then bind them to config input ports on the board.",
+    "translation": "Wählen Sie abgeschlossene Datensatzversionen und binden Sie diese an Eingangsports der Board-Konfiguration."
+  },
+  "runs.picker.datasetsDescription": {
+    "generatorVersion": 2,
+    "source": "Open a folder to inspect its completed dataset versions.",
+    "translation": "Öffnen Sie einen Ordner, um seine abgeschlossenen Datensatzversionen zu überprüfen."
+  },
+  "runs.picker.datasetsEmpty": {
+    "generatorVersion": 2,
+    "source": "No completed versions are available in this dataset folder.",
+    "translation": "In diesem Datenordner sind keine abgeschlossenen Versionen verfügbar."
+  },
+  "runs.picker.done": {
+    "generatorVersion": 2,
+    "source": "Done",
+    "translation": "Fertig"
+  },
+  "runs.picker.loadingConfigDetails": {
+    "generatorVersion": 2,
+    "source": "Loading config inputs and outputs…",
+    "translation": "Lade Konfigurationseingaben und -ausgaben…"
+  },
+  "runs.picker.searchConfigs": {
+    "generatorVersion": 2,
+    "source": "Search available configs...",
+    "translation": "Verfügbare Konfigurationen durchsuchen..."
+  },
+  "runs.picker.searchVersions": {
+    "generatorVersion": 2,
+    "source": "Search for completed dataset versions...",
+    "translation": "Abgeschlossene Datensatzversionen durchsuchen..."
+  },
+  "runs.picker.selected_one": {
+    "generatorVersion": 2,
+    "source": "{{count}} selected",
+    "translation": "{{count}} ausgewählt"
+  },
+  "runs.picker.selected_other": {
+    "generatorVersion": 2,
+    "source": "{{count}} selected",
+    "translation": "{{count}} ausgewählt"
+  },
+  "runs.picker.title": {
+    "generatorVersion": 2,
+    "source": "Find Dataset",
+    "translation": "Datensatz finden"
+  },
+  "runs.namePlaceholder": {
+    "generatorVersion": 2,
+    "source": "Enter experiment run name",
+    "translation": "Geben Sie den Namen des Experimentlaufs ein."
+  },
+  "runs.noAvailableConfigs": {
+    "generatorVersion": 2,
+    "source": "All selected configs are on the board.",
+    "translation": "Alle ausgewählten Konfigurationen befinden sich bereits auf dem Board."
+  },
+  "runs.noDatasetsSelected": {
+    "generatorVersion": 2,
+    "source": "No dataset versions selected yet.",
+    "translation": "Noch keine Datensatzversionen ausgewählt."
+  },
+  "runs.permissionDenied": {
+    "generatorVersion": 2,
+    "source": "You do not have permission to view experiment runs.",
+    "translation": "Sie haben nicht die Berechtigung, Experimentläufe anzuzeigen."
+  },
+  "runs.remove": {
+    "generatorVersion": 2,
+    "source": "Remove",
+    "translation": "Entfernen"
+  },
+  "runs.removeDataset": {
+    "generatorVersion": 2,
+    "source": "Remove {{file}}",
+    "translation": "{{file}} entfernen"
+  },
+  "runs.search": {
+    "generatorVersion": 2,
+    "source": "Search runs by name...",
+    "translation": "Experimentläufe nach Name suchen..."
+  },
+  "runs.searchConfigs": {
+    "generatorVersion": 2,
+    "source": "Search configs",
+    "translation": "Konfigurationen suchen"
+  },
+  "runs.searchConfigsDescription": {
+    "generatorVersion": 2,
+    "source": "Search configs and select rows from the popup.",
+    "translation": "Suche Konfigurationen und wählen Sie Zeilen aus dem Popupfenster."
+  },
+  "runs.searchConfigsTitle": {
+    "generatorVersion": 2,
+    "source": "Search for experiment configs",
+    "translation": "Nach Experiment-Konfigurationen suchen"
+  },
+  "runs.searchLabel": {
+    "generatorVersion": 2,
+    "source": "Search experiment runs",
+    "translation": "Experimentläufe suchen"
+  },
+  "runs.status.failed": {
+    "generatorVersion": 2,
+    "source": "Failed",
+    "translation": "Fehlgeschlagen"
+  },
+  "runs.status.pending": {
+    "generatorVersion": 2,
+    "source": "Pending",
+    "translation": "Ausstehend"
+  },
+  "runs.status.running": {
+    "generatorVersion": 2,
+    "source": "Running",
+    "translation": "Läuft"
+  },
+  "runs.status.succeeded": {
+    "generatorVersion": 2,
+    "source": "Succeeded",
+    "translation": "Erfolgreich"
+  },
+  "runs.title": {
+    "generatorVersion": 2,
+    "source": "Experiment runs",
+    "translation": "Experimentläufe"
+  },
+  "runs.details.artifacts": {
+    "generatorVersion": 2,
+    "source": "Artifacts",
+    "translation": "Artefakte"
+  },
+  "runs.details.experiment": {
+    "generatorVersion": 2,
+    "source": "Experiment",
+    "translation": "Experiment"
+  },
+  "runs.details.project": {
+    "generatorVersion": 2,
+    "source": "Project",
+    "translation": "Projekt"
+  },
+  "runs.details.status": {
+    "generatorVersion": 2,
+    "source": "Status",
+    "translation": "Status"
+  },
+  "runs.steps.experiment": {
+    "generatorVersion": 2,
+    "source": "Experiment",
+    "translation": "Experiment"
+  },
+  "runs.artifactList.actions": {
+    "generatorVersion": 2,
+    "source": "Actions",
+    "translation": "Aktionen"
+  },
+  "runs.artifactList.name": {
+    "generatorVersion": 2,
+    "source": "Name",
+    "translation": "Name"
+  },
+  "runs.logList.experimentType": {
+    "generatorVersion": 2,
+    "source": "Experiment type",
+    "translation": "Experimenttyp"
+  },
+  "users.creating": {
+    "generatorVersion": 2,
+    "source": "Creating…",
+    "translation": "Erstellen…"
+  },
+  "users.name": {
+    "generatorVersion": 2,
+    "source": "Name",
+    "translation": "Name"
+  },
+  "users.title": {
+    "generatorVersion": 2,
+    "source": "Users",
+    "translation": "Benutzer"
+  },
+  "datasets.breadcrumbVersions": {
+    "generatorVersion": 2,
+    "source": "Dataset versions",
+    "translation": "Datensatzversionen"
+  },
+  "datasets.columns.select": {
+    "generatorVersion": 2,
+    "source": "Select",
+    "translation": "Auswählen"
+  },
+  "datasets.projectNotAvailable": {
+    "generatorVersion": 2,
+    "source": "This project is not available.",
+    "translation": "Dieses Projekt ist nicht verfügbar."
+  },
+  "datasets.select": {
+    "generatorVersion": 2,
+    "source": "Select",
+    "translation": "Auswählen"
+  },
+  "datasets.title": {
+    "generatorVersion": 2,
+    "source": "Dataset folders",
+    "translation": "Ordner für Datensätze"
+  },
+  "datasets.titleShort": {
+    "generatorVersion": 2,
+    "source": "Datasets",
+    "translation": "Datensätze"
+  },
+  "datasets.versions_one": {
+    "generatorVersion": 2,
+    "source": "{{count}} version",
+    "translation": "{{count}} Version"
+  },
+  "datasets.versions_other": {
+    "generatorVersion": 2,
+    "source": "{{count}} versions",
+    "translation": "{{count}} Versionen"
+  },
+  "runs.details.completedAt": {
+    "generatorVersion": 2,
+    "source": "Completed at",
+    "translation": "Abgeschlossen am"
+  },
+  "runs.details.copyId": {
+    "generatorVersion": 2,
+    "source": "Copy run ID",
+    "translation": "Lauf-ID kopieren"
+  },
+  "runs.details.copied": {
+    "generatorVersion": 2,
+    "source": "Copied",
+    "translation": "Kopiert"
+  },
+  "runs.details.datasetInputs": {
+    "generatorVersion": 2,
+    "source": "Dataset inputs",
+    "translation": "Datensatz-Eingaben"
+  },
+  "runs.details.inputCount_one": {
+    "generatorVersion": 2,
+    "source": "{{count}} input",
+    "translation": "{{count}} Eingabe"
+  },
+  "runs.details.inputCount_other": {
+    "generatorVersion": 2,
+    "source": "{{count}} inputs",
+    "translation": "{{count}} Eingaben"
+  },
+  "runs.details.loading": {
+    "generatorVersion": 2,
+    "source": "Loading experiment run",
+    "translation": "Lade Experiment-Lauf"
+  },
+  "runs.details.logs": {
+    "generatorVersion": 2,
+    "source": "Logs",
+    "translation": "Protokolle"
+  },
+  "runs.details.more": {
+    "generatorVersion": 2,
+    "source": "+{{count}} more",
+    "translation": "+{{count}} weitere"
+  },
+  "runs.details.noArtifacts": {
+    "generatorVersion": 2,
+    "source": "No artifacts",
+    "translation": "Keine Artefakte vorhanden"
+  },
+  "runs.details.noDatasets": {
+    "generatorVersion": 2,
+    "source": "No datasets",
+    "translation": "Keine Datensätze vorhanden"
+  },
+  "runs.details.notAvailable": {
+    "generatorVersion": 2,
+    "source": "This experiment run is not available.",
+    "translation": "Dieser Experimentlauf ist nicht verfügbar."
+  },
+  "runs.details.notFoundTitle": {
+    "generatorVersion": 2,
+    "source": "Experiment run not found",
+    "translation": "Experimentlauf nicht gefunden"
+  },
+  "runs.details.outputs": {
+    "generatorVersion": 2,
+    "source": "Outputs",
+    "translation": "Ausgaben"
+  },
+  "runs.details.pipelineFlow": {
+    "generatorVersion": 2,
+    "source": "Pipeline flow",
+    "translation": "Pipeline-Fluss"
+  },
+  "runs.details.runHeading": {
+    "generatorVersion": 2,
+    "source": "{{name}} Run",
+    "translation": "{{name}} Lauf"
+  },
+  "runs.details.runId": {
+    "generatorVersion": 2,
+    "source": "Run ID",
+    "translation": "Lauf-ID"
+  },
+  "runs.details.runInformation": {
+    "generatorVersion": 2,
+    "source": "Run information",
+    "translation": "Laufinformationen"
+  },
+  "runs.details.runLabel": {
+    "generatorVersion": 2,
+    "source": "Run #{{id}}",
+    "translation": "Lauf #{{id}}"
+  },
+  "runs.details.startedAt": {
+    "generatorVersion": 2,
+    "source": "Started at",
+    "translation": "Gestartet am"
+  },
+  "runs.details.step": {
+    "generatorVersion": 2,
+    "source": "Step {{count}}",
+    "translation": "Schritt {{count}}"
+  },
+  "runs.details.steps": {
+    "generatorVersion": 2,
+    "source": "Steps",
+    "translation": "Schritte"
+  },
+  "runs.details.stepsCompleted": {
+    "generatorVersion": 2,
+    "source": "Steps completed",
+    "translation": "Abgeschlossene Schritte"
+  },
+  "runs.details.title": {
+    "generatorVersion": 2,
+    "source": "Experiment run",
+    "translation": "Experimentlauf"
+  },
+  "runs.details.titleWithName": {
+    "generatorVersion": 2,
+    "source": "{{name}} run",
+    "translation": "{{name}} Lauf"
+  },
+  "runs.details.triggeredBy": {
+    "generatorVersion": 2,
+    "source": "Triggered by",
+    "translation": "Ausgelöst von"
+  },
+  "runs.details.unavailableTitle": {
+    "generatorVersion": 2,
+    "source": "Experiment run unavailable",
+    "translation": "Experimentlauf nicht verfügbar"
+  },
+  "runs.steps.configuration": {
+    "generatorVersion": 2,
+    "source": "Configuration",
+    "translation": "Konfiguration"
+  },
+  "runs.steps.configurationUnavailable": {
+    "generatorVersion": 2,
+    "source": "Configuration is not available.",
+    "translation": "Die Konfiguration ist nicht verfügbar."
+  },
+  "runs.steps.loadConfigurationError": {
+    "generatorVersion": 2,
+    "source": "Unable to load this configuration.",
+    "translation": "Diese Konfiguration kann nicht geladen werden."
+  },
+  "runs.steps.none": {
+    "generatorVersion": 2,
+    "source": "No steps are available for this run.",
+    "translation": "Für diesen Lauf sind keine Schritte verfügbar."
+  },
+  "runs.steps.noInputs": {
+    "generatorVersion": 2,
+    "source": "No resolved inputs.",
+    "translation": "Keine aufgelösten Eingaben vorhanden."
+  },
+  "runs.steps.noOutputs": {
+    "generatorVersion": 2,
+    "source": "No produced outputs.",
+    "translation": "Keine erzeugten Ausgaben vorhanden."
+  },
+  "runs.steps.producedOutputs": {
+    "generatorVersion": 2,
+    "source": "Produced outputs",
+    "translation": "Erzeugte Ausgaben"
+  },
+  "runs.steps.resolvedInputs": {
+    "generatorVersion": 2,
+    "source": "Resolved inputs",
+    "translation": "Aufgelöste Eingaben"
+  },
+  "runs.artifactList.all": {
+    "generatorVersion": 2,
+    "source": "All",
+    "translation": "Alle"
+  },
+  "runs.artifactList.download": {
+    "generatorVersion": 2,
+    "source": "Download {{name}}",
+    "translation": "{{name}} herunterladen"
+  },
+  "runs.artifactList.downstreamPolicy": {
+    "generatorVersion": 2,
+    "source": "Downstream policy",
+    "translation": "Nachfolge-Richtlinie"
+  },
+  "runs.artifactList.errors.download": {
+    "generatorVersion": 2,
+    "source": "Unable to download this artifact.",
+    "translation": "Dieses Artefakt kann nicht heruntergeladen werden."
+  },
+  "runs.artifactList.errors.load": {
+    "generatorVersion": 2,
+    "source": "Unable to load artifacts for this run.",
+    "translation": "Artefakte für diesen Lauf können nicht geladen werden."
+  },
+  "runs.artifactList.format": {
+    "generatorVersion": 2,
+    "source": "Format",
+    "translation": "Format"
+  },
+  "runs.artifactList.intermediate": {
+    "generatorVersion": 2,
+    "source": "Intermediate",
+    "translation": "Zwischenergebnisse"
+  },
+  "runs.artifactList.intermediateOutputs": {
+    "generatorVersion": 2,
+    "source": "Intermediate outputs",
+    "translation": "Zwischenausgaben"
+  },
+  "runs.artifactList.noMatches": {
+    "generatorVersion": 2,
+    "source": "No artifacts match the current search or filter.",
+    "translation": "Keine Artefakte entsprechen der aktuellen Suche oder dem Filter."
+  },
+  "runs.artifactList.none": {
+    "generatorVersion": 2,
+    "source": "No artifacts are available for this run.",
+    "translation": "Für diesen Lauf sind keine Artefakte verfügbar."
+  },
+  "runs.artifactList.primary": {
+    "generatorVersion": 2,
+    "source": "Primary",
+    "translation": "Primär"
+  },
+  "runs.artifactList.primaryOutputs": {
+    "generatorVersion": 2,
+    "source": "Primary outputs",
+    "translation": "Hauptausgaben"
+  },
+  "runs.artifactList.producedBy": {
+    "generatorVersion": 2,
+    "source": "Produced by",
+    "translation": "Erzeugt von"
+  },
+  "runs.artifactList.refresh": {
+    "generatorVersion": 2,
+    "source": "Refresh artifacts",
+    "translation": "Artefaktliste aktualisieren"
+  },
+  "runs.artifactList.search": {
+    "generatorVersion": 2,
+    "source": "Search artifacts by name...",
+    "translation": "Artefakte nach Name suchen..."
+  },
+  "runs.artifactList.searchLabel": {
+    "generatorVersion": 2,
+    "source": "Search artifacts by name",
+    "translation": "Artefakte nach Namen suchen"
+  },
+  "runs.artifactList.showing": {
+    "generatorVersion": 2,
+    "source": "Showing {{visible}} of {{total}} artifacts",
+    "translation": "Anzeige {{visible}} von {{total}} Artefakten"
+  },
+  "runs.artifactList.type": {
+    "generatorVersion": 2,
+    "source": "Type",
+    "translation": "Typ"
+  },
+  "runs.logList.all": {
+    "generatorVersion": 2,
+    "source": "All",
+    "translation": "Alle"
+  },
+  "runs.logList.download": {
+    "generatorVersion": 2,
+    "source": "Download logs",
+    "translation": "Protokolle herunterladen"
+  },
+  "runs.logList.error": {
+    "generatorVersion": 2,
+    "source": "Error",
+    "translation": "Fehler"
+  },
+  "runs.logList.filterLevel": {
+    "generatorVersion": 2,
+    "source": "Filter logs by level",
+    "translation": "Protokolle nach Level filtern"
+  },
+  "runs.logList.info": {
+    "generatorVersion": 2,
+    "source": "Info",
+    "translation": "Info"
+  },
+  "runs.logList.level": {
+    "generatorVersion": 2,
+    "source": "Level",
+    "translation": "Level"
+  },
+  "runs.logList.loading": {
+    "generatorVersion": 2,
+    "source": "Loading experiment run logs",
+    "translation": "Lade Protokolle des Experimentlaufs"
+  },
+  "runs.logList.matches_one": {
+    "generatorVersion": 2,
+    "source": "{{count}} match on this page",
+    "translation": "{{count}} Treffer auf dieser Seite"
+  },
+  "runs.logList.matches_other": {
+    "generatorVersion": 2,
+    "source": "{{count}} matches on this page",
+    "translation": "{{count}} Treffer auf dieser Seite"
+  },
+  "runs.logList.message": {
+    "generatorVersion": 2,
+    "source": "Message",
+    "translation": "Nachricht"
+  },
+  "runs.logList.nextPage": {
+    "generatorVersion": 2,
+    "source": "Next log page",
+    "translation": "Nächste Log-Seite"
+  },
+  "runs.logList.noMatches": {
+    "generatorVersion": 2,
+    "source": "No logs on this page match the current search or level.",
+    "translation": "Keine Protokolle auf dieser Seite entsprechen der aktuellen Suche oder dem Level."
+  },
+  "runs.logList.none": {
+    "generatorVersion": 2,
+    "source": "No logs are available for this run.",
+    "translation": "Für diesen Lauf sind keine Protokolle verfügbar."
+  },
+  "runs.logList.preparing": {
+    "generatorVersion": 2,
+    "source": "Preparing...",
+    "translation": "Vorbereitung..."
+  },
+  "runs.logList.previousPage": {
+    "generatorVersion": 2,
+    "source": "Previous log page",
+    "translation": "Vorherige Log-Seite"
+  },
+  "runs.logList.refresh": {
+    "generatorVersion": 2,
+    "source": "Refresh logs",
+    "translation": "Protokolle aktualisieren"
+  },
+  "runs.logList.search": {
+    "generatorVersion": 2,
+    "source": "Search logs on this page...",
+    "translation": "Suche nach Protokollen auf dieser Seite..."
+  },
+  "runs.logList.searchLabel": {
+    "generatorVersion": 2,
+    "source": "Search logs on this page",
+    "translation": "Nachsuche nach Protokollen auf dieser Seite"
+  },
+  "runs.logList.sequence": {
+    "generatorVersion": 2,
+    "source": "Seq.",
+    "translation": "Seq."
+  },
+  "runs.logList.showing": {
+    "generatorVersion": 2,
+    "source": "Showing {{start}}–{{end}} of {{total}} logs",
+    "translation": "Zeige {{start}}–{{end}} von {{total}} Protokolle"
+  },
+  "runs.logList.timestamp": {
+    "generatorVersion": 2,
+    "source": "Timestamp",
+    "translation": "Zeitstempel"
+  },
+  "runs.notifications.failed": {
+    "generatorVersion": 2,
+    "source": "Experiment run {{id}} failed.",
+    "translation": "Experimentlauf {{id}} fehlgeschlagen."
+  },
+  "runs.notifications.succeeded": {
+    "generatorVersion": 2,
+    "source": "Experiment run {{id}} succeeded.",
+    "translation": "Experimentlauf {{id}} erfolgreich."
+  },
+  "runs.logErrors.download": {
+    "generatorVersion": 2,
+    "source": "Unable to download logs for this run.",
+    "translation": "Protokolle für diesen Lauf können nicht heruntergeladen werden."
+  },
+  "runs.logErrors.load": {
+    "generatorVersion": 2,
+    "source": "Unable to load logs for this run.",
+    "translation": "Protokolle für diesen Lauf können nicht geladen werden."
+  },
+  "runs.unavailableTitle": {
+    "generatorVersion": 2,
+    "source": "Experiment runs are unavailable",
+    "translation": "Experimentläufe sind nicht verfügbar"
+  },
+  "runs.usedCount": {
+    "generatorVersion": 2,
+    "source": "used {{count}}×",
+    "translation": "benutzt {{count}}×"
+  },
+  "runs.moveToBoard": {
+    "generatorVersion": 2,
+    "source": "Move to board",
+    "translation": "Zu Board verschieben"
+  },
+  "runs.pipeline.attention": {
+    "generatorVersion": 2,
+    "source": "Pipeline needs attention",
+    "translation": "Pipeline benötigt Aufmerksamkeit"
+  },
+  "runs.pipeline.bindDataset": {
+    "generatorVersion": 2,
+    "source": "Bind a selected dataset",
+    "translation": "Datensatz auswählen und binden"
+  },
+  "runs.pipeline.datasetVersion": {
+    "generatorVersion": 2,
+    "source": "Dataset version",
+    "translation": "Datensatzversion"
+  },
+  "runs.pipeline.drawingFrom": {
+    "generatorVersion": 2,
+    "source": "Drawing from {{output}}",
+    "translation": "Ziehen von {{output}}"
+  },
+  "runs.pipeline.emptyBoard": {
+    "generatorVersion": 2,
+    "source": "Move configs from Available configs to begin building the workflow. Drag cards to arrange them, then connect an output box to a compatible input box.",
+    "translation": "Verschieben Sie Konfigurationen aus 'Verfügbare Konfigurationen', um den Workflow zu starten. Ziehen Sie Karten, um sie anzuordnen und verbinden Sie eine Ausgabekarte mit einer kompatiblen Eingabekarte."
+  },
+  "runs.pipeline.errors.alreadyBound": {
+    "generatorVersion": 2,
+    "source": "{{port}} already has a binding.",
+    "translation": "{{port}} ist bereits gebunden."
+  },
+  "runs.pipeline.errors.bothConfigsRequired": {
+    "generatorVersion": 2,
+    "source": "Both configs must be on the board.",
+    "translation": "Beide Konfigurationen müssen auf dem Board vorhanden sein."
+  },
+  "runs.pipeline.errors.configBindings": {
+    "generatorVersion": 2,
+    "source": "{{config}} has missing or incompatible input bindings.",
+    "translation": "{{config}} weist fehlende oder inkompatible Eingabebindungen auf."
+  },
+  "runs.pipeline.errors.configManifestAmbiguous": {
+    "generatorVersion": 2,
+    "source": "{{config}} matches more than one manifest.",
+    "translation": "{{config}} passt zu mehr als einem Manifest."
+  },
+  "runs.pipeline.errors.connectionCycle": {
+    "generatorVersion": 2,
+    "source": "This connection would create a cycle.",
+    "translation": "Diese Verbindung würde einen Zyklus erzeugen."
+  },
+  "runs.pipeline.errors.connectionExists": {
+    "generatorVersion": 2,
+    "source": "This connection already exists.",
+    "translation": "Diese Verbindung existiert bereits."
+  },
+  "runs.pipeline.errors.datasetFirstStep": {
+    "generatorVersion": 2,
+    "source": "The backend currently allows datasets only on the first pipeline step.",
+    "translation": "Der Backend erlaubt derzeit Datensätze nur im ersten Pipeline-Schritt."
+  },
+  "runs.pipeline.errors.datasetsFirstStep": {
+    "generatorVersion": 2,
+    "source": "Datasets can currently be bound only to the first step.",
+    "translation": "Datensätze können derzeit ausschließlich dem ersten Schritt zugeordnet werden."
+  },
+  "runs.pipeline.errors.inputNoDatasets": {
+    "generatorVersion": 2,
+    "source": "{{port}} does not accept datasets.",
+    "translation": "{{port}} akzeptiert keine Datensätze."
+  },
+  "runs.pipeline.errors.inputNoFormat": {
+    "generatorVersion": 2,
+    "source": "{{port}} does not accept {{format}}.",
+    "translation": "{{port}} akzeptiert kein Format {{format}}."
+  },
+  "runs.pipeline.errors.inputUnavailable": {
+    "generatorVersion": 2,
+    "source": "The selected input port is not available.",
+    "translation": "Der ausgewählte Eingangs-Port ist nicht verfügbar."
+  },
+  "runs.pipeline.errors.incompatibleDataKind": {
+    "generatorVersion": 2,
+    "source": "{{output}} produces {{actual}}, but {{input}} expects {{expected}}.",
+    "translation": "{{output}} erzeugt {{actual}}, aber {{input}} erwartet {{expected}}."
+  },
+  "runs.pipeline.errors.incompatibleFormat": {
+    "generatorVersion": 2,
+    "source": "{{output}} has an incompatible format for {{input}}.",
+    "translation": "Das Format von {{output}} ist für {{input}} nicht kompatibel."
+  },
+  "runs.pipeline.errors.mustAddConfig": {
+    "generatorVersion": 2,
+    "source": "Add at least one config to the board.",
+    "translation": "Fügen Sie mindestens eine Konfiguration zum Board hinzu."
+  },
+  "runs.pipeline.errors.notConnectable": {
+    "generatorVersion": 2,
+    "source": "{{output}} is not a connectable output for the resolved manifest.",
+    "translation": "{{output}} ist kein verbindlicher Ausgang für das aufgelöste Manifest."
+  },
+  "runs.pipeline.errors.pipelineCycle": {
+    "generatorVersion": 2,
+    "source": "The pipeline contains a cycle.",
+    "translation": "Die Pipeline enthält einen Zyklus."
+  },
+  "runs.pipeline.errors.portUnavailable": {
+    "generatorVersion": 2,
+    "source": "The selected port is not available.",
+    "translation": "Der ausgewählte Port steht nicht zur Verfügung."
+  },
+  "runs.pipeline.errors.selectDatasetFirst": {
+    "generatorVersion": 2,
+    "source": "Select this dataset version before binding it.",
+    "translation": "Wählen Sie diese Datensatzversion aus, bevor Sie sie binden."
+  },
+  "runs.pipeline.errors.selfConnection": {
+    "generatorVersion": 2,
+    "source": "A config cannot connect to itself.",
+    "translation": "Eine Konfiguration kann sich selbst nicht verbinden."
+  },
+  "runs.pipeline.errors.terminalOutput": {
+    "generatorVersion": 2,
+    "source": "{{output}} is a terminal output.",
+    "translation": "{{output}} ist ein terminaler Ausgang."
+  },
+  "runs.pipeline.passed": {
+    "generatorVersion": 2,
+    "source": "Pipeline validation passed.",
+    "translation": "Validierung der Pipeline bestanden."
+  },
+  "runs.pipeline.inputs": {
+    "generatorVersion": 2,
+    "source": "Inputs",
+    "translation": "Eingaben"
+  },
+  "runs.pipeline.outputs": {
+    "generatorVersion": 2,
+    "source": "Outputs",
+    "translation": "Ausgaben"
+  },
+  "runs.pipeline.removeConfig": {
+    "generatorVersion": 2,
+    "source": "Remove {{config}} from board",
+    "translation": "Entfernen Sie {{config}} vom Board"
+  },
+  "runs.pipeline.removeConnection": {
+    "generatorVersion": 2,
+    "source": "Double-click to remove connection",
+    "translation": "Doppelklicken, um die Verbindung zu entfernen"
+  },
+  "runs.pipeline.removeDataset": {
+    "generatorVersion": 2,
+    "source": "Remove dataset from {{input}}",
+    "translation": "Datensatz von {{input}} entfernen"
+  },
+  "runs.pipeline.selectDatasetsFirst": {
+    "generatorVersion": 2,
+    "source": "Select dataset versions from the sidebar first.",
+    "translation": "Wählen Sie zuerst Datensatzversionen aus der Seitenleiste."
+  },
+  "runs.pipeline.terminal": {
+    "generatorVersion": 2,
+    "source": "Terminal",
+    "translation": "Terminal"
+  },
+  "runs.pipeline.inputAria": {
+    "generatorVersion": 2,
+    "source": "{{config}} input {{input}}",
+    "translation": "{{config}} Eingabe {{input}}"
+  },
+  "runs.pipeline.outputAria": {
+    "generatorVersion": 2,
+    "source": "{{config}} output {{output}}",
+    "translation": "{{config}} Ausgabe {{output}}"
+  },
+  "runs.pipeline.terminalOutputAria": {
+    "generatorVersion": 2,
+    "source": "{{config}} output {{output}}, terminal",
+    "translation": "{{config}} Ausgabe {{output}}, Terminal"
+  },
+  "runs.pipeline.validating": {
+    "generatorVersion": 2,
+    "source": "Validating this port-level pipeline…",
+    "translation": "Dieser Pipeline auf Portebene wird validiert…"
+  },
+  "users.add": {
+    "generatorVersion": 2,
+    "source": "Add User",
+    "translation": "Benutzer hinzufügen"
+  },
+  "users.closeDialog": {
+    "generatorVersion": 2,
+    "source": "Close add user dialog",
+    "translation": "Hinzufügen-Benutzer-Dialog schließen"
+  },
+  "users.create": {
+    "generatorVersion": 2,
+    "source": "Create user",
+    "translation": "Benutzer erstellen"
+  },
+  "users.created": {
+    "generatorVersion": 2,
+    "source": "User created successfully.",
+    "translation": "Benutzer erfolgreich erstellt."
+  },
+  "users.dialogDescription": {
+    "generatorVersion": 2,
+    "source": "Create an account for this workspace.",
+    "translation": "Ein Konto für diesen Arbeitsbereich erstellen."
+  },
+  "users.email": {
+    "generatorVersion": 2,
+    "source": "Email",
+    "translation": "E-Mail"
+  },
+  "users.emailAddress": {
+    "generatorVersion": 2,
+    "source": "Email address",
+    "translation": "E-Mail-Adresse"
+  },
+  "users.empty": {
+    "generatorVersion": 2,
+    "source": "No users have been added to this workspace yet.",
+    "translation": "Noch keine Benutzer wurden diesem Arbeitsbereich hinzugefügt."
+  },
+  "users.errors.create": {
+    "generatorVersion": 2,
+    "source": "Unable to create user. Please try again.",
+    "translation": "Benutzer konnte nicht erstellt werden. Bitte versuchen Sie es erneut."
+  },
+  "users.errors.load": {
+    "generatorVersion": 2,
+    "source": "Unable to load users. Please try again.",
+    "translation": "Benutzer konnten nicht geladen werden. Bitte versuchen Sie es erneut."
+  },
+  "users.firstName": {
+    "generatorVersion": 2,
+    "source": "First name",
+    "translation": "Vorname"
+  },
+  "users.lastName": {
+    "generatorVersion": 2,
+    "source": "Last name",
+    "translation": "Nachname"
+  },
+  "users.permissionDenied": {
+    "generatorVersion": 2,
+    "source": "You do not have permission to view users.",
+    "translation": "Sie haben keine Berechtigung, Benutzer anzuzeigen."
+  },
+  "users.role": {
+    "generatorVersion": 2,
+    "source": "Role",
+    "translation": "Rolle"
+  },
+  "users.roles.researcher": {
+    "generatorVersion": 2,
+    "source": "Researcher",
+    "translation": "Forscher"
+  },
+  "users.roles.workspaceAdmin": {
+    "generatorVersion": 2,
+    "source": "Workspace Admin",
+    "translation": "Arbeitsbereichsadministrator"
+  },
+  "users.search": {
+    "generatorVersion": 2,
+    "source": "Search users...",
+    "translation": "Benutzer suchen..."
+  },
+  "users.userRole": {
+    "generatorVersion": 2,
+    "source": "User role",
+    "translation": "Benutzerrolle"
+  },
+  "datasets.add": {
+    "generatorVersion": 2,
+    "source": "Add Dataset",
+    "translation": "Datensatz hinzufügen"
+  },
+  "datasets.closeAddDialog": {
+    "generatorVersion": 2,
+    "source": "Close add dataset dialog",
+    "translation": "Hinzufügen-Datensatz-Dialog schließen"
+  },
+  "datasets.closePreview": {
+    "generatorVersion": 2,
+    "source": "Close dataset preview",
+    "translation": "Datensatzvorschau schließen"
+  },
+  "datasets.columns.file": {
+    "generatorVersion": 2,
+    "source": "File",
+    "translation": "Datei"
+  },
+  "datasets.columns.format": {
+    "generatorVersion": 2,
+    "source": "Format",
+    "translation": "Format"
+  },
+  "datasets.columns.scanMessage": {
+    "generatorVersion": 2,
+    "source": "Scan Message",
+    "translation": "Scan-Nachricht"
+  },
+  "datasets.columns.scanStatus": {
+    "generatorVersion": 2,
+    "source": "Scan Status",
+    "translation": "Scan-Status"
+  },
+  "datasets.columns.size": {
+    "generatorVersion": 2,
+    "source": "Size",
+    "translation": "Größe"
+  },
+  "datasets.columns.version": {
+    "generatorVersion": 2,
+    "source": "Version",
+    "translation": "Version"
+  },
+  "datasets.csvFile": {
+    "generatorVersion": 2,
+    "source": "CSV file",
+    "translation": "CSV-Datei"
+  },
+  "datasets.description": {
+    "generatorVersion": 2,
+    "source": "Open a folder to inspect its uploaded dataset versions.",
+    "translation": "Öffnen Sie einen Ordner, um seine hochgeladenen Datensatzversionen zu überprüfen."
+  },
+  "datasets.empty": {
+    "generatorVersion": 2,
+    "source": "No dataset folders have been created yet.",
+    "translation": "Noch keine Ordnerr für Datensätze erstellt."
+  },
+  "datasets.errors.loadFolders": {
+    "generatorVersion": 2,
+    "source": "Unable to load dataset folders. Please try again.",
+    "translation": "Ordner für Datensätze konnten nicht geladen werden. Bitte versuchen Sie es erneut."
+  },
+  "datasets.errors.loadProject": {
+    "generatorVersion": 2,
+    "source": "Unable to load this project.",
+    "translation": "Dieses Projekt konnte nicht geladen werden."
+  },
+  "datasets.errors.loadVersions": {
+    "generatorVersion": 2,
+    "source": "Unable to load dataset versions. Please try again.",
+    "translation": "Datensatzversionen konnten nicht geladen werden. Bitte versuchen Sie es erneut."
+  },
+  "datasets.errors.preview": {
+    "generatorVersion": 2,
+    "source": "Unable to preview this dataset version.",
+    "translation": "Diese Datensatzversion kann nicht angezeigt werden."
+  },
+  "datasets.errors.upload": {
+    "generatorVersion": 2,
+    "source": "Unable to upload this dataset version.",
+    "translation": "Diese Datensatzversion konnte nicht hochgeladen werden."
+  },
+  "datasets.errors.csvOnly": {
+    "generatorVersion": 2,
+    "source": "Only CSV files are supported.",
+    "translation": "Nur CSV-Dateien werden unterstützt."
+  },
+  "datasets.loadingFolders": {
+    "generatorVersion": 2,
+    "source": "Loading dataset folders",
+    "translation": "Ordner für Datensätze werden geladen"
+  },
+  "datasets.noSearchResults": {
+    "generatorVersion": 2,
+    "source": "No dataset folders match your search.",
+    "translation": "Keine Ordner für Datensätze entsprechen Ihrer Suche."
+  },
+  "datasets.permissionDenied": {
+    "generatorVersion": 2,
+    "source": "You do not have permission to view datasets.",
+    "translation": "Sie haben keine Berechtigung, um Datensätze anzuzeigen."
+  },
+  "datasets.permissionDeniedSingle": {
+    "generatorVersion": 2,
+    "source": "You do not have permission to view this dataset.",
+    "translation": "Sie haben keine Berechtigung, um diesen Datensatz anzusehen."
+  },
+  "datasets.search": {
+    "generatorVersion": 2,
+    "source": "Search dataset folders...",
+    "translation": "Ordner für Datensätze suchen..."
+  },
+  "datasets.searchLabel": {
+    "generatorVersion": 2,
+    "source": "Search dataset folders",
+    "translation": "Ordner für Datensätze suchen"
+  },
+  "datasets.searchVersions": {
+    "generatorVersion": 2,
+    "source": "Search dataset versions...",
+    "translation": "Datensatzversionen suchen..."
+  },
+  "datasets.selected": {
+    "generatorVersion": 2,
+    "source": "Selected",
+    "translation": "Ausgewählt"
+  },
+  "datasets.openingFile": {
+    "generatorVersion": 2,
+    "source": "Opening {{file}}…",
+    "translation": "Öffnen von {{file}}…"
+  },
+  "datasets.previewDescription": {
+    "generatorVersion": 2,
+    "source": "Read-only CSV preview",
+    "translation": "CSV-Vorschau (Nur-Lese)"
+  },
+  "datasets.titleWithProject": {
+    "generatorVersion": 2,
+    "source": "{{project}} datasets",
+    "translation": "{{project}} Datensätze"
+  },
+  "datasets.unavailable": {
+    "generatorVersion": 2,
+    "source": "This dataset is not available.",
+    "translation": "Dieser Datensatz ist nicht verfügbar."
+  },
+  "datasets.upload": {
+    "generatorVersion": 2,
+    "source": "Upload",
+    "translation": "Hochladen"
+  },
+  "datasets.uploaded": {
+    "generatorVersion": 2,
+    "source": "Dataset version uploaded successfully.",
+    "translation": "Datensatzversion erfolgreich hochgeladen."
+  },
+  "datasets.uploading": {
+    "generatorVersion": 2,
+    "source": "Uploading…",
+    "translation": "Wird hochgeladen…"
+  },
+  "datasets.uploadProgress": {
+    "generatorVersion": 2,
+    "source": "Uploading… {{progress}}%",
+    "translation": "Wird hochgeladen… {{progress}}%"
+  },
+  "datasets.versionsEmpty": {
+    "generatorVersion": 2,
+    "source": "No versions have been uploaded to this dataset folder.",
+    "translation": "Keine Versionen wurden in diesen Ordner für den Datensatz hochgeladen."
+  },
+  "auth.backToSignIn": {
+    "generatorVersion": 2,
+    "source": "Back to sign in",
+    "translation": "Zurück zur Anmeldung"
+  },
+  "auth.chooseStrongPassword": {
+    "generatorVersion": 2,
+    "source": "Choose a strong password to regain access to your workspace.",
+    "translation": "Wählen Sie ein starkes Passwort, um wieder Zugriff auf Ihren Arbeitsbereich zu erhalten."
+  },
+  "auth.confirmPassword": {
+    "generatorVersion": 2,
+    "source": "Confirm new password",
+    "translation": "Neues Passwort bestätigen"
+  },
+  "auth.emailOrUsername": {
+    "generatorVersion": 2,
+    "source": "Email or username",
+    "translation": "E-Mail oder Benutzername"
+  },
+  "auth.emailPlaceholder": {
+    "generatorVersion": 2,
+    "source": "you@example.com",
+    "translation": "ihre@emailbeispiel.de"
+  },
+  "auth.forgotPassword": {
+    "generatorVersion": 2,
+    "source": "Forgot password?",
+    "translation": "Passwort vergessen?"
+  },
+  "auth.forgotPasswordRequesting": {
+    "generatorVersion": 2,
+    "source": "Requesting password reset…",
+    "translation": "Anfrage zur Zurücksetzung des Passworts…"
+  },
+  "auth.loginDescription": {
+    "generatorVersion": 2,
+    "source": "Sign in to access the ExperimentOps dashboard.",
+    "translation": "Melden Sie sich an, um auf das ExperimentOps-Dashboard zuzugreifen."
+  },
+  "auth.newPassword": {
+    "generatorVersion": 2,
+    "source": "New password",
+    "translation": "Neues Passwort"
+  },
+  "auth.password": {
+    "generatorVersion": 2,
+    "source": "Password",
+    "translation": "Passwort"
+  },
+  "auth.passwordPlaceholder": {
+    "generatorVersion": 2,
+    "source": "Enter your password",
+    "translation": "Geben Sie Ihr Passwort ein"
+  },
+  "auth.resetPassword": {
+    "generatorVersion": 2,
+    "source": "Reset password",
+    "translation": "Passwort zurücksetzen"
+  },
+  "auth.reset.confirmationMismatch": {
+    "generatorVersion": 2,
+    "source": "Your password confirmation does not match.",
+    "translation": "Ihre Passwortsicherstellung stimmt nicht überein."
+  },
+  "auth.reset.hideField": {
+    "generatorVersion": 2,
+    "source": "Hide {{field}}",
+    "translation": "{{field}} ausblenden"
+  },
+  "auth.reset.invalidPassword": {
+    "generatorVersion": 2,
+    "source": "Invalid password. Please make sure your password is strong and hasn't been used before.",
+    "translation": "Ungültiges Passwort. Stellen Sie sicher, dass das Passwort stark ist und zuvor noch nicht verwendet wurde."
+  },
+  "auth.reset.invalidRequirements": {
+    "generatorVersion": 2,
+    "source": "Choose a password that meets all of the requirements below.",
+    "translation": "Wählen Sie ein Passwort, das alle unten aufgeführten Anforderungen erfüllt."
+  },
+  "auth.reset.missingToken": {
+    "generatorVersion": 2,
+    "source": "This reset link is missing its token. Request a new password reset email.",
+    "translation": "Dieser Zurücksetzungslink fehlt sein Token. Fordern Sie eine neue E-Mail zur Zurücksetzung des Passworts an."
+  },
+  "auth.reset.passwordsMatch": {
+    "generatorVersion": 2,
+    "source": "Passwords match",
+    "translation": "Passwörter stimmen überein"
+  },
+  "auth.reset.requirements": {
+    "generatorVersion": 2,
+    "source": "Password requirements",
+    "translation": "Anforderungen für das Passwort"
+  },
+  "auth.reset.requirementLength": {
+    "generatorVersion": 2,
+    "source": "At least 8 characters",
+    "translation": "Mindestens 8 Zeichen"
+  },
+  "auth.reset.requirementSpecial": {
+    "generatorVersion": 2,
+    "source": "At least one special character",
+    "translation": "Mindestens ein Sonderzeichen"
+  },
+  "auth.reset.requirementUppercase": {
+    "generatorVersion": 2,
+    "source": "At least one uppercase letter",
+    "translation": "Mindestens eine Großbuchstabe"
+  },
+  "auth.reset.setNewPassword": {
+    "generatorVersion": 2,
+    "source": "Set a new password",
+    "translation": "Neues Passwort festlegen"
+  },
+  "auth.reset.showField": {
+    "generatorVersion": 2,
+    "source": "Show {{field}}",
+    "translation": "{{field}} anzeigen"
+  },
+  "auth.reset.update": {
+    "generatorVersion": 2,
+    "source": "Update password",
+    "translation": "Passwort aktualisieren"
+  },
+  "auth.reset.updating": {
+    "generatorVersion": 2,
+    "source": "Updating password…",
+    "translation": "Passwort wird aktualisiert…"
+  },
+  "auth.messages.checkEmail": {
+    "generatorVersion": 2,
+    "source": "Please check your email.",
+    "translation": "Bitte überprüfen Sie Ihre E-Mail."
+  },
+  "auth.messages.enterResetEmail": {
+    "generatorVersion": 2,
+    "source": "Enter your email address to reset your password.",
+    "translation": "Geben Sie Ihre E-Mail-Adresse ein, um Ihr Passwort zurückzusetzen."
+  },
+  "auth.messages.requestFailed": {
+    "generatorVersion": 2,
+    "source": "Unable to request a password reset. Please try again.",
+    "translation": "Das Zurücksetzen des Passworts ist fehlgeschlagen. Bitte versuchen Sie es erneut."
+  },
+  "auth.messages.signInFailed": {
+    "generatorVersion": 2,
+    "source": "Unable to sign in. Please try again.",
+    "translation": "Anmeldung nicht möglich. Bitte versuchen Sie es erneut."
+  },
+  "auth.signIn": {
+    "generatorVersion": 2,
+    "source": "Sign in",
+    "translation": "Anmelden"
+  },
+  "auth.signingIn": {
+    "generatorVersion": 2,
+    "source": "Signing in…",
+    "translation": "Wird angemeldet…"
+  },
+  "auth.signOut": {
+    "generatorVersion": 2,
+    "source": "Sign out",
+    "translation": "Abmelden"
+  },
+  "auth.welcomeBack": {
+    "generatorVersion": 2,
+    "source": "Welcome back",
+    "translation": "Willkommen zurück"
+  },
+  "common.unknownEmail": {
+    "generatorVersion": 2,
+    "source": "Unknown email",
+    "translation": "Unbekannte E-Mail-Adresse"
+  }
+}

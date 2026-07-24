@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import { useMutationRunArtifactDownloadUrl } from '../../queries'
 import type { RunArtifact } from '../../services/runArtifact.service'
@@ -7,6 +8,12 @@ import { formatLabel } from '../ProjectDetails/projectDetails.utils'
 import { ArtifactIcon } from './ExperimentRunDetail.components'
 
 type ArtifactFilter = 'ALL' | 'INTERMEDIATE' | 'PRIMARY'
+
+const artifactFilterKeys = {
+  ALL: 'runs.artifactList.all',
+  INTERMEDIATE: 'runs.artifactList.intermediate',
+  PRIMARY: 'runs.artifactList.primary',
+} as const
 
 function DownloadIcon({ isLoading }: { isLoading: boolean }) {
   if (isLoading) {
@@ -96,6 +103,7 @@ function ArtifactTable({
   onDownload: (artifact: RunArtifact) => void
   title: string
 }) {
+  const { t } = useTranslation()
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3">
@@ -109,22 +117,22 @@ function ArtifactTable({
           <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-4 py-3 font-semibold" scope="col">
-                Name
+                {t('runs.artifactList.name')}
               </th>
               <th className="px-4 py-3 font-semibold" scope="col">
-                Type
+                {t('runs.artifactList.type')}
               </th>
               <th className="px-4 py-3 font-semibold" scope="col">
-                Produced by
+                {t('runs.artifactList.producedBy')}
               </th>
               <th className="px-4 py-3 font-semibold" scope="col">
-                Format
+                {t('runs.artifactList.format')}
               </th>
               <th className="px-4 py-3 font-semibold" scope="col">
-                Downstream policy
+                {t('runs.artifactList.downstreamPolicy')}
               </th>
               <th className="px-4 py-3 text-center font-semibold" scope="col">
-                Actions
+                {t('runs.artifactList.actions')}
               </th>
             </tr>
           </thead>
@@ -158,11 +166,15 @@ function ArtifactTable({
                   </td>
                   <td className="px-4 py-3.5 text-center">
                     <button
-                      aria-label={`Download ${artifact.portName}`}
+                      aria-label={t('runs.artifactList.download', {
+                        name: artifact.portName,
+                      })}
                       className="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition hover:bg-sky-50 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-wait disabled:opacity-60"
                       disabled={isDownloading}
                       onClick={() => onDownload(artifact)}
-                      title={`Download ${artifact.portName}`}
+                      title={t('runs.artifactList.download', {
+                        name: artifact.portName,
+                      })}
                       type="button"
                     >
                       <DownloadIcon isLoading={isDownloading} />
@@ -191,6 +203,7 @@ export function ExperimentRunArtifacts({
   isLoading: boolean
   onRefresh: () => void
 }) {
+  const { t } = useTranslation()
   const [filter, setFilter] = useState<ArtifactFilter>('ALL')
   const [search, setSearch] = useState('')
   const [downloadingUuid, setDownloadingUuid] = useState<string | null>(null)
@@ -223,7 +236,7 @@ export function ExperimentRunArtifacts({
       Toaster.error(
         downloadError instanceof Error
           ? downloadError.message
-          : 'Unable to download this artifact.',
+          : t('runs.artifactList.errors.download'),
       )
     } finally {
       setDownloadingUuid(null)
@@ -234,7 +247,7 @@ export function ExperimentRunArtifacts({
     <div className="mt-4" role="tabpanel">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <label className="relative block min-w-0 flex-1 sm:max-w-sm">
-          <span className="sr-only">Search artifacts by name</span>
+          <span className="sr-only">{t('runs.artifactList.searchLabel')}</span>
           <svg
             aria-hidden="true"
             className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
@@ -258,7 +271,7 @@ export function ExperimentRunArtifacts({
           <input
             className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search artifacts by name..."
+            placeholder={t('runs.artifactList.search')}
             type="search"
             value={search}
           />
@@ -276,17 +289,17 @@ export function ExperimentRunArtifacts({
               onClick={() => setFilter(option)}
               type="button"
             >
-              {formatLabel(option)}
+              {t(artifactFilterKeys[option])}
             </button>
           ))}
         </div>
 
         <button
-          aria-label="Refresh artifacts"
+          aria-label={t('runs.artifactList.refresh')}
           className="inline-flex h-10 w-10 items-center justify-center self-start rounded-lg border border-slate-300 bg-white text-slate-500 transition hover:border-primary hover:text-primary sm:ml-auto"
           disabled={isFetching}
           onClick={onRefresh}
-          title="Refresh artifacts"
+          title={t('runs.artifactList.refresh')}
           type="button"
         >
           <RefreshIcon isLoading={isFetching} />
@@ -306,13 +319,13 @@ export function ExperimentRunArtifacts({
         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-5 py-8 text-center text-sm text-red-700">
           {error instanceof Error
             ? error.message
-            : 'Unable to load artifacts for this run.'}
+            : t('runs.artifactList.errors.load')}
         </div>
       ) : filteredArtifacts.length === 0 ? (
         <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-500">
           {artifacts.length
-            ? 'No artifacts match the current search or filter.'
-            : 'No artifacts are available for this run.'}
+            ? t('runs.artifactList.noMatches')
+            : t('runs.artifactList.none')}
         </div>
       ) : (
         <div className="mt-4 space-y-4">
@@ -321,7 +334,7 @@ export function ExperimentRunArtifacts({
               artifacts={primaryArtifacts}
               downloadingUuid={downloadingUuid}
               onDownload={handleDownload}
-              title="Primary outputs"
+              title={t('runs.artifactList.primaryOutputs')}
             />
           ) : null}
           {intermediateArtifacts.length ? (
@@ -329,12 +342,14 @@ export function ExperimentRunArtifacts({
               artifacts={intermediateArtifacts}
               downloadingUuid={downloadingUuid}
               onDownload={handleDownload}
-              title="Intermediate outputs"
+              title={t('runs.artifactList.intermediateOutputs')}
             />
           ) : null}
           <p className="text-xs text-slate-500">
-            Showing {filteredArtifacts.length} of {artifacts.length} artifact
-            {artifacts.length === 1 ? '' : 's'}
+            {t('runs.artifactList.showing', {
+              total: artifacts.length,
+              visible: filteredArtifacts.length,
+            })}
           </p>
         </div>
       )}

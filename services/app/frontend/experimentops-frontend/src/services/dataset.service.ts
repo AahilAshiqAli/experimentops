@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import ApiService, { ApiServiceError } from '../utils/api.service'
 import type { CsvPreviewData } from '../components/CsvPreview'
 import { getAuthenticatedRequestHeaders } from './jwt.service'
@@ -149,7 +150,7 @@ export async function getProjectDatasets(
 
   if (!datasets) {
     throw new ApiServiceError(
-      'The dataset service returned an invalid response.',
+      i18n.t('serviceErrors.datasetInvalid'),
       500,
       payload,
     )
@@ -177,7 +178,7 @@ export async function getDataset(
 
   if (!isDatasetDetail(payload)) {
     throw new ApiServiceError(
-      'The dataset service returned an invalid response.',
+      i18n.t('serviceErrors.datasetInvalid'),
       500,
       payload,
     )
@@ -202,7 +203,7 @@ export async function initiateDatasetVersionUpload(
 
   if (!isDatasetVersionUploadTicket(payload)) {
     throw new ApiServiceError(
-      'The dataset service returned an invalid upload response.',
+      i18n.t('serviceErrors.datasetUploadInvalid'),
       500,
       payload,
     )
@@ -283,7 +284,7 @@ export async function getDatasetVersionPreview(
     payload = JSON.parse(await response.text()) as unknown
   } catch {
     throw new ApiServiceError(
-      'The dataset version returned an invalid CSV preview.',
+      i18n.t('serviceErrors.datasetPreviewInvalid'),
       500,
       response,
     )
@@ -302,7 +303,7 @@ export async function getDatasetVersionPreview(
     )
   ) {
     throw new ApiServiceError(
-      'The dataset version returned an invalid CSV preview.',
+      i18n.t('serviceErrors.datasetPreviewInvalid'),
       500,
       payload,
     )

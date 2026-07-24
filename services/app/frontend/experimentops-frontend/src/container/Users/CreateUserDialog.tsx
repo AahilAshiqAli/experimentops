@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { CreateUserInput } from '../../services/user.service'
 
@@ -13,6 +14,7 @@ export function CreateUserDialog({
   onClose,
   onSubmit,
 }: CreateUserDialogProps) {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -43,14 +45,14 @@ export function CreateUserDialog({
               className="font-heading text-2xl font-semibold text-secondary"
               id="create-user-title"
             >
-              Add User
+              {t('users.add')}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Create an account for this workspace.
+              {t('users.dialogDescription')}
             </p>
           </div>
           <button
-            aria-label="Close add user dialog"
+            aria-label={t('users.closeDialog')}
             className="rounded-md p-2 text-slate-500 hover:bg-slate-100"
             disabled={isPending}
             onClick={onClose}
@@ -63,7 +65,7 @@ export function CreateUserDialog({
         <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm font-medium text-secondary">
-              First name
+              {t('users.firstName')}
               <input
                 autoFocus
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
@@ -74,7 +76,7 @@ export function CreateUserDialog({
               />
             </label>
             <label className="block text-sm font-medium text-secondary">
-              Last name
+              {t('users.lastName')}
               <input
                 className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 disabled={isPending}
@@ -85,7 +87,7 @@ export function CreateUserDialog({
             </label>
           </div>
           <label className="block text-sm font-medium text-secondary">
-            Email address
+            {t('users.emailAddress')}
             <input
               autoComplete="email"
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
@@ -97,7 +99,7 @@ export function CreateUserDialog({
             />
           </label>
           <label className="block text-sm font-medium text-secondary">
-            User role
+            {t('users.userRole')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               disabled={isPending}
@@ -106,8 +108,10 @@ export function CreateUserDialog({
               }
               value={userRole}
             >
-              <option value="RESEARCHER">Researcher</option>
-              <option value="WORKSPACE_ADMIN">Workspace Admin</option>
+              <option value="RESEARCHER">{t('users.roles.researcher')}</option>
+              <option value="WORKSPACE_ADMIN">
+                {t('users.roles.workspaceAdmin')}
+              </option>
             </select>
           </label>
           <div className="flex justify-end gap-3 pt-2">
@@ -117,14 +121,14 @@ export function CreateUserDialog({
               onClick={onClose}
               type="button"
             >
-              Cancel
+              {t('common.actions.cancel')}
             </button>
             <button
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isPending}
               type="submit"
             >
-              {isPending ? 'Creating…' : 'Create user'}
+              {isPending ? t('users.creating') : t('users.create')}
             </button>
           </div>
         </form>

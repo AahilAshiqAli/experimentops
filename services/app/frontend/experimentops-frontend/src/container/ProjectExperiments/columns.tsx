@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 import type { DataTableColumn } from '../../components/DataTable'
 import type { Experiment } from '../../services/experiment.service'
 import { ExperimentActions } from '../ProjectDetails/projectDetails.shared'
@@ -5,6 +7,8 @@ import { formatDate } from '../ProjectDetails/projectDetails.utils'
 
 export function getExperimentColumns(
   projectUuid: string,
+  t: TFunction,
+  locale?: string,
 ): DataTableColumn<Experiment>[] {
   return [
     {
@@ -14,33 +18,33 @@ export function getExperimentColumns(
             {experiment.name}
           </p>
           <p className="mt-1 line-clamp-1 text-xs text-slate-500">
-            {experiment.description || 'No description provided.'}
+            {experiment.description || t('project.noDescription')}
           </p>
         </div>
       ),
-      header: 'Experiment',
+      header: t('experiments.experiment'),
       key: 'name',
       sort: true,
       value: (experiment) => `${experiment.name} ${experiment.description}`,
     },
     {
       align: 'center',
-      header: 'Runs',
+      header: t('experiments.runs'),
       key: 'runs',
       sort: true,
       value: (experiment) => experiment.runCount,
     },
     {
       align: 'center',
-      header: 'Configs',
+      header: t('experiments.configs'),
       key: 'configs',
       sort: true,
       value: (experiment) => experiment.configCount,
     },
     {
       className: 'whitespace-nowrap text-sm text-slate-500',
-      cell: (experiment) => formatDate(experiment.createdAt),
-      header: 'Created',
+      cell: (experiment) => formatDate(experiment.createdAt, locale),
+      header: t('experiments.createdColumn'),
       key: 'created',
       sort: true,
       value: (experiment) => experiment.createdAt,
@@ -56,7 +60,7 @@ export function getExperimentColumns(
         </span>
       ),
       className: 'whitespace-nowrap',
-      header: 'Actions',
+      header: t('experiments.actions'),
       key: 'actions',
     },
   ]

@@ -1,4 +1,5 @@
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 import { useLogin } from './context-api/logincontext'
 import {
@@ -9,6 +10,7 @@ import {
 } from './routes'
 
 function App() {
+  const { t } = useTranslation()
   const { isAuthenticated, isAuthenticating } = useLogin()
 
   if (isAuthenticating) {
@@ -17,7 +19,7 @@ function App() {
         <div className="text-center">
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-primary" />
           <p className="mt-4 text-sm font-medium text-slate-600">
-            Loading your workspace…
+            {t('app.loadingWorkspace')}
           </p>
         </div>
       </div>

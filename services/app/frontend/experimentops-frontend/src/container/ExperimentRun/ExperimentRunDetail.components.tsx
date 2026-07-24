@@ -1,10 +1,12 @@
 import { useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type {
   ExperimentRunDetail,
   ExperimentRunStatus,
 } from '../../services/experimentRun.service'
 import { formatLabel } from '../ProjectDetails/projectDetails.utils'
+import { RUN_STATUS_TRANSLATION_KEYS } from './columns'
 
 type IconProps = { className?: string }
 
@@ -147,12 +149,13 @@ const statusDotStyles: Record<ExperimentRunStatus, string> = {
 }
 
 export function RunStatusBadge({ status }: { status: ExperimentRunStatus }) {
+  const { t } = useTranslation()
   return (
     <span
       className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-semibold ${statusStyles[status]}`}
     >
       <span className={`h-2 w-2 rounded-full ${statusDotStyles[status]}`} />
-      {formatLabel(status)}
+      {t(RUN_STATUS_TRANSLATION_KEYS[status])}
     </span>
   )
 }
@@ -204,6 +207,7 @@ export function InfoRow({ label, value }: { label: string; value: ReactNode }) {
 }
 
 export function CopyableRunId({ uuid }: { uuid: string }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
@@ -216,10 +220,10 @@ export function CopyableRunId({ uuid }: { uuid: string }) {
     <span className="flex items-start gap-2">
       <span className="break-all font-mono text-xs leading-5">{uuid}</span>
       <button
-        aria-label="Copy run ID"
+        aria-label={t('runs.details.copyId')}
         className="shrink-0 rounded p-1 text-slate-400 transition hover:bg-slate-100 hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
         onClick={handleCopy}
-        title={copied ? 'Copied' : 'Copy run ID'}
+        title={copied ? t('runs.details.copied') : t('runs.details.copyId')}
         type="button"
       >
         {copied ? (
@@ -279,6 +283,7 @@ function PipelineNode({
 }
 
 export function PipelineFlow({ run }: { run: ExperimentRunDetail }) {
+  const { t } = useTranslation()
   const orderedSteps = [...run.executionMode].sort(
     (left, right) => left.stepCount - right.stepCount,
   )
@@ -286,11 +291,14 @@ export function PipelineFlow({ run }: { run: ExperimentRunDetail }) {
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <h2 className="font-heading text-lg font-semibold text-secondary">
-        Pipeline flow
+        {t('runs.details.pipelineFlow')}
       </h2>
       <div className="mt-4 overflow-x-auto pb-2">
         <div className="flex min-w-max items-center gap-3">
-          <PipelineNode eyebrow="Dataset inputs" icon={<DatasetIcon />}>
+          <PipelineNode
+            eyebrow={t('runs.details.datasetInputs')}
+            icon={<DatasetIcon />}
+          >
             {run.datasets.length ? (
               <div className="mt-1.5 space-y-1.5">
                 {run.datasets.map((dataset) => (
@@ -304,7 +312,9 @@ export function PipelineFlow({ run }: { run: ExperimentRunDetail }) {
                 ))}
               </div>
             ) : (
-              <p className="mt-1.5 text-sm text-slate-500">No datasets</p>
+              <p className="mt-1.5 text-sm text-slate-500">
+                {t('runs.details.noDatasets')}
+              </p>
             )}
           </PipelineNode>
 
@@ -312,7 +322,7 @@ export function PipelineFlow({ run }: { run: ExperimentRunDetail }) {
             <div className="flex items-center gap-3" key={step.stepCount}>
               <ArrowIcon />
               <PipelineNode
-                eyebrow={`Step ${step.stepCount}`}
+                eyebrow={t('runs.details.step', { count: step.stepCount })}
                 icon={
                   <span className="text-sm font-bold">{step.stepCount}</span>
                 }
@@ -321,15 +331,17 @@ export function PipelineFlow({ run }: { run: ExperimentRunDetail }) {
                   {formatLabel(step.experimentType)}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  {step.inputs.length} input
-                  {step.inputs.length === 1 ? '' : 's'}
+                  {t('runs.details.inputCount', { count: step.inputs.length })}
                 </p>
               </PipelineNode>
             </div>
           ))}
 
           <ArrowIcon />
-          <PipelineNode eyebrow="Outputs" icon={<ArtifactIcon />}>
+          <PipelineNode
+            eyebrow={t('runs.details.outputs')}
+            icon={<ArtifactIcon />}
+          >
             {run.runArtifacts.length ? (
               <div className="mt-1.5 space-y-1.5">
                 {run.runArtifacts.slice(0, 3).map((artifact) => (
@@ -343,12 +355,16 @@ export function PipelineFlow({ run }: { run: ExperimentRunDetail }) {
                 ))}
                 {run.runArtifacts.length > 3 ? (
                   <p className="text-xs text-slate-500">
-                    +{run.runArtifacts.length - 3} more
+                    {t('runs.details.more', {
+                      count: run.runArtifacts.length - 3,
+                    })}
                   </p>
                 ) : null}
               </div>
             ) : (
-              <p className="mt-1.5 text-sm text-slate-500">No artifacts</p>
+              <p className="mt-1.5 text-sm text-slate-500">
+                {t('runs.details.noArtifacts')}
+              </p>
             )}
           </PipelineNode>
         </div>
@@ -357,12 +373,12 @@ export function PipelineFlow({ run }: { run: ExperimentRunDetail }) {
   )
 }
 
-type RunDetailTab = 'Artifacts' | 'Logs' | 'Steps'
+type RunDetailTab = 'artifacts' | 'logs' | 'steps'
 
 const detailTabs: Array<{ label: RunDetailTab }> = [
-  { label: 'Steps' },
-  { label: 'Artifacts' },
-  { label: 'Logs' },
+  { label: 'steps' },
+  { label: 'artifacts' },
+  { label: 'logs' },
 ]
 
 export function RunDetailTabs({
@@ -374,7 +390,8 @@ export function RunDetailTabs({
   logsContent: ReactNode
   stepsContent: ReactNode
 }) {
-  const [activeTab, setActiveTab] = useState<RunDetailTab>('Steps')
+  const { t } = useTranslation()
+  const [activeTab, setActiveTab] = useState<RunDetailTab>('steps')
   return (
     <section>
       <div className="flex gap-7 border-b border-slate-200" role="tablist">
@@ -391,13 +408,13 @@ export function RunDetailTabs({
             role="tab"
             type="button"
           >
-            {tab.label}
+            {t(`runs.details.${tab.label}`)}
           </button>
         ))}
       </div>
-      {activeTab === 'Steps'
+      {activeTab === 'steps'
         ? stepsContent
-        : activeTab === 'Artifacts'
+        : activeTab === 'artifacts'
           ? artifactsContent
           : logsContent}
     </section>
