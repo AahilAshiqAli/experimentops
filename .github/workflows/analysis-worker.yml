@@ -39,7 +39,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install dependencies
-        run: uv sync --frozen --all-groups
+        run: uv sync --frozen --all-groups --all-packages
       - name: Lint Python code
         run: uv run ruff check .
       - name: Run Python tests
