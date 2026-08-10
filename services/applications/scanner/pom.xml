@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.experimentops</groupId>
         <artifactId>root</artifactId>
-        <version>0.1.0</version>
+        <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
