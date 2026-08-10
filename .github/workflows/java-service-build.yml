@@ -29,6 +29,8 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Install the root Maven parent POM
+        run: mvn --batch-mode --non-recursive install
       - name: Build shared libraries
         run: mvn --batch-mode --file libs/pom.xml install -DskipTests
       - name: Build application JAR
