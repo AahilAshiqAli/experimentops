@@ -1,0 +1,17 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+nodes:
+  - role: control-plane
+    # These mappings let the ingress controller's HTTP and HTTPS host ports
+    # receive traffic from the Mac at the normal web ports.
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        listenAddress: "127.0.0.1"
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        listenAddress: "127.0.0.1"
+        protocol: TCP
+  - role: worker

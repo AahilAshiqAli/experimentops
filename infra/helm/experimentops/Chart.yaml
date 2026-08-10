@@ -1,0 +1,6 @@
+apiVersion: v2
+name: experimentops
+description: Local Kind deployment for ExperimentOps
+type: application
+version: 0.1.0
+appVersion: "local"

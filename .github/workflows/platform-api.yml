@@ -1,0 +1,38 @@
+name: Platform API
+
+on:
+  pull_request:
+    branches: [latest]
+    paths:
+      - services/pom.xml
+      - services/libs/**
+      - services/applications/pom.xml
+      - services/applications/platform-api/**
+      - .github/workflows/java-service-test.yml
+      - .github/workflows/platform-api.yml
+  push:
+    branches: [latest]
+    paths:
+      - services/pom.xml
+      - services/libs/**
+      - services/applications/pom.xml
+      - services/applications/platform-api/**
+      - .github/workflows/java-service-build.yml
+      - .github/workflows/platform-api.yml
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/java-service-test.yml
+    with:
+      service-path: applications/platform-api
+  build-and-push:
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/java-service-build.yml
+    with:
+      service-name: platform-api
+      service-path: applications/platform-api

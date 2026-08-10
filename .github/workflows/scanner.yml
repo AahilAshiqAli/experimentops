@@ -1,0 +1,36 @@
+name: Scanner
+
+on:
+  pull_request:
+    branches: [latest]
+    paths:
+      - services/pom.xml
+      - services/libs/**
+      - services/applications/scanner/**
+      - .github/workflows/java-service-test.yml
+      - .github/workflows/scanner.yml
+  push:
+    branches: [latest]
+    paths:
+      - services/pom.xml
+      - services/libs/**
+      - services/applications/scanner/**
+      - .github/workflows/java-service-build.yml
+      - .github/workflows/scanner.yml
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/java-service-test.yml
+    with:
+      service-path: applications/scanner
+  build-and-push:
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/java-service-build.yml
+    with:
+      service-name: scanner
+      service-path: applications/scanner

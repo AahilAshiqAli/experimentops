@@ -135,6 +135,7 @@ public class ExperimentRunRepositoryImpl implements ExperimentRunRepositoryCusto
                             experimentRun.getLastUpdated(),
                             (String) row[5],
                             (Long) row[6],
+                            experimentRun.getStepCompleted(),
                             experimentRun.getExecutionMode()
                     );
                 });

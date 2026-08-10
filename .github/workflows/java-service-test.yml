@@ -1,0 +1,37 @@
+name: Test Java service
+
+on:
+  workflow_call:
+    inputs:
+      service-path:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+      - name: Set up Java 21 and Maven cache
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Install the root Maven parent POM
+        run: mvn --batch-mode --non-recursive install
+      - name: Test shared libraries
+        run: mvn --batch-mode --file libs/pom.xml test
+      - name: Build shared libraries
+        run: mvn --batch-mode --file libs/pom.xml install -DskipTests
+      - name: Compile application
+        run: mvn --batch-mode --projects ${{ inputs.service-path }} compile -DskipTests
+      - name: Test application
+        run: mvn --batch-mode --projects ${{ inputs.service-path }} test

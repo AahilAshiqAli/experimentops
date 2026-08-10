@@ -265,6 +265,7 @@ public class ExperimentRunTransformer {
         responseModel.setNumSteps(summary.executionMode().size());
         responseModel.setDatasets(transformExperimentRunDatasetModels(datasets));
         responseModel.setRunArtifacts(transformExperimentRunArtifactModels(primaryArtifacts));
+        responseModel.setCompletedSteps(summary.completedSteps());
         responseModel.setExecutionMode(transformExperimentRunDetailExecutionModeModels(
                 summary.executionMode(),
                 experimentTypesByConfigUuid,

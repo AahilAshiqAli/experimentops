@@ -196,7 +196,7 @@ export function ExperimentRunDetails() {
             <SummaryCard
               icon={<StepsIcon className="h-6 w-6" />}
               label={t('runs.details.stepsCompleted')}
-              value={`${run.numSteps} / ${run.numSteps}`}
+              value={`${run.completedSteps} / ${run.numSteps}`}
             />
             <SummaryCard
               icon={<ArtifactIcon className="h-6 w-6" />}
