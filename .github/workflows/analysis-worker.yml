@@ -1,0 +1,71 @@
+name: Analysis Worker
+
+on:
+  pull_request:
+    branches: [latest]
+    paths:
+      - services/applications/python/pyproject.toml
+      - services/applications/python/uv.lock
+      - services/applications/python/apps/analysis-worker/**
+      - services/applications/python/packages/experiment-runtime/**
+      - .github/workflows/analysis-worker.yml
+  push:
+    branches: [latest]
+    paths:
+      - services/applications/python/pyproject.toml
+      - services/applications/python/uv.lock
+      - services/applications/python/apps/analysis-worker/**
+      - services/applications/python/packages/experiment-runtime/**
+      - .github/workflows/analysis-worker.yml
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    name: Lint and test analysis worker
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/applications/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Set up uv and its cache
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: uv sync --frozen --all-groups
+      - name: Lint Python code
+        run: uv run ruff check .
+      - name: Run Python tests
+        run: uv run pytest apps/analysis-worker/tests packages/experiment-runtime/tests
+
+  build-and-push:
+    if: github.event_name == 'push'
+    name: Build and publish analysis worker
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/applications/python
+          file: services/applications/python/apps/analysis-worker/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/experimentops-analysis-worker:sha-${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/experimentops-analysis-worker:latest

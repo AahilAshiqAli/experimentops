@@ -1,0 +1,38 @@
+name: API Gateway Service
+
+on:
+  pull_request:
+    branches: [latest]
+    paths:
+      - services/pom.xml
+      - services/libs/**
+      - services/applications/pom.xml
+      - services/applications/api-gateway-service/**
+      - .github/workflows/java-service-test.yml
+      - .github/workflows/api-gateway-service.yml
+  push:
+    branches: [latest]
+    paths:
+      - services/pom.xml
+      - services/libs/**
+      - services/applications/pom.xml
+      - services/applications/api-gateway-service/**
+      - .github/workflows/java-service-build.yml
+      - .github/workflows/api-gateway-service.yml
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/java-service-test.yml
+    with:
+      service-path: applications/api-gateway-service
+  build-and-push:
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/java-service-build.yml
+    with:
+      service-name: api-gateway-service
+      service-path: applications/api-gateway-service

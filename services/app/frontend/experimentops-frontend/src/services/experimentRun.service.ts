@@ -82,6 +82,7 @@ export type ExperimentRunDetailStep = {
 
 export type ExperimentRunDetail = {
   artifactCount: number
+  completedSteps: number
   createdBy: string
   creationDate: string
   datasets: ExperimentRunDataset[]
@@ -267,6 +268,7 @@ function isExperimentRunDetail(value: unknown): value is ExperimentRunDetail {
     typeof run.lastUpdated === 'string' &&
     typeof run.createdBy === 'string' &&
     typeof run.artifactCount === 'number' &&
+    typeof run.completedSteps === 'number' &&
     typeof run.numSteps === 'number' &&
     Array.isArray(run.datasets) &&
     run.datasets.every(isExperimentRunDataset) &&

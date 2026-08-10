@@ -369,6 +369,10 @@ components:
           type: integer
           format: int64
           example: 2
+        completedSteps:
+          type: integer
+          format: int32
+          example: 3
         numSteps:
           type: integer
           format: int32

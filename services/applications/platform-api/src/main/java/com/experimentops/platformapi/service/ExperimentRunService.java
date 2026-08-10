@@ -422,7 +422,7 @@ public class ExperimentRunService {
         ExperimentRun experimentRun = experimentRunRepository
                 .findByUuidAndWorkspaceUuidAndEnabled(experimentRunUuid, headers.getWorkspaceUuid(), true)
                 .orElseThrow(() -> new EntityNotFoundException("Experiment Run uuid", experimentRunUuid));
-        experimentRun.setStepsCompleted(experimentRun.getStepsCompleted());
+        experimentRun.setStepCompleted(experimentRun.getStepCompleted());
         experimentRun.setProgress(progress);
         experimentRunRepository.save(experimentRun);
 

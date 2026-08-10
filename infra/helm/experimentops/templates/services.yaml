@@ -1,0 +1,21 @@
+{{- range $service := .Values.services }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $service.name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "experimentops.appLabels" $service.app | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector: { app.kubernetes.io/name: {{ $service.app }} }
+  ports:
+    {{- if $service.ports }}
+    {{- range $port := $service.ports }}
+    - { name: {{ $port.name }}, protocol: TCP, port: {{ $port.port }}, targetPort: {{ $port.targetPort }} }
+    {{- end }}
+    {{- else }}
+    - { name: http, protocol: TCP, port: {{ $service.port }}, targetPort: {{ $service.targetPort }} }
+    {{- end }}
+---
+{{- end }}

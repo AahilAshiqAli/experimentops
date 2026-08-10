@@ -19,6 +19,7 @@ public record ExperimentRunDetailSummary(
         Timestamp lastUpdated,
         String createdBy,
         Long artifactCount,
+        Integer completedSteps,
         List<ExecutionMode> executionMode
 ) {
     public ExperimentRunDetailSummary {

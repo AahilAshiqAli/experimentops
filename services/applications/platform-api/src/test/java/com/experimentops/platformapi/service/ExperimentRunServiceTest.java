@@ -568,6 +568,7 @@ class ExperimentRunServiceTest {
                 Timestamp.valueOf("2026-01-01 00:01:00"),
                 "user-1",
                 1L,
+                1,
                 List.of(executionModeStep)
         );
 
@@ -624,6 +625,7 @@ class ExperimentRunServiceTest {
         assertThat(response.getProjectName()).isEqualTo("Project 1");
         assertThat(response.getCreatedBy()).isEqualTo("user-1");
         assertThat(response.getArtifactCount()).isEqualTo(1L);
+        assertThat(response.getCompletedSteps()).isEqualTo(1);
         assertThat(response.getNumSteps()).isEqualTo(1);
         assertThat(response.getDatasets()).singleElement()
                 .satisfies(dataset -> {

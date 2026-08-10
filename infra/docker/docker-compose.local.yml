@@ -7,6 +7,7 @@ services:
     container_name: experimentops-kafka
     ports:
       - "9092:9092"
+      - "39092:39092"
     environment:
       # Single node setup
       KAFKA_NODE_ID: 1
@@ -14,10 +15,10 @@ services:
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       # First is for containers in docker to talk to Kafka. Second is for applications in same container as Kafka to talk. Third is internal Kafka Leader coordinating.
-      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092,PLAINTEXT_K8S://0.0.0.0:39092,CONTROLLER://kafka:9093
       # Controller is not in Advertised Listeners because no external client can ever know about it, only for internal communication
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092,PLAINTEXT_K8S://host.docker.internal:39092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_K8S:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
 
@@ -68,7 +69,7 @@ services:
 
       # This overrides SpringBoot local address with docker container address
       experimentops.db.host: host.docker.internal
-      experimentops.db.port: 55000
+      experimentops.db.port: 55118
       experimentops.db.schema: experimentOps
       experimentops.db.username: experimentops_user
       experimentops.db.password: experimentops_password
@@ -147,7 +148,7 @@ services:
     image: flyway/flyway:latest
     container_name: experimentops-flyway
     command:
-      -url=jdbc:mysql://host.docker.internal:55000/experimentOps
+      -url=jdbc:mysql://host.docker.internal:55118/experimentOps
       -user=experimentops_user
       -password=experimentops_password
       -connectRetries=60
@@ -174,13 +175,12 @@ services:
     image: api-gateway-service:local
     container_name: experimentops-api-gateway-service
     depends_on:
-      - platform-api
       - keycloak
     ports:
       - "8080:8080"
     environment:
       SERVER_PORT: 8080
-      services.platform-api.url: http://platform-api:8080
+      services.platform-api.url: http://host.docker.internal:8088
       JWKS_CERTS_FILE: /app/config/experimentops-jwks.json
       JWT_CLIENT_ID: experimentops-web
     volumes:

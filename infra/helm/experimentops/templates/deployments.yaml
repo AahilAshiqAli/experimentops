@@ -1,0 +1,76 @@
+{{- range $workload := .Values.deployments }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $workload.name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "experimentops.appLabels" $workload.name | nindent 4 }}
+spec:
+  replicas: {{ default 1 $workload.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $workload.name }}
+  template:
+    metadata:
+      labels:
+        {{- include "experimentops.appLabels" $workload.name | nindent 8 }}
+    spec:
+      {{- if hasKey $workload "enableServiceLinks" }}
+      enableServiceLinks: {{ $workload.enableServiceLinks }}
+      {{- end }}
+      {{- with $workload.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ . }}
+      {{- end }}
+      containers:
+        - name: {{ $workload.name }}
+          image: {{ $workload.image.repository }}:{{ $workload.image.tag }}
+          imagePullPolicy: {{ $workload.image.pullPolicy }}
+          {{- if $workload.port }}
+          ports:
+            - name: {{ $workload.port.name }}
+              containerPort: {{ $workload.port.containerPort }}
+          {{- else if $workload.ports }}
+          ports:
+            {{- range $port := $workload.ports }}
+            - name: {{ $port.name }}
+              containerPort: {{ $port.containerPort }}
+            {{- end }}
+          {{- end }}
+          {{- if or $workload.configMaps $workload.secrets }}
+          envFrom:
+            {{- range $name := $workload.configMaps }}
+            - configMapRef: { name: {{ $name }} }
+            {{- end }}
+            {{- range $name := $workload.secrets }}
+            - secretRef: { name: {{ $name }} }
+            {{- end }}
+          {{- end }}
+          {{- if $workload.fieldRefEnv }}
+          env:
+            {{- range $name, $path := $workload.fieldRefEnv }}
+            - name: {{ $name }}
+              valueFrom:
+                fieldRef: { fieldPath: {{ $path }} }
+            {{- end }}
+          {{- end }}
+          {{- with $workload.readinessProbe }}
+          readinessProbe:
+            httpGet: { path: {{ .path }}, port: {{ default "http" .port }} }
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            periodSeconds: {{ .periodSeconds }}
+            timeoutSeconds: {{ .timeoutSeconds }}
+            failureThreshold: {{ .failureThreshold }}
+          {{- end }}
+          {{- with $workload.livenessProbe }}
+          livenessProbe:
+            httpGet: { path: {{ .path }}, port: {{ default "http" .port }} }
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            periodSeconds: {{ .periodSeconds }}
+            timeoutSeconds: {{ .timeoutSeconds }}
+            failureThreshold: {{ .failureThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml $workload.resources | nindent 12 }}
+---
+{{- end }}
