@@ -2,6 +2,7 @@ name: API Gateway Service
 
 on:
   pull_request:
+    types: [opened, synchronize, closed]
     branches: [latest]
     paths:
       - services/pom.xml
@@ -9,14 +10,6 @@ on:
       - services/applications/pom.xml
       - services/applications/api-gateway-service/**
       - .github/workflows/java-service-test.yml
-      - .github/workflows/api-gateway-service.yml
-  push:
-    branches: [latest]
-    paths:
-      - services/pom.xml
-      - services/libs/**
-      - services/applications/pom.xml
-      - services/applications/api-gateway-service/**
       - .github/workflows/java-service-build.yml
       - .github/workflows/api-gateway-service.yml
 
@@ -26,12 +19,12 @@ permissions:
 
 jobs:
   test:
-    if: github.event_name == 'pull_request'
+    if: github.event.action == 'opened' || github.event.action == 'synchronize'
     uses: ./.github/workflows/java-service-test.yml
     with:
       service-path: applications/api-gateway-service
   build-and-push:
-    if: github.event_name == 'push'
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
     uses: ./.github/workflows/java-service-build.yml
     with:
       service-name: api-gateway-service

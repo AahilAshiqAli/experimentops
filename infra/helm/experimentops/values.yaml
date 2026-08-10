@@ -3,6 +3,7 @@ configMaps:
     app: platform-api
     data:
       SERVER_PORT: "8080"
+      EXPERIMENTOPS_PORTAL_URL: "http://{{ .Values.ingress.frontendHost }}"
       EXPERIMENTOPS_DB_HOST: host.docker.internal
       EXPERIMENTOPS_DB_PORT: "55118"
       EXPERIMENTOPS_DB_SCHEMA: experimentOps

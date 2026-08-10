@@ -8,7 +8,7 @@ metadata:
     {{- include "experimentops.appLabels" $configMap.app | nindent 4 }}
 data:
   {{- range $key, $value := $configMap.data }}
-  {{ $key }}: {{ $value | quote }}
+  {{ $key }}: {{ tpl ($value | toString) $ | quote }}
   {{- end }}
 ---
 {{- end }}

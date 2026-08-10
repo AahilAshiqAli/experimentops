@@ -2,14 +2,7 @@ name: Analysis Worker
 
 on:
   pull_request:
-    branches: [latest]
-    paths:
-      - services/applications/python/pyproject.toml
-      - services/applications/python/uv.lock
-      - services/applications/python/apps/analysis-worker/**
-      - services/applications/python/packages/experiment-runtime/**
-      - .github/workflows/analysis-worker.yml
-  push:
+    types: [opened, synchronize, closed]
     branches: [latest]
     paths:
       - services/applications/python/pyproject.toml
@@ -23,7 +16,7 @@ permissions:
 
 jobs:
   test:
-    if: github.event_name == 'pull_request'
+    if: github.event.action == 'opened' || github.event.action == 'synchronize'
     name: Lint and test analysis worker
     runs-on: ubuntu-latest
     defaults:
@@ -46,7 +39,7 @@ jobs:
         run: uv run pytest apps/analysis-worker/tests packages/experiment-runtime/tests
 
   build-and-push:
-    if: github.event_name == 'push'
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
     name: Build and publish analysis worker
     runs-on: ubuntu-latest
     permissions:
@@ -54,6 +47,9 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+      - name: Create lowercase GHCR owner
+        id: image
+        run: echo "owner=$(echo \"$GITHUB_REPOSITORY_OWNER\" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -67,5 +63,5 @@ jobs:
           file: services/applications/python/apps/analysis-worker/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/experimentops-analysis-worker:sha-${{ github.sha }}
-            ghcr.io/${{ github.repository_owner }}/experimentops-analysis-worker:latest
+            ghcr.io/${{ steps.image.outputs.owner }}/experimentops-analysis-worker:sha-${{ github.sha }}
+            ghcr.io/${{ steps.image.outputs.owner }}/experimentops-analysis-worker:latest
