@@ -100,7 +100,7 @@ deployments:
     terminationGracePeriodSeconds: 60
     resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
   - name: analysis-worker
-    image: {repository: analysis-worker, tag: local, pullPolicy: IfNotPresent}
+    image: {repository: ghcr.io/aahilashiqali/experimentops-analysis-worker, tag: sha-2be7d80fff190fda88f919946368244039a0050c, pullPolicy: IfNotPresent}
     configMaps: [analysis-worker-config]
     secrets: [experimentops-runtime-secrets]
     terminationGracePeriodSeconds: 120
