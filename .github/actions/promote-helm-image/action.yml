@@ -23,30 +23,38 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Rebase on the current desired state
+      shell: bash
+      env:
+        TARGET_BRANCH: ${{ inputs.target-branch }}
+      run: |
+        git fetch origin "${TARGET_BRANCH}"
+        git rebase "origin/${TARGET_BRANCH}"
+
     - name: Update desired image
       if: inputs.image-target == 'deployment'
-      uses: mikefarah/yq@v4.45.1
+      shell: bash
       env:
         SERVICE_NAME: ${{ inputs.service-name }}
         IMAGE_REPOSITORY: ${{ inputs.image-repository }}
         IMAGE_TAG: ${{ inputs.image-tag }}
-      with:
-        cmd: >-
-          yq -i '(.deployments[] | select(.name == strenv(SERVICE_NAME)).image) |=
-          (.repository = strenv(IMAGE_REPOSITORY) | .tag = strenv(IMAGE_TAG) | .pullPolicy = "IfNotPresent")'
-          infra/helm/experimentops/values.yaml
+      run: |
+        perl -0pi -e '
+          my $changed = s~(^  - name: \Q$ENV{SERVICE_NAME}\E\n    image: \{ repository: )[^,]+(, tag: )[^,]+(, pullPolicy: )[^}]+( \})~$1 . $ENV{IMAGE_REPOSITORY} . $2 . $ENV{IMAGE_TAG} . $3 . "IfNotPresent" . $4~em;
+          die "Expected exactly one deployment image for $ENV{SERVICE_NAME}, updated $changed\n" unless $changed == 1;
+        ' infra/helm/experimentops/values.yaml
 
     - name: Update Keycloak realm-import image
       if: inputs.image-target == 'keycloak-realm-import'
-      uses: mikefarah/yq@v4.45.1
+      shell: bash
       env:
         IMAGE_REPOSITORY: ${{ inputs.image-repository }}
         IMAGE_TAG: ${{ inputs.image-tag }}
-      with:
-        cmd: >-
-          yq -i '(.keycloak.realmImportImage) |=
-          (.repository = strenv(IMAGE_REPOSITORY) | .tag = strenv(IMAGE_TAG) | .pullPolicy = "IfNotPresent")'
-          infra/helm/experimentops/values.yaml
+      run: |
+        perl -0pi -e '
+          my $changed = s~(^  realmImportImage: \{ repository: )[^,]+(, tag: )[^,]+(, pullPolicy: )[^}]+( \})~$1 . $ENV{IMAGE_REPOSITORY} . $2 . $ENV{IMAGE_TAG} . $3 . "IfNotPresent" . $4~em;
+          die "Expected exactly one Keycloak realm-import image, updated $changed\n" unless $changed == 1;
+        ' infra/helm/experimentops/values.yaml
 
     - name: Commit desired state
       shell: bash
