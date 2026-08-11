@@ -1,0 +1,67 @@
+name: Promote Helm image
+description: Update one ExperimentOps image reference and commit the desired state to latest.
+
+inputs:
+  service-name:
+    description: Name of the deployment entry in the Helm values file.
+    required: true
+  image-repository:
+    description: Fully qualified container-image repository.
+    required: true
+  image-tag:
+    description: Immutable container-image tag to deploy.
+    required: true
+  image-target:
+    description: "Helm image entry to update: deployment or keycloak-realm-import."
+    required: false
+    default: deployment
+  target-branch:
+    description: Branch Argo CD watches.
+    required: false
+    default: latest
+
+runs:
+  using: composite
+  steps:
+    - name: Update desired image
+      if: inputs.image-target == 'deployment'
+      uses: mikefarah/yq@v4.45.1
+      env:
+        SERVICE_NAME: ${{ inputs.service-name }}
+        IMAGE_REPOSITORY: ${{ inputs.image-repository }}
+        IMAGE_TAG: ${{ inputs.image-tag }}
+      with:
+        cmd: >-
+          yq -i '(.deployments[] | select(.name == strenv(SERVICE_NAME)).image) |=
+          (.repository = strenv(IMAGE_REPOSITORY) | .tag = strenv(IMAGE_TAG) | .pullPolicy = "IfNotPresent")'
+          infra/helm/experimentops/values.yaml
+
+    - name: Update Keycloak realm-import image
+      if: inputs.image-target == 'keycloak-realm-import'
+      uses: mikefarah/yq@v4.45.1
+      env:
+        IMAGE_REPOSITORY: ${{ inputs.image-repository }}
+        IMAGE_TAG: ${{ inputs.image-tag }}
+      with:
+        cmd: >-
+          yq -i '(.keycloak.realmImportImage) |=
+          (.repository = strenv(IMAGE_REPOSITORY) | .tag = strenv(IMAGE_TAG) | .pullPolicy = "IfNotPresent")'
+          infra/helm/experimentops/values.yaml
+
+    - name: Commit desired state
+      shell: bash
+      env:
+        SERVICE_NAME: ${{ inputs.service-name }}
+        IMAGE_TAG: ${{ inputs.image-tag }}
+        TARGET_BRANCH: ${{ inputs.target-branch }}
+      run: |
+        git config user.name "experimentops-deploy[bot]"
+        git config user.email "experimentops-deploy[bot]@users.noreply.github.com"
+        git add infra/helm/experimentops/values.yaml
+        if git diff --cached --quiet; then
+          echo "Helm values already reference ${IMAGE_TAG}; nothing to promote."
+          exit 0
+        fi
+        git commit -m "deploy(${SERVICE_NAME}): ${IMAGE_TAG}"
+        git pull --rebase origin "${TARGET_BRANCH}"
+        git push origin "HEAD:${TARGET_BRANCH}"

@@ -38,7 +38,44 @@ The output is `sealed-secrets.values.yaml`. It is encrypted for this Kind
 cluster's controller key and is the only secret material included in the
 chart. Re-run the script after any local secret changes.
 
-## Build and deploy
+## CI image promotion and GitOps
+
+This repository is also the GitOps repository for the local Kind environment.
+Argo CD watches the `latest` branch at `infra/helm/experimentops`; the Helm
+values in this directory are the desired state of the cluster.
+
+On a merged pull request, the service workflow:
+
+1. builds the merged revision and pushes `ghcr.io/<owner>/experimentops-<service>:sha-<commit>`;
+2. updates that service's image repository and tag in `values.yaml`;
+3. commits `deploy(<service>): sha-<commit>` to `latest` as
+   `experimentops-deploy[bot]`.
+
+Argo CD will then detect that commit and synchronize the cluster. The
+`sha-<commit>` tag is immutable deployment evidence: it identifies exactly
+which source revision the cluster is meant to run. Do not use `latest` as a
+deployed image tag.
+
+Before enabling this flow in GitHub:
+
+- Set **Settings → Actions → General → Workflow permissions** to **Read and
+  write permissions**.
+- If `latest` is branch-protected, allow GitHub Actions to bypass the required
+  restriction or use a deployment pull-request workflow instead.
+- Set the six first-party GHCR packages to public so Kind can pull them
+  without an `imagePullSecret`.
+
+The first successful publish for each service creates its corresponding Helm
+promotion commit. Until then, the chart keeps its existing local image values
+and can still be used with the manual Kind image-loading flow below.
+
+Before installing Argo CD for the first time, run each of the six publish
+workflows manually with **Actions → Run workflow**. This publishes a consistent
+initial set of GHCR images and replaces every local image reference in the
+chart. Later, only the workflow for the changed service runs after its pull
+request is merged.
+
+## Manual local build and deploy
 
 ```bash
 docker compose -f infra/docker/docker-compose.local.yml build \

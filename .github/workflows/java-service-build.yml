@@ -11,18 +11,24 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    concurrency:
+      group: local-kind-image-promotion
+      cancel-in-progress: false
     defaults:
       run:
         working-directory: services
     steps:
-      - name: Check out source code
+      - name: Check out merged revision
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
       - name: Create lowercase GHCR owner
         id: image
         run: |
@@ -54,3 +60,9 @@ jobs:
           tags: |
             ghcr.io/${{ steps.image.outputs.owner }}/experimentops-${{ inputs.service-name }}:sha-${{ github.sha }}
             ghcr.io/${{ steps.image.outputs.owner }}/experimentops-${{ inputs.service-name }}:latest
+      - name: Promote image in Helm values
+        uses: ./.github/actions/promote-helm-image
+        with:
+          service-name: ${{ inputs.service-name }}
+          image-repository: ghcr.io/${{ steps.image.outputs.owner }}/experimentops-${{ inputs.service-name }}
+          image-tag: sha-${{ github.sha }}
