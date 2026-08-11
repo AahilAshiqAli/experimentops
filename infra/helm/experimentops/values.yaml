@@ -94,7 +94,7 @@ deployments:
     livenessProbe: {path: /, initialDelaySeconds: 15, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3}
     resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 250m, memory: 256Mi}}
   - name: scanner
-    image: {repository: ghcr.io/aahilashiqali/experimentops-scanner, tag: sha-8e0df167c288f2e8bad25d46486c667450dda71c, pullPolicy: IfNotPresent}
+    image: {repository: ghcr.io/aahilashiqali/experimentops-scanner, tag: sha-2bcb7df4153f162485498aadc8df8a1f337b611f, pullPolicy: IfNotPresent}
     configMaps: [scanner-config]
     secrets: [experimentops-runtime-secrets]
     terminationGracePeriodSeconds: 60
