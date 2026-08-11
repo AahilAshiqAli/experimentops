@@ -1,4 +1,4 @@
-name: Frontend
+name: Keycloak Realm Import
 
 on:
   workflow_dispatch:
@@ -6,43 +6,18 @@ on:
     types: [opened, synchronize, closed]
     branches: [latest]
     paths:
-      - services/app/frontend/experimentops-frontend/**
-      - .github/workflows/frontend.yml
+      - infra/helm/experimentops/keycloak/**
+      - .github/workflows/keycloak-realm-import.yml
       - .github/actions/promote-helm-image/**
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
-  test:
-    if: github.event.action == 'opened' || github.event.action == 'synchronize'
-    name: Lint and build frontend
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/app/frontend/experimentops-frontend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Enable pnpm
-        run: corepack enable
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      # The frontend does not currently contain a test runner or test files.
-      - name: Lint frontend
-        run: pnpm lint
-      - name: Build frontend
-        run: pnpm build
-
   build-and-push:
     if: github.event_name == 'workflow_dispatch' || (github.event.action == 'closed' && github.event.pull_request.merged == true)
-    name: Build and publish frontend
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
     concurrency:
       group: local-kind-image-promotion
       cancel-in-progress: false
@@ -65,14 +40,16 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: services/app/frontend/experimentops-frontend
+          context: infra/helm/experimentops/keycloak
+          file: infra/helm/experimentops/keycloak/import/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ steps.image.outputs.owner }}/experimentops-frontend:sha-${{ github.sha }}
-            ghcr.io/${{ steps.image.outputs.owner }}/experimentops-frontend:latest
+            ghcr.io/${{ steps.image.outputs.owner }}/experimentops-keycloak-realm-import:sha-${{ github.sha }}
+            ghcr.io/${{ steps.image.outputs.owner }}/experimentops-keycloak-realm-import:latest
       - name: Promote image in Helm values
         uses: ./.github/actions/promote-helm-image
         with:
-          service-name: frontend
-          image-repository: ghcr.io/${{ steps.image.outputs.owner }}/experimentops-frontend
+          service-name: keycloak-realm-import
+          image-repository: ghcr.io/${{ steps.image.outputs.owner }}/experimentops-keycloak-realm-import
           image-tag: sha-${{ github.sha }}
+          image-target: keycloak-realm-import

@@ -1,6 +1,7 @@
 name: Scanner
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, closed]
     branches: [latest]
@@ -11,9 +12,10 @@ on:
       - .github/workflows/java-service-test.yml
       - .github/workflows/java-service-build.yml
       - .github/workflows/scanner.yml
+      - .github/actions/promote-helm-image/**
 
 permissions:
-  contents: read
+  contents: write
   packages: write
 
 jobs:
@@ -23,7 +25,7 @@ jobs:
     with:
       service-path: applications/scanner
   build-and-push:
-    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || (github.event.action == 'closed' && github.event.pull_request.merged == true)
     uses: ./.github/workflows/java-service-build.yml
     with:
       service-name: scanner
