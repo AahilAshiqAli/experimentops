@@ -40,7 +40,7 @@ runs:
         IMAGE_TAG: ${{ inputs.image-tag }}
       run: |
         perl -0pi -e '
-          my $changed = s~(^  - name: \Q$ENV{SERVICE_NAME}\E\n    image: \{ repository: )[^,]+(, tag: )[^,]+(, pullPolicy: )[^}]+( \})~$1 . $ENV{IMAGE_REPOSITORY} . $2 . $ENV{IMAGE_TAG} . $3 . "IfNotPresent" . $4~em;
+          my $changed = s~(^  - name: \Q$ENV{SERVICE_NAME}\E\n    image: \{[ ]*repository:[ ]*)[^,]+(,[ ]*tag:[ ]*)[^,]+(,[ ]*pullPolicy:[ ]*)[^}]+([ ]*\})~$1 . $ENV{IMAGE_REPOSITORY} . $2 . $ENV{IMAGE_TAG} . $3 . "IfNotPresent" . $4~em;
           die "Expected exactly one deployment image for $ENV{SERVICE_NAME}, updated $changed\n" unless $changed == 1;
         ' infra/helm/experimentops/values.yaml
 
@@ -52,7 +52,7 @@ runs:
         IMAGE_TAG: ${{ inputs.image-tag }}
       run: |
         perl -0pi -e '
-          my $changed = s~(^  realmImportImage: \{ repository: )[^,]+(, tag: )[^,]+(, pullPolicy: )[^}]+( \})~$1 . $ENV{IMAGE_REPOSITORY} . $2 . $ENV{IMAGE_TAG} . $3 . "IfNotPresent" . $4~em;
+          my $changed = s~(^  realmImportImage: \{[ ]*repository:[ ]*)[^,]+(,[ ]*tag:[ ]*)[^,]+(,[ ]*pullPolicy:[ ]*)[^}]+([ ]*\})~$1 . $ENV{IMAGE_REPOSITORY} . $2 . $ENV{IMAGE_TAG} . $3 . "IfNotPresent" . $4~em;
           die "Expected exactly one Keycloak realm-import image, updated $changed\n" unless $changed == 1;
         ' infra/helm/experimentops/values.yaml
 
