@@ -70,77 +70,73 @@ configMaps:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
-
 deployments:
   - name: platform-api
-    image: { repository: platform-api, tag: local, pullPolicy: IfNotPresent }
-    port: { name: http, containerPort: 8080 }
+    image: {repository: platform-api, tag: local, pullPolicy: IfNotPresent}
+    port: {name: http, containerPort: 8080}
     configMaps: [platform-api-config]
     secrets: [experimentops-runtime-secrets, platform-api-secrets]
-    readinessProbe: { path: /actuator/health/readiness, initialDelaySeconds: 30, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 3 }
-    livenessProbe: { path: /actuator/health/liveness, initialDelaySeconds: 60, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3 }
-    resources: { requests: { cpu: 250m, memory: 512Mi }, limits: { cpu: 500m, memory: 1Gi } }
+    readinessProbe: {path: /actuator/health/readiness, initialDelaySeconds: 30, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 3}
+    livenessProbe: {path: /actuator/health/liveness, initialDelaySeconds: 60, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3}
+    resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: 500m, memory: 1Gi}}
   - name: api-gateway-service
-    image: { repository: api-gateway-service, tag: local, pullPolicy: IfNotPresent }
-    port: { name: http, containerPort: 8080 }
+    image: {repository: api-gateway-service, tag: local, pullPolicy: IfNotPresent}
+    port: {name: http, containerPort: 8080}
     configMaps: [api-gateway-service-config]
     secrets: [api-gateway-service-secrets]
-    readinessProbe: { path: /actuator/health/readiness, initialDelaySeconds: 20, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 6 }
-    livenessProbe: { path: /actuator/health/liveness, initialDelaySeconds: 45, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3 }
-    resources: { requests: { cpu: 250m, memory: 512Mi }, limits: { cpu: "1", memory: 1Gi } }
+    readinessProbe: {path: /actuator/health/readiness, initialDelaySeconds: 20, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 6}
+    livenessProbe: {path: /actuator/health/liveness, initialDelaySeconds: 45, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3}
+    resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
   - name: frontend
-    image: { repository: experimentops-frontend, tag: local, pullPolicy: IfNotPresent }
-    port: { name: http, containerPort: 80 }
-    readinessProbe: { path: /, initialDelaySeconds: 5, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 3 }
-    livenessProbe: { path: /, initialDelaySeconds: 15, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3 }
-    resources: { requests: { cpu: 50m, memory: 64Mi }, limits: { cpu: 250m, memory: 256Mi } }
+    image: {repository: ghcr.io/aahilashiqali/experimentops-frontend, tag: sha-f120d6ebc8303dad3256b3ba9087eeb8c11c1b60, pullPolicy: IfNotPresent}
+    port: {name: http, containerPort: 80}
+    readinessProbe: {path: /, initialDelaySeconds: 5, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 3}
+    livenessProbe: {path: /, initialDelaySeconds: 15, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3}
+    resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 250m, memory: 256Mi}}
   - name: scanner
-    image: { repository: scanner, tag: local, pullPolicy: IfNotPresent }
+    image: {repository: scanner, tag: local, pullPolicy: IfNotPresent}
     configMaps: [scanner-config]
     secrets: [experimentops-runtime-secrets]
     terminationGracePeriodSeconds: 60
-    resources: { requests: { cpu: 250m, memory: 512Mi }, limits: { cpu: "1", memory: 1Gi } }
+    resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
   - name: analysis-worker
-    image: { repository: analysis-worker, tag: local, pullPolicy: IfNotPresent }
+    image: {repository: analysis-worker, tag: local, pullPolicy: IfNotPresent}
     configMaps: [analysis-worker-config]
     secrets: [experimentops-runtime-secrets]
     terminationGracePeriodSeconds: 120
-    fieldRefEnv: { EXPERIMENTOPS_KAFKA_CLIENT_ID: metadata.name }
-    resources: { requests: { cpu: 500m, memory: 1Gi }, limits: { cpu: "2", memory: 4Gi } }
+    fieldRefEnv: {EXPERIMENTOPS_KAFKA_CLIENT_ID: metadata.name}
+    resources: {requests: {cpu: 500m, memory: 1Gi}, limits: {cpu: "2", memory: 4Gi}}
   - name: schema-registry
-    image: { repository: confluentinc/cp-schema-registry, tag: 7.7.1, pullPolicy: IfNotPresent }
-    port: { name: http, containerPort: 8081 }
+    image: {repository: confluentinc/cp-schema-registry, tag: 7.7.1, pullPolicy: IfNotPresent}
+    port: {name: http, containerPort: 8081}
     configMaps: [schema-registry-config]
     enableServiceLinks: false
-    readinessProbe: { path: /subjects, initialDelaySeconds: 20, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 6 }
-    livenessProbe: { path: /subjects, initialDelaySeconds: 60, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3 }
-    resources: { requests: { cpu: 250m, memory: 512Mi }, limits: { cpu: 500m, memory: 1Gi } }
+    readinessProbe: {path: /subjects, initialDelaySeconds: 20, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 6}
+    livenessProbe: {path: /subjects, initialDelaySeconds: 60, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3}
+    resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: 500m, memory: 1Gi}}
   - name: mailpit
-    image: { repository: axllent/mailpit, tag: latest, pullPolicy: IfNotPresent }
-    ports: [{ name: smtp, containerPort: 1025 }, { name: web, containerPort: 8025 }]
-    readinessProbe: { path: /, port: web, initialDelaySeconds: 5, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 3 }
-    livenessProbe: { path: /, port: web, initialDelaySeconds: 15, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3 }
-    resources: { requests: { cpu: 50m, memory: 64Mi }, limits: { cpu: 250m, memory: 256Mi } }
-
+    image: {repository: axllent/mailpit, tag: latest, pullPolicy: IfNotPresent}
+    ports: [{name: smtp, containerPort: 1025}, {name: web, containerPort: 8025}]
+    readinessProbe: {path: /, port: web, initialDelaySeconds: 5, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 3}
+    livenessProbe: {path: /, port: web, initialDelaySeconds: 15, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3}
+    resources: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 250m, memory: 256Mi}}
 services:
-  - { name: platform-api, app: platform-api, port: 8080, targetPort: http }
-  - { name: api-gateway-service, app: api-gateway-service, port: 8080, targetPort: http }
-  - { name: frontend, app: frontend, port: 80, targetPort: http }
-  - { name: schema-registry, app: schema-registry, port: 8081, targetPort: http }
-  - { name: mailpit, app: mailpit, ports: [{ name: smtp, port: 1025, targetPort: smtp }, { name: web, port: 8025, targetPort: web }] }
-
+  - {name: platform-api, app: platform-api, port: 8080, targetPort: http}
+  - {name: api-gateway-service, app: api-gateway-service, port: 8080, targetPort: http}
+  - {name: frontend, app: frontend, port: 80, targetPort: http}
+  - {name: schema-registry, app: schema-registry, port: 8081, targetPort: http}
+  - {name: mailpit, app: mailpit, ports: [{name: smtp, port: 1025, targetPort: smtp}, {name: web, port: 8025, targetPort: web}]}
 kafka:
-  image: { repository: confluentinc/cp-kafka, tag: 7.7.1, pullPolicy: IfNotPresent }
+  image: {repository: confluentinc/cp-kafka, tag: 7.7.1, pullPolicy: IfNotPresent}
   replicas: 1
-  persistence: { size: 2Gi, storageClassName: "" }
-  resources: { requests: { cpu: 500m, memory: 1Gi }, limits: { cpu: "1", memory: 2Gi } }
+  persistence: {size: 2Gi, storageClassName: ""}
+  resources: {requests: {cpu: 500m, memory: 1Gi}, limits: {cpu: "1", memory: 2Gi}}
 keycloak:
-  image: { repository: quay.io/keycloak/keycloak, tag: 25.0.6, pullPolicy: IfNotPresent }
-  realmImportImage: { repository: keycloak-realm-import, tag: local, pullPolicy: IfNotPresent }
+  image: {repository: quay.io/keycloak/keycloak, tag: 25.0.6, pullPolicy: IfNotPresent}
+  realmImportImage: {repository: keycloak-realm-import, tag: local, pullPolicy: IfNotPresent}
   replicas: 1
-  persistence: { size: 1Gi, storageClassName: "" }
-  resources: { requests: { cpu: 250m, memory: 512Mi }, limits: { cpu: "1", memory: 1Gi } }
-
+  persistence: {size: 1Gi, storageClassName: ""}
+  resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
 ingress:
   enabled: true
   className: nginx
