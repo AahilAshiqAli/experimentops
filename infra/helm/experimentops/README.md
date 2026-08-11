@@ -66,18 +66,20 @@ Before enabling this flow in GitHub:
 - If `latest` is branch-protected, allow GitHub Actions to bypass the required
   restriction through that token or use a deployment pull-request workflow
   instead.
-- Set the six first-party GHCR packages to public so Kind can pull them
+- Set the five application GHCR packages to public so Kind can pull them
   without an `imagePullSecret`.
 
 The first successful publish for each service creates its corresponding Helm
 promotion commit. Until then, the chart keeps its existing local image values
 and can still be used with the manual Kind image-loading flow below.
 
-Before installing Argo CD for the first time, run each of the six publish
+Before installing Argo CD for the first time, run each of the five application publish
 workflows manually with **Actions → Run workflow**. This publishes a consistent
-initial set of GHCR images and replaces every local image reference in the
-chart. Later, only the workflow for the changed service runs after its pull
-request is merged.
+initial set of GHCR images and replaces their local image references in the
+chart. The Keycloak realm-import image remains a one-time local Kind bootstrap
+image because `export.local` is intentionally ignored and the Keycloak
+StatefulSet persists its initialized data. Later, only the workflow for the
+changed application runs after its pull request is merged.
 
 ## Manual local build and deploy
 
