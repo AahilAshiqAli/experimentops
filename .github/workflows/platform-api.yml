@@ -31,3 +31,5 @@ jobs:
     with:
       service-name: platform-api
       service-path: applications/platform-api
+    secrets:
+      HELM_PROMOTION_TOKEN: ${{ secrets.HELM_PROMOTION_TOKEN }}

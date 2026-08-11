@@ -60,8 +60,12 @@ Before enabling this flow in GitHub:
 
 - Set **Settings → Actions → General → Workflow permissions** to **Read and
   write permissions**.
+- Add the fine-grained administrator PAT as the repository Actions secret
+  `HELM_PROMOTION_TOKEN`; it is used only to push the protected-branch Helm
+  promotion commit.
 - If `latest` is branch-protected, allow GitHub Actions to bypass the required
-  restriction or use a deployment pull-request workflow instead.
+  restriction through that token or use a deployment pull-request workflow
+  instead.
 - Set the six first-party GHCR packages to public so Kind can pull them
   without an `imagePullSecret`.
 
