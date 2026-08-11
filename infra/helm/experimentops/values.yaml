@@ -88,7 +88,7 @@ deployments:
     livenessProbe: {path: /actuator/health/liveness, initialDelaySeconds: 45, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3}
     resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
   - name: frontend
-    image: {repository: ghcr.io/aahilashiqali/experimentops-frontend, tag: sha-f120d6ebc8303dad3256b3ba9087eeb8c11c1b60, pullPolicy: IfNotPresent}
+    image: {repository: ghcr.io/aahilashiqali/experimentops-frontend, tag: sha-8e0df167c288f2e8bad25d46486c667450dda71c, pullPolicy: IfNotPresent}
     port: {name: http, containerPort: 80}
     readinessProbe: {path: /, initialDelaySeconds: 5, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 3}
     livenessProbe: {path: /, initialDelaySeconds: 15, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3}
