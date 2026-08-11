@@ -9,6 +9,9 @@ on:
       service-path:
         required: true
         type: string
+    secrets:
+      HELM_PROMOTION_TOKEN:
+        required: true
 
 permissions:
   contents: write
@@ -29,6 +32,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
+          token: ${{ secrets.HELM_PROMOTION_TOKEN }}
       - name: Create lowercase GHCR owner
         id: image
         run: |

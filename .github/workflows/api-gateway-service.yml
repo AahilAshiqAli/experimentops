@@ -31,3 +31,5 @@ jobs:
     with:
       service-name: api-gateway-service
       service-path: applications/api-gateway-service
+    secrets:
+      HELM_PROMOTION_TOKEN: ${{ secrets.HELM_PROMOTION_TOKEN }}
