@@ -6,8 +6,19 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "experimentops.labels" . | nindent 4 }}
+  {{- if .Values.ingress.tls.enabled }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - secretName: {{ .Values.ingress.tls.secretName }}
+      hosts:
+        - {{ .Values.ingress.frontendHost }}
+        - {{ .Values.ingress.apiHost }}
+  {{- end }}
   rules:
     - host: {{ .Values.ingress.frontendHost }}
       http:

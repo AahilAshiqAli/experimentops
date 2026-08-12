@@ -14,6 +14,9 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.template
+*.pem
+*.key
+*.crt
 infra/helm/experimentops/keycloak/realm-import.local.json
 infra/helm/experimentops/keycloak/export.local/
 experimentops-jwks.json

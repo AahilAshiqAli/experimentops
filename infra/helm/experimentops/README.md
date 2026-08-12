@@ -9,6 +9,19 @@ cluster. `values.yaml` contains only non-sensitive local configuration.
 - Images built and loaded into Kind, as described below.
 - NGINX Ingress controller installed with
   `infra/helm/experimentops/scripts/install-kind-ingress-nginx.sh`.
+- `mkcert` installed on macOS with `brew install mkcert` (`brew install nss`
+  is additionally required when using Firefox).
+- A locally trusted ingress certificate installed with:
+
+```bash
+bash infra/helm/experimentops/scripts/install-local-tls.sh
+```
+
+  The script uses `mkcert` to trust a local certificate authority, creates a
+  certificate for `experimentops.test` and `api.experimentops.test`, and stores
+  it as the cluster-local `experimentops-local-tls` Secret. Certificate and
+  private-key files are temporary and are never committed. Re-run the script
+  whenever the Kind cluster is recreated.
 - Sealed Secrets controller installed once per Kind cluster:
 
 ```bash
