@@ -76,9 +76,10 @@ deployments:
     port: {name: http, containerPort: 8080}
     configMaps: [platform-api-config]
     secrets: [experimentops-runtime-secrets, platform-api-secrets]
+    startupProbe: {path: /actuator/health/liveness, initialDelaySeconds: 10, periodSeconds: 5, timeoutSeconds: 3, failureThreshold: 48}
     readinessProbe: {path: /actuator/health/readiness, initialDelaySeconds: 30, periodSeconds: 10, timeoutSeconds: 3, failureThreshold: 3}
     livenessProbe: {path: /actuator/health/liveness, initialDelaySeconds: 60, periodSeconds: 20, timeoutSeconds: 3, failureThreshold: 3}
-    resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: 500m, memory: 1Gi}}
+    resources: {requests: {cpu: 250m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
   - name: api-gateway-service
     image: {repository: ghcr.io/aahilashiqali/experimentops-api-gateway-service, tag: sha-149cc6872f142dc03dbe80a86f6819218f738cab, pullPolicy: IfNotPresent}
     port: {name: http, containerPort: 8080}

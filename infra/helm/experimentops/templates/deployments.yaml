@@ -54,6 +54,14 @@ spec:
                 fieldRef: { fieldPath: {{ $path }} }
             {{- end }}
           {{- end }}
+          {{- with $workload.startupProbe }}
+          startupProbe:
+            httpGet: { path: {{ .path }}, port: {{ default "http" .port }} }
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            periodSeconds: {{ .periodSeconds }}
+            timeoutSeconds: {{ .timeoutSeconds }}
+            failureThreshold: {{ .failureThreshold }}
+          {{- end }}
           {{- with $workload.readinessProbe }}
           readinessProbe:
             httpGet: { path: {{ .path }}, port: {{ default "http" .port }} }
