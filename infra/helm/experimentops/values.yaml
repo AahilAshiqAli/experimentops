@@ -72,7 +72,7 @@ configMaps:
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
 deployments:
   - name: platform-api
-    image: {repository: platform-api, tag: local, pullPolicy: IfNotPresent}
+    image: {repository: ghcr.io/aahilashiqali/experimentops-platform-api, tag: sha-3a06409b9867b12ad1798af04a6133cf8aabada2, pullPolicy: IfNotPresent}
     port: {name: http, containerPort: 8080}
     configMaps: [platform-api-config]
     secrets: [experimentops-runtime-secrets, platform-api-secrets]
