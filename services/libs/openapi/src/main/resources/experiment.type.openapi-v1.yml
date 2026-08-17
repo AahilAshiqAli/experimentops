@@ -43,6 +43,30 @@ paths:
       tags:
         - Experiment Type
       operationId: getExperimentTypeList
+      parameters:
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Zero-based page index
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of entries to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 20
       responses:
         200:
           description: successful operation

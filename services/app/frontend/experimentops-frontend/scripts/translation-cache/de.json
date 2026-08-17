@@ -824,6 +824,11 @@
     "source": "Unable to load experiment configs. Please try again.",
     "translation": "Das Laden von Experimentkonfigurationen ist fehlgeschlagen. Bitte versuchen Sie es erneut."
   },
+  "configs.errors.loadTypes": {
+    "generatorVersion": 2,
+    "source": "Unable to load experiment types. Please try again.",
+    "translation": "Das Laden von Experimenttypen ist fehlgeschlagen. Bitte versuchen Sie es erneut."
+  },
   "configs.errors.update": {
     "generatorVersion": 2,
     "source": "Unable to update the experiment config.",
@@ -884,15 +889,135 @@
     "source": "No format restrictions configured.",
     "translation": "Keine Formatbeschränkungen konfiguriert."
   },
+  "configs.io.anyFormat": {
+    "generatorVersion": 2,
+    "source": "Any format",
+    "translation": "Beliebiges Format"
+  },
+  "configs.io.connectable": {
+    "generatorVersion": 2,
+    "source": "Connectable",
+    "translation": "Verbindbar"
+  },
+  "configs.io.empty": {
+    "generatorVersion": 2,
+    "source": "No input/output contract configured.",
+    "translation": "Kein Ein-/Ausgabevertrag konfiguriert."
+  },
+  "configs.io.inputCount_one": {
+    "generatorVersion": 2,
+    "source": "{{count}} input",
+    "translation": "{{count}} Eingabe"
+  },
+  "configs.io.inputCount_other": {
+    "generatorVersion": 2,
+    "source": "{{count}} inputs",
+    "translation": "{{count}} Eingaben"
+  },
+  "configs.io.inputShort": {
+    "generatorVersion": 2,
+    "source": "In",
+    "translation": "Ein"
+  },
+  "configs.io.inputs": {
+    "generatorVersion": 2,
+    "source": "Inputs",
+    "translation": "Eingaben"
+  },
+  "configs.io.matchesInput": {
+    "generatorVersion": 2,
+    "source": "Matches {{port}}",
+    "translation": "Entspricht {{port}}"
+  },
+  "configs.io.option": {
+    "generatorVersion": 2,
+    "source": "Compatibility option {{number}}",
+    "translation": "Kompatibilitätsoption {{number}}"
+  },
+  "configs.io.optionCount_one": {
+    "generatorVersion": 2,
+    "source": "{{count}} compatibility option",
+    "translation": "{{count}} Kompatibilitätsoption"
+  },
+  "configs.io.optionCount_other": {
+    "generatorVersion": 2,
+    "source": "{{count}} compatibility options",
+    "translation": "{{count}} Kompatibilitätsoptionen"
+  },
+  "configs.io.optional": {
+    "generatorVersion": 2,
+    "source": "Optional",
+    "translation": "Optional"
+  },
+  "configs.io.openContract": {
+    "generatorVersion": 2,
+    "source": "View inputs and outputs for {{name}}",
+    "translation": "Ein- und Ausgaben für {{name}} anzeigen"
+  },
+  "configs.io.outputCount_one": {
+    "generatorVersion": 2,
+    "source": "{{count}} output",
+    "translation": "{{count}} Ausgabe"
+  },
+  "configs.io.outputCount_other": {
+    "generatorVersion": 2,
+    "source": "{{count}} outputs",
+    "translation": "{{count}} Ausgaben"
+  },
+  "configs.io.outputShort": {
+    "generatorVersion": 2,
+    "source": "Out",
+    "translation": "Aus"
+  },
+  "configs.io.outputs": {
+    "generatorVersion": 2,
+    "source": "Outputs",
+    "translation": "Ausgaben"
+  },
+  "configs.io.required": {
+    "generatorVersion": 2,
+    "source": "Required",
+    "translation": "Erforderlich"
+  },
+  "configs.io.sameFormat": {
+    "generatorVersion": 2,
+    "source": "{{ports}} must use the same format.",
+    "translation": "{{ports}} müssen dasselbe Format verwenden."
+  },
+  "configs.io.single": {
+    "generatorVersion": 2,
+    "source": "Single",
+    "translation": "Einzeln"
+  },
+  "configs.io.terminal": {
+    "generatorVersion": 2,
+    "source": "Terminal",
+    "translation": "Terminal"
+  },
+  "configs.io.title": {
+    "generatorVersion": 2,
+    "source": "Inputs & outputs",
+    "translation": "Ein- und Ausgaben"
+  },
   "configs.permissionDenied": {
     "generatorVersion": 2,
     "source": "You do not have permission to view experiment configs.",
     "translation": "Sie haben keine Berechtigung, um Experimentkonfigurationen anzuzeigen."
   },
+  "configs.resetToDefaults": {
+    "generatorVersion": 2,
+    "source": "Reset to defaults",
+    "translation": "Auf Standardwerte zurücksetzen"
+  },
   "configs.search": {
     "generatorVersion": 2,
     "source": "Search configs...",
     "translation": "Konfigurationen suchen..."
+  },
+  "configs.searchTypes": {
+    "generatorVersion": 2,
+    "source": "Search experiment types...",
+    "translation": "Experimenttypen suchen..."
   },
   "configs.selectType": {
     "generatorVersion": 2,

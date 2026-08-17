@@ -175,12 +175,13 @@ services:
     image: api-gateway-service:local
     container_name: experimentops-api-gateway-service
     depends_on:
+      - platform-api
       - keycloak
     ports:
       - "8080:8080"
     environment:
       SERVER_PORT: 8080
-      services.platform-api.url: http://host.docker.internal:8088
+      services.platform-api.url: http://platform-api:8080
       JWKS_CERTS_FILE: /app/config/experimentops-jwks.json
       JWT_CLIENT_ID: experimentops-web
     volumes:

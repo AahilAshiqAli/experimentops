@@ -57,12 +57,14 @@ class _PipelineExecutionError(Exception):
         self,
         original: Exception,
         *,
+        experiment_type: str | None,
         progress_sequence: int,
         last_published_progress: int | None,
         current_step: int | None,
     ) -> None:
         super().__init__(str(original))
         self.original = original
+        self.experiment_type = experiment_type
         self.progress_sequence = progress_sequence
         self.last_published_progress = last_published_progress
         self.current_step = current_step
@@ -119,7 +121,7 @@ def build_experiment_run_requested_handler(
         except _PipelineExecutionError as pipeline_error:
             exception = pipeline_error.original
             run_log_sink.error(
-                _experiment_types_label(execution_configs),
+                pipeline_error.experiment_type,
                 "Experiment processing failed: %s",
                 str(exception) or exception.__class__.__name__,
             )
@@ -418,6 +420,7 @@ def _execute_pipeline(
         except Exception as exception:
             raise _PipelineExecutionError(
                 exception,
+                experiment_type=execution_config.experiment_type,
                 progress_sequence=context.progress_sequence,
                 last_published_progress=context.last_published_progress,
                 current_step=current_step,

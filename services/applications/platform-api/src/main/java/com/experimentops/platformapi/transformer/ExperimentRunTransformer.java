@@ -94,6 +94,7 @@ public class ExperimentRunTransformer {
                 .experimentStatus(ExperimentStatusEnum.PENDING)
                 .runNumber(1)
                 .progress(0)
+                .stepCompleted(0)
                 .build();
         experimentRun.setUuid(ExperimentOpsUtils.uuid());
         experimentRun.setCreatedBy(headers.getUserUuid());
@@ -265,7 +266,11 @@ public class ExperimentRunTransformer {
         responseModel.setNumSteps(summary.executionMode().size());
         responseModel.setDatasets(transformExperimentRunDatasetModels(datasets));
         responseModel.setRunArtifacts(transformExperimentRunArtifactModels(primaryArtifacts));
-        responseModel.setCompletedSteps(summary.completedSteps());
+        responseModel.setCompletedSteps(summary.completedSteps() != null
+                ? summary.completedSteps()
+                : summary.experimentStatus() == ExperimentStatusEnum.SUCCEEDED
+                        ? summary.executionMode().size()
+                        : 0);
         responseModel.setExecutionMode(transformExperimentRunDetailExecutionModeModels(
                 summary.executionMode(),
                 experimentTypesByConfigUuid,

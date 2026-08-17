@@ -15,12 +15,12 @@ import {
   useMutationValidateExperimentRun,
   useQueryDataset,
   useQueryExperimentConfigs,
-  useQueryExperimentTypes,
   useQueryProject,
   useQueryProjectDatasets,
 } from '../../queries'
 import type { Dataset, DatasetVersion } from '../../services/dataset.service'
 import type { ExperimentConfig } from '../../services/experimentConfig.service'
+import type { ExperimentType } from '../../services/experimentType.service'
 import { Toaster } from '../../services/toaster.service'
 import {
   buildExecutionMode,
@@ -37,7 +37,6 @@ export function useExperimentRunContainer() {
   }>()
   const navigate = useNavigate()
   const projectQuery = useQueryProject(projectUuid)
-  const experimentTypesQuery = useQueryExperimentTypes()
   const createRunMutation = useMutationCreateExperimentRun(experimentUuid ?? '')
   const configDetailsMutation = useMutationGetExperimentConfigsByUuids(
     experimentUuid ?? '',
@@ -52,7 +51,8 @@ export function useExperimentRunContainer() {
   >([])
   const [datasetBindings, setDatasetBindings] = useState<DatasetBinding[]>([])
   const [isConfigPickerOpen, setIsConfigPickerOpen] = useState(false)
-  const [selectedExperimentType, setSelectedExperimentType] = useState('')
+  const [selectedExperimentType, setSelectedExperimentType] =
+    useState<ExperimentType | null>(null)
   const [selectedConfigs, setSelectedConfigs] = useState<ExperimentConfig[]>([])
   const [boardConfigUuids, setBoardConfigUuids] = useState<string[]>([])
   const [connections, setConnections] = useState<PipelineConnection[]>([])
@@ -76,7 +76,7 @@ export function useExperimentRunContainer() {
   const configPickerQuery = useQueryExperimentConfigs(
     experimentUuid,
     {
-      experimentType: selectedExperimentType,
+      experimentType: selectedExperimentType?.name,
       page: 0,
       size: 100,
     },
@@ -370,7 +370,6 @@ export function useExperimentRunContainer() {
     datasetPickerTotalPages,
     datasetVersionsQuery,
     datasetsQuery,
-    experimentTypesQuery,
     experimentUuid,
     filteredDatasets,
     getConnectionError: (draft: ConnectionDraft) =>

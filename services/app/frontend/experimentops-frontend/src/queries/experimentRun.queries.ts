@@ -77,7 +77,7 @@ export function useQueryExperimentRunStatuses(experimentRunUuids: string[]) {
     queryFn: () =>
       getExperimentRunStatuses(accessToken as string, experimentRunUuids),
     queryKey: ['experiment-runs', 'statuses', experimentRunUuids],
-    refetchInterval: 10_000,
+    refetchInterval: 3_000,
   })
 }
 

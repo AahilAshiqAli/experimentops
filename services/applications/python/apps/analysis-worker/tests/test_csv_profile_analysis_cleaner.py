@@ -1,12 +1,18 @@
+# Purpose: Verify CSV cleaning behavior, artifact persistence, and saved config binding.
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
 from analysis_worker.executors.csv_profile_analysis.cleaner import clean_context
+from analysis_worker.executors.csv_profile_analysis.executor import (
+    CsvProfileAnalysisExecutor,
+)
 from analysis_worker.executors.csv_profile_analysis.model import (
     CsvProfileAnalysisContext,
 )
+from experiment_runtime.models import ExperimentExecutionContext
 from experiment_runtime.models.experiment_run_completed_event import Artifact
 
 
@@ -28,6 +34,14 @@ class FakeObjectStorage:
 
     def delete_file(self, key: str) -> None:
         return None
+
+
+class RecordingProgressPublisher:
+    def __init__(self) -> None:
+        self.values: list[int] = []
+
+    def publish(self, context: ExperimentExecutionContext, progress: int) -> None:
+        self.values.append(progress)
 
 
 def test_clean_context_downloads_input_and_uploads_artifacts(tmp_path: Path) -> None:
@@ -72,11 +86,13 @@ def test_clean_context_downloads_input_and_uploads_artifacts(tmp_path: Path) -> 
                 "format": "csv",
                 "type": "CLEANED_DATASET",
                 "uri": cleaned_dataset_artifact.uri,
-                "size": len(object_storage.uploads[
-                    "workspaces/workspace-1/projects/project-1/"
-                    "experiments/experiment-1/runs/run-1/artifacts/"
-                    "csv-profile-analysis/input_cleaned.csv"
-                ]),
+                "size": len(
+                    object_storage.uploads[
+                        "workspaces/workspace-1/projects/project-1/"
+                        "experiments/experiment-1/runs/run-1/artifacts/"
+                        "csv-profile-analysis/input_cleaned.csv"
+                    ]
+                ),
                 "stepCount": None,
                 "portName": None,
             },
@@ -84,11 +100,13 @@ def test_clean_context_downloads_input_and_uploads_artifacts(tmp_path: Path) -> 
                 "format": "json",
                 "type": "CLEANING_REPORT",
                 "uri": cleaning_report_artifact.uri,
-                "size": len(object_storage.uploads[
-                    "workspaces/workspace-1/projects/project-1/"
-                    "experiments/experiment-1/runs/run-1/artifacts/"
-                    "csv-profile-analysis/input_cleaning_report.json"
-                ]),
+                "size": len(
+                    object_storage.uploads[
+                        "workspaces/workspace-1/projects/project-1/"
+                        "experiments/experiment-1/runs/run-1/artifacts/"
+                        "csv-profile-analysis/input_cleaning_report.json"
+                    ]
+                ),
                 "stepCount": None,
                 "portName": None,
             },
@@ -124,6 +142,34 @@ def test_clean_context_reads_windows_1252_csv(tmp_path: Path) -> None:
 
     assert progress_updates == [25, 75, 100]
     assert result.metrics.output_rows == 1
+
+
+def test_executor_binds_config_json_to_cleaning_config(tmp_path: Path) -> None:
+    input_file_path = tmp_path / "duplicates.csv"
+    input_file_path.write_text(
+        "Name,Age\nAlice,30\nAlice,30\n",
+        encoding="utf-8",
+    )
+    progress = RecordingProgressPublisher()
+    executor = CsvProfileAnalysisExecutor(progress_publisher=progress)
+
+    result = executor.execute(
+        ExperimentExecutionContext(
+            event_uuid="event-1",
+            request_uuid="request-1",
+            workspace_uuid="workspace-1",
+            project_uuid="project-1",
+            experiment_uuid="experiment-1",
+            experiment_run_uuid="csv-config-binding-run",
+            experiment_type="CSV_PROFILE_ANALYSIS",
+            dataset_uri=input_file_path.as_uri(),
+            config_json={"dropDuplicateRows": False},
+        )
+    )
+
+    assert result.metrics.output_rows == 2
+    assert result.metrics.duplicate_rows_removed == 0
+    assert progress.values == [25, 75, 100]
 
 
 def _artifact(artifacts: list[Artifact], artifact_type: str) -> Artifact:

@@ -245,6 +245,33 @@ def test_run_requested_event_parses_execution_configs_from_execution_plan() -> N
     assert context.config_json == {"sampleSize": 100}
 
 
+def test_run_requested_event_decodes_execution_plan_config_json_string() -> None:
+    requested_event = ExperimentRunRequestedEvent.from_payload(
+        {
+            "metadata": {"uuid": "run-1"},
+            "payload": {
+                "executionPlan": {
+                    "schemaVersion": 1,
+                    "steps": [
+                        {
+                            "stepCount": 1,
+                            "experimentType": "TABULAR_TRAIN_TEST_SPLIT",
+                            "experimentConfigJson": '{"testSize": 0.2, "shuffle": true}',
+                        }
+                    ],
+                }
+            },
+        }
+    )
+
+    context = ExperimentExecutionContext.from_requested_event(
+        requested_event,
+        requested_event.execution_configs[0],
+    )
+
+    assert context.config_json == {"testSize": 0.2, "shuffle": True}
+
+
 def test_run_requested_event_parses_nested_execution_plan_contracts() -> None:
     requested_event = ExperimentRunRequestedEvent.from_payload(
         {

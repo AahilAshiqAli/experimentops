@@ -61,6 +61,12 @@ export type ExperimentType = {
   uuid: string
 }
 
+export type ExperimentTypeListParams = {
+  name?: string
+  page?: number
+  size?: number
+}
+
 export type PaginatedResponse<T> = {
   data: T[]
   totalElements: number
@@ -183,10 +189,14 @@ function toPaginatedResponse<T>(
 
 export async function getExperimentTypes(
   accessToken: string,
+  params: ExperimentTypeListParams = {},
 ): Promise<PaginatedResponse<ExperimentType>> {
   const payload = await ApiService.get<unknown>(
     ServicesUrlEndpoints.GET_EXPERIMENT_TYPES,
-    { headers: getAuthenticatedRequestHeaders(accessToken) },
+    {
+      headers: getAuthenticatedRequestHeaders(accessToken),
+      params,
+    },
   )
 
   const experimentTypes = toPaginatedResponse(payload, isExperimentType)

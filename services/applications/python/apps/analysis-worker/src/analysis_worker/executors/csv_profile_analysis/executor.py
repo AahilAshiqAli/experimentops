@@ -1,3 +1,5 @@
+# Purpose: Execute CSV profile cleaning with the saved configuration and publish progress.
+
 from __future__ import annotations
 
 from analysis_worker.executors.csv_profile_analysis.cleaner import clean_context
@@ -25,7 +27,7 @@ class CsvProfileAnalysisExecutor:
         self._progress_publisher = progress_publisher
 
     def execute(self, context: ExperimentExecutionContext) -> Result:
-        execution_context = CsvProfileAnalysisContext.model_validate(context)
+        execution_context = CsvProfileAnalysisContext.from_execution_context(context)
 
         cleaned_context = clean_context(
             execution_context,

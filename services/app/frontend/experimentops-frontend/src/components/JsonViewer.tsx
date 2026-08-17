@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 const INLINE_CONTROL_CLASS =
@@ -172,18 +172,22 @@ export function JsonEditor({
 
 export function JsonEditorDialog({
   getValidationErrors,
+  headerContent,
   isSubmitting = false,
   isValidationLoading = false,
   onClose,
   onSubmit,
+  resetValue,
   title,
   value,
 }: {
   getValidationErrors?: (value: unknown) => string[]
+  headerContent?: ReactNode
   isSubmitting?: boolean
   isValidationLoading?: boolean
   onClose: () => void
   onSubmit: (value: unknown) => void
+  resetValue?: unknown
   title: string
   value: unknown
 }) {
@@ -202,6 +206,11 @@ export function JsonEditorDialog({
     onSubmit(draft)
   }
 
+  const handleReset = () => {
+    if (resetValue === undefined) return
+    setDraft(resetValue)
+  }
+
   return (
     <div
       aria-labelledby="json-editor-title"
@@ -209,7 +218,7 @@ export function JsonEditorDialog({
       className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/40 p-4"
       role="dialog"
     >
-      <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-2xl">
+      <div className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
         <div className="flex items-center justify-between gap-4">
           <h2
             className="font-heading text-xl font-semibold text-secondary"
@@ -227,6 +236,8 @@ export function JsonEditorDialog({
             ×
           </button>
         </div>
+
+        {headerContent ? <div className="mt-4">{headerContent}</div> : null}
 
         <form className="mt-4" onSubmit={handleSubmit}>
           <JsonEditor onChange={setDraft} value={draft} />
@@ -247,26 +258,40 @@ export function JsonEditorDialog({
               </ul>
             </div>
           ) : null}
-          <div className="mt-5 flex justify-end gap-3">
-            <button
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-secondary hover:bg-slate-50"
-              disabled={isSubmitting}
-              onClick={onClose}
-              type="button"
-            >
-              {t('common.actions.cancel')}
-            </button>
-            <button
-              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={
-                isSubmitting || isValidationLoading || hasValidationErrors
-              }
-              type="submit"
-            >
-              {isSubmitting
-                ? t('common.jsonEditor.saving')
-                : t('common.actions.submit')}
-            </button>
+          <div className="mt-5 flex items-center justify-between gap-3">
+            <div>
+              {resetValue !== undefined ? (
+                <button
+                  className="rounded-md border border-primary/30 px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmitting || isValidationLoading}
+                  onClick={handleReset}
+                  type="button"
+                >
+                  {t('configs.resetToDefaults')}
+                </button>
+              ) : null}
+            </div>
+            <div className="flex gap-3">
+              <button
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-secondary hover:bg-slate-50"
+                disabled={isSubmitting}
+                onClick={onClose}
+                type="button"
+              >
+                {t('common.actions.cancel')}
+              </button>
+              <button
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={
+                  isSubmitting || isValidationLoading || hasValidationErrors
+                }
+                type="submit"
+              >
+                {isSubmitting
+                  ? t('common.jsonEditor.saving')
+                  : t('common.actions.submit')}
+              </button>
+            </div>
           </div>
         </form>
       </div>

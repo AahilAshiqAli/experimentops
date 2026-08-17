@@ -278,6 +278,7 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ExperimentConfigResponse'
+  /experiment/{experimentUuid}/experiment-config/{uuid}:
     put:
       summary: Update Experiment Config
       description: This API will update experiment config.

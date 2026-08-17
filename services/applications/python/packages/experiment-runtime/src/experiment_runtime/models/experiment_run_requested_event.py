@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any, Mapping
 
 from experiment_runtime.base_model import ExperimentOpsModel
@@ -82,7 +83,7 @@ class ExperimentRunExecutionPlanStep(ExperimentOpsModel):
             step_count=payload.get("stepCount"),
             experiment_config_uuid=payload.get("experimentConfigUuid"),
             experiment_type=payload.get("experimentType"),
-            experiment_config_json=payload.get("experimentConfigJson"),
+            experiment_config_json=_decode_json(payload.get("experimentConfigJson")),
             time_weight=payload.get("timeWeight"),
             inputs=tuple(
                 ExperimentRunExecutionPlanInput.from_payload(item)
@@ -189,3 +190,15 @@ def _mapping_items(value: Any) -> tuple[Mapping[str, Any], ...]:
         return ()
 
     return tuple(item for item in value if isinstance(item, Mapping))
+
+
+def _decode_json(value: Any) -> Any:
+    """Decode JSON stored in Avro string fields while preserving invalid values."""
+
+    if not isinstance(value, str):
+        return value
+
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value

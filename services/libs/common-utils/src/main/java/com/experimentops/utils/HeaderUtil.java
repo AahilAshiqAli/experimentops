@@ -1,6 +1,7 @@
 package com.experimentops.utils;
 
 import com.experimentops.utils.constant.Headers;
+import com.experimentops.utils.constant.RoleType;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
@@ -62,6 +63,11 @@ public final class HeaderUtil {
     private static String getHeader(HttpServletRequest request, String headerName) {
         return request.getHeader(headerName);
     }
+
+    public static boolean isAdministrator(ExperimentOpsHeaders headers){
+        return StringUtils.equalsIgnoreCase(RoleType.PLATFORM_ADMIN.getRoleName(), headers.getUserRole());
+    }
+
 
     private static String resolveClientIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");

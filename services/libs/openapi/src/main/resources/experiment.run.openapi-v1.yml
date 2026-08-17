@@ -228,6 +228,30 @@ paths:
         200:
           description: Experiment run request is valid
 
+  /experiment/{experimentUuid}/experiment-run/compare:
+    post:
+      summary: Compare Experiment Run
+      description: This API will validate experiment run execution mode format compatibility.
+      tags:
+        - Experiment run
+      operationId: validateExperimentRun
+      parameters:
+        - name: experimentUuid
+          in: path
+          description: Experiment uuid
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentRunRequestModel'
+      responses:
+        200:
+          description: Experiment run request is valid
+
 components:
   schemas:
     ExperimentRunListResponseModel:

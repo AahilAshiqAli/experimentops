@@ -156,6 +156,7 @@ public class ExperimentTypeTransformer {
 
         ExperimentTypeMutationEventPayload payload = event.getPayload();
         ExperimentType experimentType = ExperimentType.builder()
+                .workspaceUuid(event.getMetadata().getWorkspaceUuid())
                 .name(payload.getName())
                 .defaultConfig(toDefaultConfigEntity(payload.getDefaultConfig()))
                 .formatMappings(toFormatMappingEntity(payload.getFormatMappings()))

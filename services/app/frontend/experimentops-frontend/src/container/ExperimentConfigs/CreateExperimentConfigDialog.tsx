@@ -1,28 +1,18 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ExperimentTypeSelect } from '../../components/ExperimentTypeSelect'
 import { JsonEditor } from '../../components/JsonViewer'
 import type { ExperimentType } from '../../services/experimentType.service'
 import { getExperimentConfigValidationErrors } from './configValidation'
-
-function buildDefaultConfig(experimentType: ExperimentType) {
-  return Object.fromEntries(
-    experimentType.defaultConfig.map((field) => [
-      field.name,
-      field.defaultValue,
-    ]),
-  ) as Record<string, unknown>
-}
+import { buildExperimentTypeDefaultConfig } from './experimentConfigDefaults'
+import { ExperimentTypeIoSummary } from './ExperimentTypeIoSummary'
 
 export function CreateExperimentConfigDialog({
-  experimentTypes,
-  isLoadingExperimentTypes,
   isPending,
   onClose,
   onSubmit,
 }: {
-  experimentTypes: ExperimentType[]
-  isLoadingExperimentTypes: boolean
   isPending: boolean
   onClose: () => void
   onSubmit: (input: {
@@ -33,13 +23,11 @@ export function CreateExperimentConfigDialog({
 }) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
-  const [selectedTypeUuid, setSelectedTypeUuid] = useState('')
+  const [selectedType, setSelectedType] = useState<ExperimentType | null>(null)
   const [configDraft, setConfigDraft] = useState<Record<
     string,
     unknown
   > | null>(null)
-  const selectedType =
-    experimentTypes.find((type) => type.uuid === selectedTypeUuid) ?? null
   const regexValidationErrors = useMemo(
     () =>
       configDraft
@@ -49,10 +37,11 @@ export function CreateExperimentConfigDialog({
   )
   const hasValidationErrors = regexValidationErrors.length > 0
 
-  const handleSelectType = (uuid: string) => {
-    setSelectedTypeUuid(uuid)
-    const experimentType = experimentTypes.find((type) => type.uuid === uuid)
-    setConfigDraft(experimentType ? buildDefaultConfig(experimentType) : null)
+  const handleSelectType = (experimentType: ExperimentType | null) => {
+    setSelectedType(experimentType)
+    setConfigDraft(
+      experimentType ? buildExperimentTypeDefaultConfig(experimentType) : null,
+    )
   }
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -73,7 +62,7 @@ export function CreateExperimentConfigDialog({
       className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/40 p-4"
       role="dialog"
     >
-      <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl">
+      <div className="max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-2xl">
         <div className="flex items-center justify-between gap-4">
           <h2
             className="font-heading text-2xl font-semibold text-secondary"
@@ -105,59 +94,38 @@ export function CreateExperimentConfigDialog({
             />
           </label>
 
-          <label className="block text-sm font-medium text-secondary">
-            {t('configs.experimentTypeLabel')}
-            <select
-              className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-              disabled={isPending || isLoadingExperimentTypes}
-              onChange={(event) => handleSelectType(event.target.value)}
-              required
-              value={selectedTypeUuid}
-            >
-              <option disabled value="">
-                {isLoadingExperimentTypes
-                  ? t('configs.loadingTypes')
-                  : t('configs.selectType')}
-              </option>
-              {experimentTypes.map((experimentType) => (
-                <option key={experimentType.uuid} value={experimentType.uuid}>
-                  {experimentType.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <ExperimentTypeSelect
+            disabled={isPending}
+            label={t('configs.experimentTypeLabel')}
+            onChange={handleSelectType}
+            required
+            selectedType={selectedType}
+          />
 
           {selectedType ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <span className="block text-sm font-semibold text-secondary">
-                {t('configs.supportedFormats')}
-              </span>
-              {selectedType.formatMappings.length ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {selectedType.formatMappings.map((mapping) => (
-                    <span
-                      className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-white px-2.5 py-1 text-xs font-semibold text-secondary"
-                      key={`${mapping.inputFormat}-${mapping.outputFormat}`}
-                    >
-                      <span>{mapping.inputFormat}</span>
-                      <span className="text-slate-400">→</span>
-                      <span>{mapping.outputFormat}</span>
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-1 text-sm text-slate-500">
-                  {t('configs.noFormatRestrictions')}
-                </p>
-              )}
-            </div>
+            <ExperimentTypeIoSummary manifests={selectedType.formatMappings} />
           ) : null}
 
           {configDraft ? (
             <div>
-              <span className="block text-sm font-medium text-secondary">
-                {t('configs.config')}
-              </span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="block text-sm font-medium text-secondary">
+                  {t('configs.config')}
+                </span>
+                <button
+                  className="text-xs font-semibold text-primary hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isPending || !selectedType}
+                  onClick={() =>
+                    selectedType &&
+                    setConfigDraft(
+                      buildExperimentTypeDefaultConfig(selectedType),
+                    )
+                  }
+                  type="button"
+                >
+                  {t('configs.resetToDefaults')}
+                </button>
+              </div>
               <div className="mt-1">
                 <JsonEditor
                   onChange={(value) =>

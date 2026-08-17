@@ -13,6 +13,7 @@ import {
 import { getErrorMessage } from '../ProjectDetails/projectDetails.utils'
 import { CreateExperimentConfigDialog } from './CreateExperimentConfigDialog'
 import { getExperimentConfigColumns } from './columns'
+import { ExperimentTypeIoSummary } from './ExperimentTypeIoSummary'
 import { useExperimentConfigsContainer } from './useExperimentConfigsContainer'
 
 export function ExperimentConfigs() {
@@ -69,7 +70,7 @@ export function ExperimentConfigs() {
               onEdit: container.setEditingConfig,
               t,
             })}
-            data={container.configsQuery.data?.data ?? []}
+            data={container.configs}
             emptyMessage={t('configs.empty')}
             getRowKey={(config) => config.uuid}
             pagination={{
@@ -98,8 +99,6 @@ export function ExperimentConfigs() {
 
       {container.isCreateOpen && (
         <CreateExperimentConfigDialog
-          experimentTypes={container.experimentTypesQuery.data?.data ?? []}
-          isLoadingExperimentTypes={container.experimentTypesQuery.isLoading}
           isPending={container.createConfigMutation.isPending}
           onClose={() => container.setIsCreateOpen(false)}
           onSubmit={container.handleCreateConfig}
@@ -109,10 +108,16 @@ export function ExperimentConfigs() {
       {container.editingConfig && (
         <JsonEditorDialog
           getValidationErrors={container.getEditingConfigValidationErrors}
+          headerContent={
+            <ExperimentTypeIoSummary
+              manifests={container.editingConfig.formatMappings}
+            />
+          }
           isSubmitting={container.updateConfigMutation.isPending}
-          isValidationLoading={container.experimentTypesQuery.isLoading}
+          isValidationLoading={container.isExperimentTypesLoading}
           onClose={() => container.setEditingConfig(null)}
           onSubmit={container.handleUpdateConfig}
+          resetValue={container.editingConfigDefault}
           title={container.editingConfig.name}
           value={container.editingConfig.config}
         />

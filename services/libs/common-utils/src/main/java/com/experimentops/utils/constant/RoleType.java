@@ -33,7 +33,9 @@ public enum RoleType {
             PermissionConstants.GET_EXPERIMENT_CONFIG,
             PermissionConstants.RUN_EXPERIMENT,
             PermissionConstants.GET_EXPERIMENT_TYPE,
-            PermissionConstants.GET_EXPERIMENT_RUNS
+            PermissionConstants.GET_EXPERIMENT_RUNS,
+            PermissionConstants.ADD_EXPERIMENT_TYPE,
+            PermissionConstants.EDIT_EXPERIMENT_TYPE
     ), false),
     RESEARCHER("RESEARCHER", List.of(
             PermissionConstants.ADD_DATASET,

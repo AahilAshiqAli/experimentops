@@ -157,6 +157,18 @@ class LoggingRegistry(FakeRegistry):
         )
 
 
+class FailingRegistry(FakeRegistry):
+    def execute(
+        self,
+        experiment_type: str,
+        context: ExperimentExecutionContext,
+    ) -> Result:
+        self.contexts.append(context)
+        if experiment_type == "SECOND_ANALYSIS":
+            raise RuntimeError("second step failed")
+        return Result(artifact=[], metrics=[])
+
+
 class FakeProducer:
     def __init__(self) -> None:
         self.produced: list[dict[str, object]] = []
@@ -432,6 +444,80 @@ def test_handler_uploads_run_log_file_and_publishes_sequence_logs(tmp_path) -> N
         "Internal dtype warning.",
         "Finished cleaning CSV data.",
     ]
+
+
+def test_handler_failure_log_uses_failing_step_experiment_type(tmp_path) -> None:
+    progress_producer = FakeProducer()
+    progress_publisher = ExperimentRunProgressPublisher(
+        producer=progress_producer,
+        producer_topic="progress-topic",
+    )
+    registry = FailingRegistry()
+    producer = FakeProducer()
+    failure_producer = FakeProducer()
+    object_storage = FakeObjectStorage()
+    handler = build_experiment_run_requested_handler(
+        registry=registry,
+        producer=producer,
+        producer_topic="completed-topic",
+        failure_producer=failure_producer,
+        failure_producer_topic="failure-topic",
+        progress_publisher=progress_publisher,
+        object_storage=object_storage,
+        log_root_dir=tmp_path,
+    )
+
+    handler(
+        KafkaMessage(
+            topic="requested-topic",
+            partition=0,
+            offset=1,
+            key="run-1",
+            value={
+                "metadata": {
+                    "eventUuid": "event-1",
+                    "traceUuid": "request-1",
+                    "requesterUuid": "user-1",
+                    "uuid": "run-1",
+                    "workspaceUuid": "workspace-1",
+                },
+                "payload": {
+                    "projectUuid": "project-1",
+                    "experimentUuid": "experiment-1",
+                    "executionPlan": {
+                        "schemaVersion": 1,
+                        "steps": [
+                            {
+                                "stepCount": 1,
+                                "experimentType": "FIRST_ANALYSIS",
+                                "inputs": [],
+                                "outputs": [],
+                            },
+                            {
+                                "stepCount": 2,
+                                "experimentType": "SECOND_ANALYSIS",
+                                "inputs": [],
+                                "outputs": [],
+                            },
+                        ],
+                    },
+                },
+            },
+            headers={},
+            timestamp_millis=None,
+        )
+    )
+
+    assert producer.produced == []
+    assert len(failure_producer.produced) == 1
+    assert len(progress_producer.produced) == 1
+    failure_log = progress_producer.produced[0]["value"]["payload"]["logs"][0]
+    assert failure_log["experimentType"] == "SECOND_ANALYSIS"
+    assert failure_log["message"] == "Experiment processing failed: second step failed"
+
+    uploaded_log = next(iter(object_storage.uploads.values())).decode()
+    uploaded_record = json.loads(uploaded_log)
+    assert uploaded_record["experimentType"] == "SECOND_ANALYSIS"
 
 
 def test_handler_maps_csv_report_artifact_to_training_report_output() -> None:

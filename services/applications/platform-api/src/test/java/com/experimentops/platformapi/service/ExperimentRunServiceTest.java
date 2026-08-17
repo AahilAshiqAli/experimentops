@@ -382,6 +382,36 @@ class ExperimentRunServiceTest {
     }
 
     @Test
+    void duplicateCompletionDoesNotCreateArtifactsAgain() {
+        ExperimentRunRepository experimentRunRepository = mock(ExperimentRunRepository.class);
+        RunArtifactService runArtifactService = mock(RunArtifactService.class);
+        ExperimentRunService service = new ExperimentRunService(
+                null,
+                new ExperimentRunValidator(),
+                new ExperimentRunTransformer(),
+                null,
+                null,
+                experimentRunRepository,
+                null,
+                null,
+                runArtifactService,
+                null,
+                null
+        );
+        ExperimentOpsHeaders headers = headers();
+        ExperimentRun experimentRun = experimentRun(List.of());
+        experimentRun.setExperimentStatus(ExperimentStatusEnum.SUCCEEDED);
+
+        when(experimentRunRepository.findByUuidAndWorkspaceUuidAndEnabled("run-1", "workspace-1", true))
+                .thenReturn(Optional.of(experimentRun));
+
+        service.processExperimentRunCompleted(completedEvent(), headers);
+
+        verify(runArtifactService, never()).uploadArtifacts(any(), any(), any(), any());
+        verify(experimentRunRepository, never()).save(any());
+    }
+
+    @Test
     void failureEventMarksRunFailedWithPayloadErrorMessage() {
         ExperimentRunRepository experimentRunRepository = mock(ExperimentRunRepository.class);
         ExperimentRunService service = new ExperimentRunService(
@@ -498,6 +528,7 @@ class ExperimentRunServiceTest {
         service.processExperimentRunProgress(event, headers);
 
         assertThat(experimentRun.getProgress()).isEqualTo(42);
+        assertThat(experimentRun.getStepCompleted()).isEqualTo(1);
         verify(experimentRunRepository).save(experimentRun);
         ArgumentCaptor<List<ExperimentRunLog>> logsCaptor = ArgumentCaptor.forClass(List.class);
         verify(experimentRunLogRepository).saveAll(logsCaptor.capture());

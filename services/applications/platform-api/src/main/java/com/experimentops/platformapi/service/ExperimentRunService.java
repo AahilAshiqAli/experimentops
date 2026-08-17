@@ -29,6 +29,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -274,8 +275,13 @@ public class ExperimentRunService {
                 ));
     }
 
+    @Transactional
     public void processExperimentRunCompleted(@NonNull ExperimentRunCompletedEvent event, @NonNull ExperimentOpsHeaders headers) {
         ExperimentRun experimentRun = getExperimentRunEntity(event.getMetadata().getUuid(), headers);
+        if (experimentRun.getExperimentStatus() == ExperimentStatusEnum.SUCCEEDED) {
+            log.info(headers, "ignoring duplicate completion event for experiment run " + experimentRun.getUuid());
+            return;
+        }
         String logFileUrl = event.getPayload() == null ? null : event.getPayload().getLogFileUrl();
         try {
             List<ExperimentRunExecutionModeModel> executionMode = experimentRunTransformer.transformExecutionModeModel(
@@ -422,7 +428,9 @@ public class ExperimentRunService {
         ExperimentRun experimentRun = experimentRunRepository
                 .findByUuidAndWorkspaceUuidAndEnabled(experimentRunUuid, headers.getWorkspaceUuid(), true)
                 .orElseThrow(() -> new EntityNotFoundException("Experiment Run uuid", experimentRunUuid));
-        experimentRun.setStepCompleted(experimentRun.getStepCompleted());
+        if (payload.getCurrentStep() != null) {
+            experimentRun.setStepCompleted(payload.getCurrentStep());
+        }
         experimentRun.setProgress(progress);
         experimentRunRepository.save(experimentRun);
 

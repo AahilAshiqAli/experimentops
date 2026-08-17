@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 import { setDatasetDragData } from '../../components/datasetDrag'
+import { ExperimentTypeSelect } from '../../components/ExperimentTypeSelect'
 import { PipelineBoard } from '../../components/PipelineBoard'
 import { useDocumentTitle } from '../../hooks'
 import {
@@ -148,30 +149,13 @@ export function CreateExperimentRun() {
             <h3 className="text-sm font-semibold text-secondary">
               {t('runs.searchConfigsTitle')}
             </h3>
-            <label className="mt-3 block text-sm font-medium text-secondary">
-              {t('configs.experimentType')}
-              <select
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                disabled={container.experimentTypesQuery.isLoading}
-                onChange={(event) =>
-                  container.setSelectedExperimentType(event.target.value)
-                }
-                value={container.selectedExperimentType}
-              >
-                <option value="">
-                  {container.experimentTypesQuery.isLoading
-                    ? t('configs.loadingTypes')
-                    : t('configs.selectType')}
-                </option>
-                {(container.experimentTypesQuery.data?.data ?? []).map(
-                  (type) => (
-                    <option key={type.uuid} value={type.name}>
-                      {type.name}
-                    </option>
-                  ),
-                )}
-              </select>
-            </label>
+            <div className="mt-3">
+              <ExperimentTypeSelect
+                label={t('configs.experimentType')}
+                onChange={container.setSelectedExperimentType}
+                selectedType={container.selectedExperimentType}
+              />
+            </div>
             <button
               className="mt-3 w-full rounded-md border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!container.selectedExperimentType}
@@ -337,7 +321,7 @@ export function CreateExperimentRun() {
         <ExperimentConfigPickerDialog
           configs={container.configPickerQuery.data?.data ?? []}
           error={container.configPickerQuery.error}
-          experimentType={container.selectedExperimentType}
+          experimentType={container.selectedExperimentType?.name ?? ''}
           isLoading={container.configPickerQuery.isLoading}
           isSelecting={container.configDetailsMutation.isPending}
           onClose={() => container.setIsConfigPickerOpen(false)}

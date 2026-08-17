@@ -31,20 +31,23 @@ public class ExperimentTypeController implements ExperimentTypeApi {
     @Override
     public ResponseEntity<ExperimentTypeResponseModel> addExperimentType(ExperimentTypeRequestModel experimentTypeRequestModel) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
+        this.isAdministrator(headers);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(experimentTypeService.publishExperimentTypeCreationEvent(experimentTypeRequestModel, headers));
     }
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.GET_EXPERIMENT_TYPE + "')")
     @Override
-    public ResponseEntity<ExperimentTypeListResponseModel> getExperimentTypeList() {
+    public ResponseEntity<ExperimentTypeListResponseModel> getExperimentTypeList(String name, Integer page, Integer size) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
-        return ResponseEntity.status(HttpStatus.OK).body(experimentTypeService.getExperimentTypeList(headers));
+        this.isAdministrator(headers);
+        return ResponseEntity.status(HttpStatus.OK).body(experimentTypeService.getExperimentTypeList(name, page, size, headers));
     }
 
     @PreAuthorize("hasAuthority('" + PermissionConstants.EDIT_EXPERIMENT_TYPE + "')")
     @Override
     public ResponseEntity<ExperimentTypeResponseModel> updateExperimentType(String uuid, ExperimentTypeRequestModel experimentTypeRequestModel) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
+        this.isAdministrator(headers);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(experimentTypeService.publishExperimentTypeUpdateEvent(uuid, experimentTypeRequestModel, headers));
     }
 
@@ -52,7 +55,14 @@ public class ExperimentTypeController implements ExperimentTypeApi {
     @Override
     public ResponseEntity<ExperimentTypeResponseModel> updateStatusExperimentType(String uuid, ExperimentTypeStatusChangeRequestModel experimentTypeStatusChangeRequestModel) {
         ExperimentOpsHeaders headers = HeaderUtil.getHeaders(exchange);
+        this.isAdministrator(headers);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(experimentTypeService.publishExperimentTypeStatusChangeEvent(uuid, experimentTypeStatusChangeRequestModel, headers));
+    }
+
+    private void isAdministrator(ExperimentOpsHeaders headers){
+        if (HeaderUtil.isAdministrator(headers)){
+            headers.setWorkspaceUuid(null);
+        }
     }
 
 }

@@ -28,6 +28,9 @@ public class ExperimentType extends ExperimentOpsEntity {
     @Column(name = "name")
     private String name;
 
+    @Column(name = "workspace_uuid")
+    private String workspaceUuid;
+
     @Type(ExperimentOpsJsonType.class)
     @Column(name = "default_config", columnDefinition = "json")
     private List<ExperimentTypeDefaultConfig> defaultConfig;

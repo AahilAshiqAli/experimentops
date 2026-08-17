@@ -17,7 +17,10 @@ import com.experimentops.utils.ExperimentOpsLogger;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -43,7 +46,7 @@ public class ExperimentTypeService {
         String experimentTypeName = experimentTypeTransformer.normalizeExperimentTypeName(requestModel.getName());
         log.info(headers, "Creating new experiment type with name " + experimentTypeName);
         experimentTypeRepository
-                .findByNameAndStatusAndEnabled(experimentTypeName, StatusEnum.ACTIVE, true)
+                .findByNameAndStatusAndWorkspaceUuidAndEnabled(experimentTypeName, StatusEnum.ACTIVE, headers.getWorkspaceUuid(), true)
                 .ifPresent(experimentType -> {
                     throw new EntityAlreadyExistsException("name", experimentTypeName);
                 });
@@ -64,13 +67,13 @@ public class ExperimentTypeService {
         experimentTypeValidator.validateExperimentTypeRequestModel(requestModel);
         String experimentTypeName = experimentTypeTransformer.normalizeExperimentTypeName(requestModel.getName());
         experimentTypeRepository
-                .findByNameAndStatusAndEnabled(experimentTypeName, StatusEnum.ACTIVE, true)
+                .findByNameAndStatusAndWorkspaceUuidAndEnabled(experimentTypeName, StatusEnum.ACTIVE, headers.getWorkspaceUuid(), true)
                 .filter(experimentType -> !uuid.equals(experimentType.getUuid()))
                 .ifPresent(experimentType -> {
                     throw new EntityAlreadyExistsException("name", experimentTypeName);
                 });
         experimentTypeRepository
-                .findByUuidAndStatusAndEnabled(uuid, StatusEnum.ACTIVE, true)
+                .findByUuidAndStatusAndWorkspaceUuidAndEnabled(uuid, StatusEnum.ACTIVE, headers.getWorkspaceUuid(), true)
                 .orElseThrow(() -> new EntityNotFoundException(EXPERIMENT_TYPE_UUID, uuid));
         ExperimentTypeMutationEvent event = experimentTypeTransformer.transformExperimentTypeUpdateEvent(uuid, requestModel, headers);
         kafkaProducer.sendMessage(experimentTypeTopic, event, event.getMetadata());
@@ -80,7 +83,7 @@ public class ExperimentTypeService {
     public void updateExperimentType(@NonNull ExperimentTypeMutationEvent event, @NonNull ExperimentOpsHeaders headers) {
         String experimentTypeUuid = event.getMetadata().getUuid();
         experimentTypeRepository
-                .findByUuidAndStatusAndEnabled(experimentTypeUuid, StatusEnum.ACTIVE, true)
+                .findByUuidAndStatusAndWorkspaceUuidAndEnabled(experimentTypeUuid, StatusEnum.ACTIVE, headers.getWorkspaceUuid(), true)
                 .ifPresentOrElse(
                         experimentType -> {
                             experimentType.setName(event.getPayload().getName());
@@ -100,7 +103,7 @@ public class ExperimentTypeService {
     public ExperimentTypeResponseModel publishExperimentTypeStatusChangeEvent(@NonNull String uuid, @NonNull ExperimentTypeStatusChangeRequestModel statusChangeRequestModel, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "changing status of experiment type with uuid " + uuid);
         ExperimentType experimentType = experimentTypeRepository
-                .findByUuidAndEnabled(uuid, true)
+                .findByUuidAndWorkspaceUuidAndEnabled(uuid, headers.getWorkspaceUuid(), true)
                 .orElseThrow(() -> new EntityNotFoundException(EXPERIMENT_TYPE_UUID, uuid));
         ExperimentTypeMutationEvent event = experimentTypeTransformer.transformExperimentTypeStatusChangeEvent(uuid, statusChangeRequestModel, headers);
         kafkaProducer.sendMessage(experimentTypeTopic, event, event.getMetadata());
@@ -113,7 +116,7 @@ public class ExperimentTypeService {
         String experimentTypeUuid = event.getMetadata().getUuid();
         StatusEnum newStatus = StatusEnum.valueOf(event.getPayload().getStatus());
         experimentTypeRepository
-                .findByUuidAndEnabled(experimentTypeUuid, true)
+                .findByUuidAndWorkspaceUuidAndEnabled(experimentTypeUuid, headers.getWorkspaceUuid(), true)
                 .ifPresentOrElse(
                         experimentType -> {
                             experimentType.setStatus(newStatus);
@@ -127,10 +130,11 @@ public class ExperimentTypeService {
     }
 
     @NonNull
-    public ExperimentTypeListResponseModel getExperimentTypeList(@NonNull ExperimentOpsHeaders headers) {
+    public ExperimentTypeListResponseModel getExperimentTypeList(@Nullable String name, @Nullable Integer page, @Nullable Integer size, @NonNull ExperimentOpsHeaders headers) {
         log.info(headers, "getting experiment type list");
-        List<ExperimentType> experimentTypesResult = experimentTypeRepository
-                .findAllByStatusAndEnabledOrderByLastUpdatedDesc(StatusEnum.ACTIVE, true);
+        Pageable pageable = PaginationUtil.createPageRequest(page, size);
+        Page<ExperimentType> experimentTypesResult = experimentTypeRepository
+                .findAllByStatusAndWorkspaceUuidAndEnabled(StatusEnum.ACTIVE, headers.getWorkspaceUuid(), true, name, pageable);
         List<ExperimentTypeResponseModel> experimentTypes = experimentTypesResult
                 .stream()
                 .map(experimentTypeEntity -> experimentTypeTransformer.transformExperimentTypeResponseModelFromEntity(experimentTypeEntity, headers))
