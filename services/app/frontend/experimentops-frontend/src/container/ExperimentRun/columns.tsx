@@ -17,10 +17,18 @@ export const RUN_STATUS_TRANSLATION_KEYS = {
   SUCCEEDED: 'runs.status.succeeded',
 } as const
 
-export function getExperimentRunColumns(
-  t: TFunction,
-): DataTableColumn<ExperimentRun>[] {
-  return [
+export function getExperimentRunColumns({
+  isRunSelected,
+  onToggleRun,
+  selectable,
+  t,
+}: {
+  isRunSelected: (runUuid: string) => boolean
+  onToggleRun: (run: ExperimentRun, selected: boolean) => void
+  selectable: boolean
+  t: TFunction
+}): DataTableColumn<ExperimentRun>[] {
+  const columns: DataTableColumn<ExperimentRun>[] = [
     {
       header: t('runs.columns.name'),
       key: 'name',
@@ -70,5 +78,34 @@ export function getExperimentRunColumns(
       key: 'duration',
       value: (run) => run.duration,
     },
+  ]
+
+  if (!selectable) return columns
+
+  return [
+    {
+      align: 'center',
+      cell: (run) => (
+        <input
+          aria-label={t('runs.compare.selectRun', { name: run.name })}
+          checked={isRunSelected(run.uuid)}
+          className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={run.status !== 'SUCCEEDED'}
+          onChange={(event) => onToggleRun(run, event.target.checked)}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+          title={
+            run.status === 'SUCCEEDED'
+              ? undefined
+              : t('runs.compare.successfulOnly')
+          }
+          type="checkbox"
+        />
+      ),
+      className: 'w-12',
+      header: <span className="sr-only">{t('runs.compare.select')}</span>,
+      key: 'selection',
+    },
+    ...columns,
   ]
 }

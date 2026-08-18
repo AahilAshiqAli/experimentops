@@ -2,11 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useLogin } from '../context-api/logincontext'
 import {
+  compareExperimentRuns,
   createExperimentRun,
   getExperimentRun,
   getExperimentRunStatuses,
   getExperimentRuns,
   type CreateExperimentRunInput,
+  type ExperimentRunComparisonInput,
   type ExperimentRunListParams,
   validateExperimentRun,
   type ValidateExperimentRunInput,
@@ -87,5 +89,52 @@ export function useMutationValidateExperimentRun(experimentUuid: string) {
   return useMutation({
     mutationFn: (input: ValidateExperimentRunInput) =>
       validateExperimentRun(accessToken as string, experimentUuid, input),
+  })
+}
+
+export const experimentRunComparisonQueryKey = (
+  input: ExperimentRunComparisonInput,
+) => [
+  'experiment-runs',
+  'comparison',
+  input.comparisonAxis,
+  ...input.experimentRunUuids,
+]
+
+export function useMutationCompareExperimentRuns() {
+  const { accessToken } = useLogin()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: ExperimentRunComparisonInput) =>
+      compareExperimentRuns(accessToken as string, input),
+    onSuccess: (comparison, input) => {
+      queryClient.setQueryData(
+        experimentRunComparisonQueryKey(input),
+        comparison,
+      )
+    },
+  })
+}
+
+export function useQueryExperimentRunComparison(
+  input: ExperimentRunComparisonInput,
+  enabled = true,
+) {
+  const { accessToken, hasPermission } = useLogin()
+  const canCompareExperimentRuns = hasPermission(
+    PERMISSIONS_KEYS.EXPERIMENT_RUN.COMPARE_EXPERIMENT_RUNS,
+  )
+
+  return useQuery({
+    enabled: Boolean(
+      accessToken &&
+      canCompareExperimentRuns &&
+      enabled &&
+      input.experimentRunUuids.length >= 2,
+    ),
+    queryFn: () => compareExperimentRuns(accessToken as string, input),
+    queryKey: experimentRunComparisonQueryKey(input),
+    staleTime: 5 * 60 * 1000,
   })
 }

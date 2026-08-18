@@ -6,11 +6,15 @@ import com.experimentops.experiment.run.event.ExperimentRunCompletedEvent;
 import com.experimentops.experiment.run.event.ExperimentRunCompletedEventPayload;
 import com.experimentops.experiment.run.event.ExperimentRunCompletedResult;
 import com.experimentops.experiment.run.model.v1.ExperimentRunExecutionModeModel;
+import com.experimentops.experiment.run.model.v1.ExperimentRunCompareRequestModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunInputModel;
 import com.experimentops.platformapi.model.ExperimentRunConfigContext;
 import com.experimentops.platformapi.model.ExperimentRunResolvedPlan;
 import com.experimentops.platformapi.model.entity.DatasetVersion;
 import com.experimentops.platformapi.model.entity.DownStreamPolicyEnum;
+import com.experimentops.platformapi.model.entity.ExecutionMode;
+import com.experimentops.platformapi.model.entity.ExecutionModeInput;
+import com.experimentops.platformapi.model.entity.ExperimentRun;
 import com.experimentops.platformapi.model.entity.ExperimentTypeManifest;
 import com.experimentops.platformapi.model.entity.FormatStrategy;
 import com.experimentops.platformapi.model.entity.FormatStrategyTypeEnum;
@@ -22,6 +26,7 @@ import com.experimentops.platformapi.model.entity.OutputDataKindEnum;
 import com.experimentops.platformapi.model.entity.OutputManifest;
 import com.experimentops.platformapi.model.type.DatasetFileFormatEnum;
 import com.experimentops.platformapi.model.type.DatasetScanStatusEnum;
+import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
 import com.experimentops.platformapi.model.type.StatusEnum;
 import org.junit.jupiter.api.Test;
 
@@ -262,7 +267,7 @@ class ExperimentRunValidatorTest {
         ));
 
         assertThatThrownBy(() -> validator.validateCompletedArtifacts(
-                completedEvent(List.of(completedArtifact(1, "debugData", "debugData", "JSON"))),
+                completedEvent(List.of(completedArtifact(1, "debugData", "TABULAR_DATASET", "JSON"))),
                 plan,
                 Map.of(1, "CSV_PROFILE_ANALYSIS_NORMALIZE")
         ))
@@ -282,14 +287,75 @@ class ExperimentRunValidatorTest {
 
         assertThatThrownBy(() -> validator.validateCompletedArtifacts(
                 completedEvent(List.of(
-                        completedArtifact(1, "report", "report", "JSON"),
-                        completedArtifact(1, "extra", "extra", "JSON")
+                        completedArtifact(1, "report", "REPORT", "JSON"),
+                        completedArtifact(1, "extra", "REPORT", "JSON")
                 )),
                 plan,
                 Map.of(1, "CSV_PROFILE_ANALYSIS_NORMALIZE")
         ))
                 .isInstanceOf(ValidationException.class)
                 .hasMessage("CSV_PROFILE_ANALYSIS_NORMALIZE failed step number : 1. Produced unexpected artifact: extra");
+    }
+
+    @Test
+    void acceptsConfigComparisonWhenOnlyConfigBindingsDiffer() {
+        ExperimentRun first = comparableRun("run-1", "dataset-1", "evaluation-config-1");
+        ExperimentRun second = comparableRun("run-2", "dataset-1", "evaluation-config-2");
+        second.setExecutionMode(List.of(
+                second.getExecutionMode().get(1),
+                second.getExecutionMode().get(0)
+        ));
+
+        validator.validateExperimentRunsToCompare(
+                List.of(first, second),
+                compareRequest(ExperimentRunCompareRequestModel.ComparisonAxisEnum.CONFIG)
+        );
+    }
+
+    @Test
+    void acceptsDatasetComparisonWhenOnlyDatasetBindingsDiffer() {
+        validator.validateExperimentRunsToCompare(
+                List.of(
+                        comparableRun("run-1", "dataset-1", "evaluation-config"),
+                        comparableRun("run-2", "dataset-2", "evaluation-config")
+                ),
+                compareRequest(ExperimentRunCompareRequestModel.ComparisonAxisEnum.DATASET)
+        );
+    }
+
+    @Test
+    void rejectsComparisonWhenConfigsAndDatasetsBothDiffer() {
+        assertThatThrownBy(() -> validator.validateExperimentRunsToCompare(
+                List.of(
+                        comparableRun("run-1", "dataset-1", "evaluation-config-1"),
+                        comparableRun("run-2", "dataset-2", "evaluation-config-2")
+                ),
+                compareRequest(ExperimentRunCompareRequestModel.ComparisonAxisEnum.CONFIG)
+        )).isInstanceOf(ValidationException.class)
+                .hasMessage("Runs must differ only along the selected comparison axis");
+    }
+
+    @Test
+    void rejectsCompareRequestWithDuplicateRunUuids() {
+        ExperimentRunCompareRequestModel request = new ExperimentRunCompareRequestModel(
+                List.of("run-1", "run-1"),
+                ExperimentRunCompareRequestModel.ComparisonAxisEnum.CONFIG
+        );
+
+        assertThatThrownBy(() -> validator.validateExperimentRunCompareRequestModel(request))
+                .isInstanceOf(ValidationException.class);
+    }
+
+    @Test
+    void rejectsComparisonWhenPipelineSignaturesDiffer() {
+        ExperimentRun first = comparableRun("run-1", "dataset-1", "evaluation-config-1");
+        ExperimentRun second = comparableRun("run-2", "dataset-1", "evaluation-config-2");
+        second.getExecutionMode().get(1).setExperimentType("REGRESSION_EVALUATION");
+
+        assertThatThrownBy(() -> validator.validateExperimentRunsToCompare(
+                List.of(first, second),
+                compareRequest(ExperimentRunCompareRequestModel.ComparisonAxisEnum.CONFIG)
+        )).isInstanceOf(ValidationException.class);
     }
 
     private static ExperimentRunConfigContext config(String uuid, ExperimentTypeManifest manifest) {
@@ -299,6 +365,46 @@ class ExperimentRunValidatorTest {
                 .formatMappings(List.of(manifest))
                 .timeWeight(1)
                 .build();
+    }
+
+    private static ExperimentRunCompareRequestModel compareRequest(
+            ExperimentRunCompareRequestModel.ComparisonAxisEnum comparisonAxis) {
+        return new ExperimentRunCompareRequestModel(List.of("run-1", "run-2"), comparisonAxis);
+    }
+
+    private static ExperimentRun comparableRun(
+            String runUuid,
+            String datasetVersionUuid,
+            String evaluationConfigUuid) {
+        ExperimentRun run = ExperimentRun.builder()
+                .experimentUuid("experiment-1")
+                .experimentStatus(ExperimentStatusEnum.SUCCEEDED)
+                .executionMode(List.of(
+                        ExecutionMode.builder()
+                                .stepCount(1)
+                                .experimentType("TABULAR_TRAIN_TEST_SPLIT")
+                                .experimentConfigUuid("split-config")
+                                .inputs(List.of(ExecutionModeInput.builder()
+                                        .portName("dataset")
+                                        .inputType("DATASET")
+                                        .file(datasetVersionUuid)
+                                        .build()))
+                                .build(),
+                        ExecutionMode.builder()
+                                .stepCount(2)
+                                .experimentType("BINARY_CLASSIFICATION_EVALUATION")
+                                .experimentConfigUuid(evaluationConfigUuid)
+                                .inputs(List.of(ExecutionModeInput.builder()
+                                        .portName("model")
+                                        .inputType("ARTIFACT")
+                                        .file("modelBundle")
+                                        .sourceStepCount(1)
+                                        .build()))
+                                .build()
+                ))
+                .build();
+        run.setUuid(runUuid);
+        return run;
     }
 
     private static ExperimentTypeManifest manifest(List<InputManifest> inputs, List<OutputManifest> outputs) {

@@ -33,6 +33,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.time.Duration;
 import java.util.Objects;
@@ -103,12 +104,13 @@ public class ExperimentRunTransformer {
     }
 
     @NonNull
-    public List<ExecutionMode> transformExecutionMode(@NonNull List<ExperimentRunExecutionModeModel> executionMode) {
+    public List<ExecutionMode> transformExecutionMode(@NonNull List<ExperimentRunExecutionModeModel> executionMode, @NonNull Map<String, ExperimentRunConfigContext> experimentRunConfigsByUuid) {
         return executionMode
                 .stream()
                 .map(executionModeItem -> ExecutionMode
                         .builder()
                         .stepCount(executionModeItem.getStepCount())
+                        .experimentType(experimentRunConfigsByUuid.get(executionModeItem.getExperimentConfigUuid()).getExperimentType())
                         .experimentConfigUuid(executionModeItem.getExperimentConfigUuid())
                         .inputs(transformExecutionModeInputs(executionModeItem.getInputs()))
                         .build())
@@ -204,7 +206,7 @@ public class ExperimentRunTransformer {
         RunArtifact runArtifact = RunArtifact.builder()
                 .experimentRunUuid(experimentRunUuid)
                 .workspaceUuid(headers.getWorkspaceUuid())
-                .artifactType(artifact.getType())
+                .artifactType(ArtifactType.valueOf(artifact.getType().trim().toUpperCase(Locale.ROOT)))
                 .storageUri(artifact.getUri())
                 .experimentType(artifact.getExperimentType())
                 .format(artifact.getFormat())
@@ -228,7 +230,7 @@ public class ExperimentRunTransformer {
 
         return new RunArtifactResponseModel()
                 .uuid(runArtifact.getUuid())
-                .artifactType(runArtifact.getArtifactType())
+                .artifactType(runArtifact.getArtifactType().name())
                 .format(runArtifact.getFormat())
                 .size(Math.toIntExact(runArtifact.getSize()))
                 .stepCount(runArtifact.getStepCount())
@@ -642,5 +644,15 @@ public class ExperimentRunTransformer {
         experimentRunLog.setCreatedBy(headers.getUserUuid());
         experimentRunLog.setUpdatedBy(headers.getUserUuid());
         return experimentRunLog;
+    }
+
+    @NonNull
+    public ExperimentRunCompareResponseModel transformExperimentRunCompareResponseModel(@NonNull List<String> experimentPipeline, @NonNull List<ExperimentRunCompareReport> experimentRunCompareReports, @NonNull String comparisonAxisEnum){
+        ExperimentRunCompareResponseModel experimentRunCompareResponseModel = new ExperimentRunCompareResponseModel();
+        experimentRunCompareResponseModel.setPipelineSignature(experimentPipeline);
+        experimentRunCompareResponseModel.setComparisonAxis(ExperimentRunCompareResponseModel.ComparisonAxisEnum.fromValue(comparisonAxisEnum));
+        experimentRunCompareResponseModel.setRuns(experimentRunCompareReports);
+        return experimentRunCompareResponseModel;
+
     }
 }

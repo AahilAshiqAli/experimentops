@@ -132,6 +132,18 @@ public final class JSONUtil {
         return Collections.emptyMap();
     }
 
+    public static Map<String, Object> readTree(byte[] content) {
+        if (content == null || content.length == 0) {
+            throw new IllegalArgumentException("JSON content cannot be null or empty");
+        }
+
+        try {
+            return nonTypedMapper.readValue(content, new TypeReference<>() {});
+        } catch (IOException exception) {
+            throw new IllegalArgumentException("Failed to parse JSON content", exception);
+        }
+    }
+
     @SuppressWarnings("unused")
     abstract static class IgnoreSchemaProperty {
         @JsonIgnore

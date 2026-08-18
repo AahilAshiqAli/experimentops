@@ -27,7 +27,8 @@ public enum PermissionType {
     ADD_EXPERIMENT_TYPE(PermissionConstants.ADD_EXPERIMENT_TYPE, "Add Experiment Type"),
     EDIT_EXPERIMENT_TYPE(PermissionConstants.EDIT_EXPERIMENT_TYPE, "Edit Experiment Type"),
     GET_EXPERIMENT_TYPE(PermissionConstants.GET_EXPERIMENT_TYPE, "Get Experiment Type"),
-    GET_EXPERIMENT_RUNS(PermissionConstants.GET_EXPERIMENT_RUNS, "Get Experiment Runs");
+    GET_EXPERIMENT_RUNS(PermissionConstants.GET_EXPERIMENT_RUNS, "Get Experiment Runs"),
+    COMPARE_EXPERIMENT(PermissionConstants.COMPARE_EXPERIMENT_RUNS, "Compare Experiment Runs");
 
 
     private final String code;

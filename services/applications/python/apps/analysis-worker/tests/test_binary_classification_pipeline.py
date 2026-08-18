@@ -163,18 +163,21 @@ def test_complete_pipeline_executes_through_named_artifact_contracts(
         "TABULAR_TRAIN_TEST_SPLIT,TABULAR_PREPROCESSING,"
         "LOGISTIC_REGRESSION_TRAINING,BINARY_CLASSIFICATION_EVALUATION"
     )
-    artifact_types = {item["type"] for item in payload["result"]["artifact"]}
-    assert artifact_types == {
-        "trainDataset",
-        "testDataset",
-        "splitReport",
-        "processedTrainDataset",
-        "processedTestDataset",
-        "preprocessorBundle",
-        "preprocessingReport",
-        "modelBundle",
-        "trainingReport",
-        "evaluationReport",
+    artifact_types_by_port = {
+        item["portName"]: item["type"]
+        for item in payload["result"]["artifact"]
+    }
+    assert artifact_types_by_port == {
+        "trainDataset": "TABULAR_DATASET",
+        "testDataset": "TABULAR_DATASET",
+        "splitReport": "REPORT",
+        "processedTrainDataset": "TABULAR_DATASET",
+        "processedTestDataset": "TABULAR_DATASET",
+        "preprocessorBundle": "FILE",
+        "preprocessingReport": "REPORT",
+        "modelBundle": "MODEL",
+        "trainingReport": "REPORT",
+        "evaluationReport": "REPORT",
     }
     assert len(payload["result"]["metrics"]) == 4
     progress_payloads = [

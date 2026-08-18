@@ -2448,5 +2448,215 @@
     "generatorVersion": 2,
     "source": "Unknown email",
     "translation": "Unbekannte E-Mail-Adresse"
+  },
+  "serviceErrors.runComparisonInvalid": {
+    "generatorVersion": 2,
+    "source": "The experiment run comparison service returned an invalid response.",
+    "translation": "Der Vergleichsdienst für Experimentläufe hat eine ungültige Antwort zurückgegeben."
+  },
+  "runs.compare.actual": {
+    "generatorVersion": 2,
+    "source": "Actual {{value}}",
+    "translation": "Tatsächlich {{value}}"
+  },
+  "runs.compare.axis.config": {
+    "generatorVersion": 2,
+    "source": "Configurations",
+    "translation": "Konfigurationen"
+  },
+  "runs.compare.axis.dataset": {
+    "generatorVersion": 2,
+    "source": "Datasets",
+    "translation": "Datensätze"
+  },
+  "runs.compare.axisDescription": {
+    "generatorVersion": 2,
+    "source": "The {{count}} selected runs must differ in exactly one dimension.",
+    "translation": "Die {{count}} ausgewählten Läufe dürfen sich in genau einer Dimension unterscheiden."
+  },
+  "runs.compare.axisDescriptionText.config": {
+    "generatorVersion": 2,
+    "source": "Use the same dataset bindings and compare different configuration UUIDs.",
+    "translation": "Dieselben Datensatzbindungen verwenden und unterschiedliche Konfigurations-UUIDs vergleichen."
+  },
+  "runs.compare.axisDescriptionText.dataset": {
+    "generatorVersion": 2,
+    "source": "Use the same configuration bindings and compare different dataset UUIDs.",
+    "translation": "Dieselben Konfigurationsbindungen verwenden und unterschiedliche Datensatz-UUIDs vergleichen."
+  },
+  "runs.compare.changeSelection": {
+    "generatorVersion": 2,
+    "source": "Change selection",
+    "translation": "Auswahl ändern"
+  },
+  "runs.compare.chooseAxis": {
+    "generatorVersion": 2,
+    "source": "Choose comparison axis",
+    "translation": "Vergleichsachse auswählen"
+  },
+  "runs.compare.closeDialog": {
+    "generatorVersion": 2,
+    "source": "Close comparison dialog",
+    "translation": "Vergleichsdialog schließen"
+  },
+  "runs.compare.compareRuns": {
+    "generatorVersion": 2,
+    "source": "Compare {{count}} runs",
+    "translation": "{{count}} Läufe vergleichen"
+  },
+  "runs.compare.comparing": {
+    "generatorVersion": 2,
+    "source": "Comparing…",
+    "translation": "Vergleich läuft…"
+  },
+  "runs.compare.comparingAxis.config": {
+    "generatorVersion": 2,
+    "source": "Comparing configurations",
+    "translation": "Konfigurationen werden verglichen"
+  },
+  "runs.compare.comparingAxis.dataset": {
+    "generatorVersion": 2,
+    "source": "Comparing datasets",
+    "translation": "Datensätze werden verglichen"
+  },
+  "runs.compare.confusionMatrices": {
+    "generatorVersion": 2,
+    "source": "Confusion matrices",
+    "translation": "Konfusionsmatrizen"
+  },
+  "runs.compare.context.algorithm": {
+    "generatorVersion": 2,
+    "source": "Algorithm",
+    "translation": "Algorithmus"
+  },
+  "runs.compare.context.decisionThreshold": {
+    "generatorVersion": 2,
+    "source": "Decision threshold",
+    "translation": "Entscheidungsschwellenwert"
+  },
+  "runs.compare.context.rowsEvaluated": {
+    "generatorVersion": 2,
+    "source": "Rows evaluated",
+    "translation": "Ausgewertete Zeilen"
+  },
+  "runs.compare.context.targetColumn": {
+    "generatorVersion": 2,
+    "source": "Target column",
+    "translation": "Zielspalte"
+  },
+  "runs.compare.error": {
+    "generatorVersion": 2,
+    "source": "Unable to compare the selected experiment runs.",
+    "translation": "Die ausgewählten Experimentläufe konnten nicht verglichen werden."
+  },
+  "runs.compare.errorTitle": {
+    "generatorVersion": 2,
+    "source": "Unable to compare experiment runs",
+    "translation": "Experimentläufe konnten nicht verglichen werden"
+  },
+  "runs.compare.evaluationContext": {
+    "generatorVersion": 2,
+    "source": "Evaluation context",
+    "translation": "Auswertungskontext"
+  },
+  "runs.compare.evaluationMetrics": {
+    "generatorVersion": 2,
+    "source": "Evaluation metrics",
+    "translation": "Auswertungsmetriken"
+  },
+  "runs.compare.field": {
+    "generatorVersion": 2,
+    "source": "Field",
+    "translation": "Feld"
+  },
+  "runs.compare.invalidSelection": {
+    "generatorVersion": 2,
+    "source": "Choose at least two runs and a valid comparison axis from the experiment runs page.",
+    "translation": "Wählen Sie auf der Experimentlaufseite mindestens zwei Läufe und eine gültige Vergleichsachse aus."
+  },
+  "runs.compare.invalidSelectionTitle": {
+    "generatorVersion": 2,
+    "source": "Invalid comparison selection",
+    "translation": "Ungültige Vergleichsauswahl"
+  },
+  "runs.compare.metric": {
+    "generatorVersion": 2,
+    "source": "Metric",
+    "translation": "Metrik"
+  },
+  "runs.compare.metrics.accuracy": {
+    "generatorVersion": 2,
+    "source": "Accuracy",
+    "translation": "Genauigkeit"
+  },
+  "runs.compare.metrics.f1": {
+    "generatorVersion": 2,
+    "source": "F1 score",
+    "translation": "F1-Wert"
+  },
+  "runs.compare.metrics.precision": {
+    "generatorVersion": 2,
+    "source": "Precision",
+    "translation": "Präzision"
+  },
+  "runs.compare.metrics.recall": {
+    "generatorVersion": 2,
+    "source": "Recall",
+    "translation": "Trefferquote"
+  },
+  "runs.compare.metrics.rocAuc": {
+    "generatorVersion": 2,
+    "source": "ROC AUC",
+    "translation": "ROC AUC"
+  },
+  "runs.compare.neutralDescription": {
+    "generatorVersion": 2,
+    "source": "Comparing {{count}} successful runs. Values are shown without ranking.",
+    "translation": "{{count}} erfolgreiche Läufe werden ohne Rangfolge verglichen."
+  },
+  "runs.compare.otherDetails": {
+    "generatorVersion": 2,
+    "source": "Other details",
+    "translation": "Weitere Details"
+  },
+  "runs.compare.permissionDenied": {
+    "generatorVersion": 2,
+    "source": "You do not have permission to compare experiment runs.",
+    "translation": "Sie haben keine Berechtigung, Experimentläufe zu vergleichen."
+  },
+  "runs.compare.predicted": {
+    "generatorVersion": 2,
+    "source": "Predicted {{value}}",
+    "translation": "Vorhergesagt {{value}}"
+  },
+  "runs.compare.reportValues": {
+    "generatorVersion": 2,
+    "source": "Evaluation report values",
+    "translation": "Werte des Auswertungsberichts"
+  },
+  "runs.compare.select": {
+    "generatorVersion": 2,
+    "source": "Select runs to compare",
+    "translation": "Läufe zum Vergleich auswählen"
+  },
+  "runs.compare.selectRun": {
+    "generatorVersion": 2,
+    "source": "Select {{name}} for comparison",
+    "translation": "{{name}} zum Vergleich auswählen"
+  },
+  "runs.compare.sharedPipeline": {
+    "generatorVersion": 2,
+    "source": "Shared pipeline",
+    "translation": "Gemeinsame Pipeline"
+  },
+  "runs.compare.successfulOnly": {
+    "generatorVersion": 2,
+    "source": "Only successful experiment runs can be compared.",
+    "translation": "Nur erfolgreiche Experimentläufe können verglichen werden."
+  },
+  "runs.compare.title": {
+    "generatorVersion": 2,
+    "source": "Compare experiment runs",
+    "translation": "Experimentläufe vergleichen"
   }
 }

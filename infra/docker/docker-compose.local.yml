@@ -69,7 +69,7 @@ services:
 
       # This overrides SpringBoot local address with docker container address
       experimentops.db.host: host.docker.internal
-      experimentops.db.port: 55118
+      experimentops.db.port: 55004
       experimentops.db.schema: experimentOps
       experimentops.db.username: experimentops_user
       experimentops.db.password: experimentops_password
@@ -148,7 +148,7 @@ services:
     image: flyway/flyway:latest
     container_name: experimentops-flyway
     command:
-      -url=jdbc:mysql://host.docker.internal:55118/experimentOps
+      -url=jdbc:mysql://host.docker.internal:55004/experimentOps
       -user=experimentops_user
       -password=experimentops_password
       -connectRetries=60

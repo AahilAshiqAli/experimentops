@@ -25,7 +25,14 @@ public enum ErrorCode {
     KEYCLOAK_TOKEN_ERROR(30003, "Unable to login", false),
     KEYCLOAK_USER_NOT_FOUND(30004, "User Not found in KeyCloak.", true),
     KEYCLOAK_PASSWORD_VALIDATION(30005, "Invalid password. Please make sure your password is strong and hasn't been used before.", false),
-    KEYCLOAK_TOKEN_FIRST_TIME_LOGIN(30006, "Please reset your password", false);
+    KEYCLOAK_TOKEN_FIRST_TIME_LOGIN(30006, "Please reset your password", false),
+    MORE_THAN_ONE_EXPERIMENT_RUN_UUID_REQUIRED(33007, "At least two experiment run UUIDs are required for comparison"),
+    SAME_EXPERIMENT_REQUIRED(33008, "Experiment runs must belong to the same experiment"),
+    PIPELINE_SIGNATURE_MISMATCH(33009, "Experiment runs must have the same pipeline signature"),
+    DUPLICATE_EXPERIMENT_RUN_UUID_NOT_ALLOWED(33010, "Duplicate experiment run UUIDs are not allowed"),
+    EVALUATION_REPORT_NOT_FOUND(33011, "Evaluation report not found for experiment run"),
+    SUCCESSFUL_EXPERIMENT_RUN_REQUIRED(33012, "Only successful experiment runs can be compared"),
+    MULTIPLE_EVALUATION_REPORTS_FOUND(33013, "Multiple primary evaluation reports found for experiment run");
 
 
 

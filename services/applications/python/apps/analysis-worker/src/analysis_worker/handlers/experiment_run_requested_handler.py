@@ -623,6 +623,10 @@ def _normalize_artifact_for_output(
     step_count: int | None,
 ) -> Artifact:
     output_name = _required_value(output.name, "executionPlan.steps.outputs.name")
+    output_data_kind = _required_value(
+        output.data_kind,
+        "executionPlan.steps.outputs.dataKind",
+    ).strip().upper()
     output_format = output.format or artifact.format
 
     if _normalize_value(artifact.format) != _normalize_value(output_format):
@@ -632,7 +636,7 @@ def _normalize_artifact_for_output(
 
     return artifact.model_copy(
         update={
-            "type": output_name,
+            "type": output_data_kind,
             "format": output_format,
             "step_count": step_count,
             "port_name": output_name,
@@ -744,7 +748,8 @@ def _visible_artifacts(
     }
     return [
         artifact for artifact in result.artifact
-        if policies_by_name.get(artifact.type) != INTERNAL_DOWN_STREAM_POLICY
+        if policies_by_name.get(artifact.port_name or artifact.type)
+        != INTERNAL_DOWN_STREAM_POLICY
     ]
 
 

@@ -12,5 +12,6 @@ import java.util.List;
 public class ExecutionMode {
     private Integer stepCount;
     private String experimentConfigUuid;
+    private String experimentType;
     private List<ExecutionModeInput> inputs;
 }

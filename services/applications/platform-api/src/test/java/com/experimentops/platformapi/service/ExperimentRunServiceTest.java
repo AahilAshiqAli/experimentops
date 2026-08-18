@@ -14,10 +14,13 @@ import com.experimentops.experiment.run.event.ExperimentRunFailureEventPayload;
 import com.experimentops.experiment.run.event.ExperimentRunProgressEvent;
 import com.experimentops.experiment.run.event.ExperimentRunProgressEventPayload;
 import com.experimentops.experiment.run.event.ExperimentRunUserLogEvent;
+import com.experimentops.experiment.run.model.v1.ExperimentRunCompareRequestModel;
+import com.experimentops.experiment.run.model.v1.ExperimentRunCompareResponseModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunDetailResponseModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunExecutionModeModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunInputModel;
 import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
+import com.experimentops.objectstorage.gateway.ObjectStorageGateway;
 import com.experimentops.platformapi.dal.repository.DatasetVersionRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentConfigRepository;
 import com.experimentops.platformapi.dal.repository.ExperimentRepository;
@@ -32,6 +35,7 @@ import com.experimentops.platformapi.model.ExperimentRunDetailDataset;
 import com.experimentops.platformapi.model.ExperimentRunDetailSummary;
 import com.experimentops.platformapi.model.ExperimentRunResolvedPlan;
 import com.experimentops.platformapi.model.entity.DatasetVersion;
+import com.experimentops.platformapi.model.entity.ArtifactType;
 import com.experimentops.platformapi.model.entity.DownStreamPolicyEnum;
 import com.experimentops.platformapi.model.entity.ExecutionMode;
 import com.experimentops.platformapi.model.entity.ExecutionModeInput;
@@ -56,6 +60,7 @@ import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -93,6 +98,7 @@ class ExperimentRunServiceTest {
                 experimentRunRepository,
                 datasetVersionRepository,
                 runDatasetRepository,
+                null,
                 null,
                 null,
                 null
@@ -211,6 +217,7 @@ class ExperimentRunServiceTest {
                 null,
                 null,
                 null,
+                null,
                 null
         );
         ExperimentOpsHeaders headers = new ExperimentOpsHeaders();
@@ -247,6 +254,7 @@ class ExperimentRunServiceTest {
                 experimentConfigRepository,
                 experimentRunRepository,
                 mock(DatasetVersionRepository.class),
+                null,
                 null,
                 null,
                 null,
@@ -303,6 +311,7 @@ class ExperimentRunServiceTest {
                 datasetVersionRepository,
                 null,
                 runArtifactService,
+                null,
                 null,
                 null
         );
@@ -396,6 +405,7 @@ class ExperimentRunServiceTest {
                 null,
                 runArtifactService,
                 null,
+                null,
                 null
         );
         ExperimentOpsHeaders headers = headers();
@@ -421,6 +431,7 @@ class ExperimentRunServiceTest {
                 null,
                 null,
                 experimentRunRepository,
+                null,
                 null,
                 null,
                 null,
@@ -451,6 +462,7 @@ class ExperimentRunServiceTest {
                 null,
                 null,
                 experimentRunRepository,
+                null,
                 null,
                 null,
                 null,
@@ -500,7 +512,8 @@ class ExperimentRunServiceTest {
                 null,
                 null,
                 null,
-                experimentRunLogRepository
+                experimentRunLogRepository,
+                null
         );
         ExperimentOpsHeaders headers = headers();
         ExperimentRun experimentRun = experimentRun(List.of());
@@ -561,6 +574,7 @@ class ExperimentRunServiceTest {
                 null,
                 null,
                 runArtifactRepository,
+                null,
                 null
         );
         ExperimentOpsHeaders headers = headers();
@@ -623,7 +637,7 @@ class ExperimentRunServiceTest {
         RunArtifact runArtifact = RunArtifact.builder()
                 .experimentRunUuid("run-1")
                 .workspaceUuid("workspace-1")
-                .artifactType("CLEANED_DATASET")
+                .artifactType(ArtifactType.TABULAR_DATASET)
                 .format("CSV")
                 .size(100L)
                 .stepCount(1)
@@ -707,11 +721,105 @@ class ExperimentRunServiceTest {
         );
     }
 
+    @Test
+    void compareExperimentReturnsReportsInRequestedRunOrder() {
+        ExperimentRunRepository experimentRunRepository = mock(ExperimentRunRepository.class);
+        RunArtifactRepository runArtifactRepository = mock(RunArtifactRepository.class);
+        ObjectStorageGateway objectStorageGateway = mock(ObjectStorageGateway.class);
+        ExperimentRun firstRun = successfulComparisonRun("run-1", "config-1");
+        ExperimentRun secondRun = successfulComparisonRun("run-2", "config-2");
+        RunArtifact firstReport = comparisonReportArtifact("run-1", "s3://bucket/run-1/report.json");
+        RunArtifact secondReport = comparisonReportArtifact("run-2", "s3://bucket/run-2/report.json");
+        ExperimentRunService service = new ExperimentRunService(
+                null,
+                new ExperimentRunValidator(),
+                new ExperimentRunTransformer(),
+                null,
+                null,
+                experimentRunRepository,
+                null,
+                null,
+                null,
+                runArtifactRepository,
+                null,
+                objectStorageGateway
+        );
+
+        when(experimentRunRepository.findAllByUuidInAndWorkspaceUuidAndEnabled(
+                List.of("run-1", "run-2"),
+                "workspace-1",
+                true
+        )).thenReturn(List.of(secondRun, firstRun));
+        when(runArtifactRepository.findByExperimentRunUuidAndWorkspaceUuidAndArtifactTypeAndStatusAndEnabled(
+                "run-1", "workspace-1", ArtifactType.REPORT, RunArtifactStatusEnum.PRIMARY, true
+        )).thenReturn(List.of(firstReport));
+        when(runArtifactRepository.findByExperimentRunUuidAndWorkspaceUuidAndArtifactTypeAndStatusAndEnabled(
+                "run-2", "workspace-1", ArtifactType.REPORT, RunArtifactStatusEnum.PRIMARY, true
+        )).thenReturn(List.of(secondReport));
+        when(objectStorageGateway.downloadObject("s3://bucket/run-1/report.json"))
+                .thenReturn("{\"schemaVersion\":1,\"metrics\":{\"accuracy\":0.91}}".getBytes(StandardCharsets.UTF_8));
+        when(objectStorageGateway.downloadObject("s3://bucket/run-2/report.json"))
+                .thenReturn("{\"schemaVersion\":1,\"metrics\":{\"accuracy\":0.94}}".getBytes(StandardCharsets.UTF_8));
+
+        ExperimentRunCompareResponseModel response = service.compareExperiment(
+                new ExperimentRunCompareRequestModel(
+                        List.of("run-1", "run-2"),
+                        ExperimentRunCompareRequestModel.ComparisonAxisEnum.CONFIG
+                ),
+                headers()
+        );
+
+        assertThat(response.getComparisonAxis())
+                .isEqualTo(ExperimentRunCompareResponseModel.ComparisonAxisEnum.CONFIG);
+        assertThat(response.getPipelineSignature())
+                .containsExactly("BINARY_CLASSIFICATION_EVALUATION");
+        assertThat(response.getRuns())
+                .extracting(report -> report.getExperimentRunUuid())
+                .containsExactly("run-1", "run-2");
+        assertThat(response.getRuns().getFirst().getEvaluationReport())
+                .containsEntry("schemaVersion", 1);
+    }
+
     private static ExperimentOpsHeaders headers() {
         ExperimentOpsHeaders headers = new ExperimentOpsHeaders();
         headers.setWorkspaceUuid("workspace-1");
         headers.setUserUuid("user-1");
         return headers;
+    }
+
+    private static ExperimentRun successfulComparisonRun(String uuid, String configUuid) {
+        ExperimentRun run = ExperimentRun.builder()
+                .experimentUuid("experiment-1")
+                .workspaceUuid("workspace-1")
+                .experimentStatus(ExperimentStatusEnum.SUCCEEDED)
+                .executionMode(List.of(ExecutionMode.builder()
+                        .stepCount(1)
+                        .experimentType("BINARY_CLASSIFICATION_EVALUATION")
+                        .experimentConfigUuid(configUuid)
+                        .inputs(List.of(ExecutionModeInput.builder()
+                                .portName("testDataset")
+                                .inputType("DATASET")
+                                .file("dataset-1")
+                                .build()))
+                        .build()))
+                .build();
+        run.setUuid(uuid);
+        return run;
+    }
+
+    private static RunArtifact comparisonReportArtifact(String runUuid, String storageUri) {
+        return RunArtifact.builder()
+                .experimentRunUuid(runUuid)
+                .workspaceUuid("workspace-1")
+                .artifactType(ArtifactType.REPORT)
+                .storageUri(storageUri)
+                .format("JSON")
+                .experimentType("BINARY_CLASSIFICATION_EVALUATION")
+                .stepCount(1)
+                .portName("evaluationReport")
+                .status(RunArtifactStatusEnum.PRIMARY)
+                .downStreamPolicy(DownStreamPolicyEnum.TERMINAL)
+                .build();
     }
 
     private static ExperimentRun experimentRun(List<ExecutionMode> executionMode) {

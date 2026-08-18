@@ -103,6 +103,7 @@
     "roleInvalid": "The role service returned an invalid response.",
     "runArtifactInvalid": "The run artifact service returned an invalid response.",
     "runDetailInvalid": "The experiment run detail service returned an invalid response.",
+    "runComparisonInvalid": "The experiment run comparison service returned an invalid response.",
     "runInvalid": "The experiment run service returned an invalid response.",
     "runStatusInvalid": "The experiment run status service returned an invalid response.",
     "userInvalid": "The user service returned an invalid response."
@@ -275,6 +276,56 @@
     "create": "Create Experiment Run",
     "created": "Experiment run created successfully.",
     "creating": "Creating run…",
+    "compare": {
+      "actual": "Actual {{value}}",
+      "axis": { "config": "Configurations", "dataset": "Datasets" },
+      "axisDescription": "The {{count}} selected runs must differ in exactly one dimension.",
+      "axisDescriptionText": {
+        "config": "Use the same dataset bindings and compare different configuration UUIDs.",
+        "dataset": "Use the same configuration bindings and compare different dataset UUIDs."
+      },
+      "changeSelection": "Change selection",
+      "chooseAxis": "Choose comparison axis",
+      "closeDialog": "Close comparison dialog",
+      "compareRuns": "Compare {{count}} runs",
+      "comparing": "Comparing…",
+      "comparingAxis": {
+        "config": "Comparing configurations",
+        "dataset": "Comparing datasets"
+      },
+      "confusionMatrices": "Confusion matrices",
+      "context": {
+        "algorithm": "Algorithm",
+        "decisionThreshold": "Decision threshold",
+        "rowsEvaluated": "Rows evaluated",
+        "targetColumn": "Target column"
+      },
+      "error": "Unable to compare the selected experiment runs.",
+      "errorTitle": "Unable to compare experiment runs",
+      "evaluationContext": "Evaluation context",
+      "evaluationMetrics": "Evaluation metrics",
+      "field": "Field",
+      "invalidSelection": "Choose at least two runs and a valid comparison axis from the experiment runs page.",
+      "invalidSelectionTitle": "Invalid comparison selection",
+      "metric": "Metric",
+      "metrics": {
+        "accuracy": "Accuracy",
+        "f1": "F1 score",
+        "precision": "Precision",
+        "recall": "Recall",
+        "rocAuc": "ROC AUC"
+      },
+      "neutralDescription": "Comparing {{count}} successful runs. Values are shown without ranking.",
+      "otherDetails": "Other details",
+      "permissionDenied": "You do not have permission to compare experiment runs.",
+      "predicted": "Predicted {{value}}",
+      "reportValues": "Evaluation report values",
+      "select": "Select runs to compare",
+      "selectRun": "Select {{name}} for comparison",
+      "sharedPipeline": "Shared pipeline",
+      "successfulOnly": "Only successful experiment runs can be compared.",
+      "title": "Compare experiment runs"
+    },
     "dragDataset": "Drag this dataset onto a compatible input port",
     "dragHint": "Drag a dataset onto an input box, or click an empty input box to assign it.",
     "empty": "No experiment runs match the current filters.",

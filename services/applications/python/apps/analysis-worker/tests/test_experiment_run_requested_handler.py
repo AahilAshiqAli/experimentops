@@ -317,7 +317,7 @@ def test_handler_executes_configs_as_dataset_pipeline() -> None:
     assert payload["result"]["artifact"] == [
         {
             "format": "CSV",
-            "type": "FIRST_ANALYSIS_ARTIFACT",
+            "type": "TABULAR_DATASET",
             "uri": "s3://bucket/first_analysis.csv",
             "size": 10,
             "experimentType": "FIRST_ANALYSIS",
@@ -326,7 +326,7 @@ def test_handler_executes_configs_as_dataset_pipeline() -> None:
         },
         {
             "format": "CSV",
-            "type": "SECOND_ANALYSIS_ARTIFACT",
+            "type": "REPORT",
             "uri": "s3://bucket/second_analysis.csv",
             "size": 10,
             "experimentType": "SECOND_ANALYSIS",
@@ -595,7 +595,7 @@ def test_handler_maps_csv_report_artifact_to_training_report_output() -> None:
     assert producer.produced[0]["value"]["payload"]["result"]["artifact"] == [
         {
             "format": "csv",
-            "type": "cleanedTrainData",
+            "type": "TABULAR_DATASET",
             "uri": "s3://bucket/cleaned.csv",
             "size": 10,
             "experimentType": "CSV_PROFILE_ANALYSIS",
@@ -604,7 +604,7 @@ def test_handler_maps_csv_report_artifact_to_training_report_output() -> None:
         },
         {
             "format": "JSON",
-            "type": "trainingReport",
+            "type": "REPORT",
             "uri": "s3://bucket/report.json",
             "size": 20,
             "experimentType": "CSV_PROFILE_ANALYSIS",
