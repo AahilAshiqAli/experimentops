@@ -27,7 +27,8 @@ public class RunArtifact extends ExperimentOpsEntity {
     private String workspaceUuid;
 
     @Column(name = "artifact_type")
-    private String artifactType;
+    @Enumerated(EnumType.STRING)
+    private ArtifactType artifactType;
 
     @Column(name = "storage_uri")
     private String storageUri;

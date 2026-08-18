@@ -5,21 +5,10 @@ import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.experiment.run.event.ExperimentRunCompletedArtifact;
 import com.experimentops.experiment.run.event.ExperimentRunCompletedEvent;
 import com.experimentops.experiment.run.event.ExperimentRunCompletedResult;
-import com.experimentops.experiment.run.model.v1.ExperimentRunExecutionModeModel;
-import com.experimentops.experiment.run.model.v1.ExperimentRunInputModel;
-import com.experimentops.experiment.run.model.v1.ExperimentRunRequestModel;
-import com.experimentops.experiment.run.model.v1.ExperimentRunStatusRequestModel;
+import com.experimentops.experiment.run.model.v1.*;
 import com.experimentops.platformapi.model.ExperimentRunConfigContext;
 import com.experimentops.platformapi.model.ExperimentRunResolvedPlan;
-import com.experimentops.platformapi.model.entity.DatasetVersion;
-import com.experimentops.platformapi.model.entity.DownStreamPolicyEnum;
-import com.experimentops.platformapi.model.entity.ExperimentTypeManifest;
-import com.experimentops.platformapi.model.entity.FormatStrategy;
-import com.experimentops.platformapi.model.entity.FormatStrategyTypeEnum;
-import com.experimentops.platformapi.model.entity.InputManifest;
-import com.experimentops.platformapi.model.entity.InputRelationship;
-import com.experimentops.platformapi.model.entity.InputRelationshipTypeEnum;
-import com.experimentops.platformapi.model.entity.OutputManifest;
+import com.experimentops.platformapi.model.entity.*;
 import com.experimentops.platformapi.model.type.DatasetFileFormatEnum;
 import com.experimentops.platformapi.model.type.DatasetScanStatusEnum;
 import com.experimentops.platformapi.model.type.ExperimentStatusEnum;
@@ -37,6 +26,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -238,13 +229,13 @@ public class ExperimentRunValidator extends GenericValidator {
             Integer stepCount,
             @NonNull Map<Integer, String> experimentConfigNamesByStep) {
 
-        if (StringUtils.equals(output.getName(), artifact.getType())) {
+        if (StringUtils.equalsIgnoreCase(output.getDataKind(), artifact.getType())) {
             return;
         }
         throw completedArtifactValidationException(
                 experimentConfigNamesByStep,
                 stepCount,
-                "Required artifact " + output.getName() + " expected type " + output.getName() + " but got " + artifact.getType()
+                "Required artifact " + output.getName() + " expected type " + output.getDataKind() + " but got " + artifact.getType()
         );
     }
 
@@ -745,6 +736,114 @@ public class ExperimentRunValidator extends GenericValidator {
             return null;
         }
         return value.get();
+    }
+
+    public void validateExperimentRunCompareRequestModel(@NonNull ExperimentRunCompareRequestModel experimentRunCompareRequestModel) {
+        List<String> experimentRunUuids = experimentRunCompareRequestModel.getExperimentRunUuids();
+        if (experimentRunUuids == null || experimentRunUuids.size() < 2) {
+            throw new ValidationException(ErrorCode.MORE_THAN_ONE_EXPERIMENT_RUN_UUID_REQUIRED);
+        }
+
+        if (experimentRunUuids.stream().anyMatch(StringUtils::isBlank)) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "Experiment run UUID cannot be blank");
+        }
+
+        if (experimentRunUuids.size() != new HashSet<>(experimentRunUuids).size()) {
+            throw new ValidationException(ErrorCode.DUPLICATE_EXPERIMENT_RUN_UUID_NOT_ALLOWED);
+        }
+
+        if (experimentRunCompareRequestModel.getComparisonAxis() == null) {
+            throw new ValidationException(ErrorCode.INVALID_INPUTS, "Comparison axis is required");
+        }
+    }
+
+    public void validateExperimentRunsToCompare(@NonNull List<ExperimentRun> experimentRuns, @NonNull ExperimentRunCompareRequestModel experimentRunCompareRequestModel) {
+
+        String experimentUuid = experimentRuns.getFirst().getExperimentUuid();
+        List<String> experimentPipeline = pipelineSignature(experimentRuns.getFirst());
+        for (ExperimentRun experimentRun : experimentRuns) {
+            if (!Objects.equals(experimentRun.getExperimentUuid(), experimentUuid)) {
+                throw new ValidationException(ErrorCode.SAME_EXPERIMENT_REQUIRED);
+            }
+
+            if (experimentRun.getExperimentStatus() != ExperimentStatusEnum.SUCCEEDED) {
+                throw new ValidationException(ErrorCode.SUCCESSFUL_EXPERIMENT_RUN_REQUIRED, experimentRun.getUuid());
+            }
+
+            if (!experimentPipeline.equals(pipelineSignature(experimentRun))) {
+                throw new ValidationException(ErrorCode.PIPELINE_SIGNATURE_MISMATCH);
+            }
+        }
+
+        boolean sameDatasets = allRunsHaveSameDatasetSignature(experimentRuns);
+        boolean sameConfigs = allRunsHaveSameConfigSignature(experimentRuns);
+
+        switch (experimentRunCompareRequestModel.getComparisonAxis()) {
+            case CONFIG -> requireComparisonAxis(sameDatasets && !sameConfigs);
+            case DATASET -> requireComparisonAxis(sameConfigs && !sameDatasets);
+        }
+    }
+
+    private void requireComparisonAxis(boolean condition) {
+        if (!condition) {
+            throw new ValidationException(
+                    ErrorCode.INVALID_INPUTS,
+                    "Runs must differ only along the selected comparison axis"
+            );
+        }
+    }
+
+    boolean allRunsHaveSameDatasetSignature(@NonNull List<ExperimentRun> experimentRuns) {
+        List<DatasetBinding> reference = datasetSignature(experimentRuns.getFirst());
+        return experimentRuns.stream()
+                .skip(1)
+                .allMatch(run -> reference.equals(datasetSignature(run)));
+    }
+
+    boolean allRunsHaveSameConfigSignature(@NonNull List<ExperimentRun> experimentRuns) {
+        List<ConfigBinding> reference = configSignature(experimentRuns.getFirst());
+        return experimentRuns.stream()
+                .skip(1)
+                .allMatch(run -> reference.equals(configSignature(run)));
+    }
+
+    private List<String> pipelineSignature(ExperimentRun experimentRun) {
+        List<String> signature = orderedExecutionMode(experimentRun).stream()
+                .map(ExecutionMode::getExperimentType)
+                .toList();
+        if (signature.isEmpty() || signature.stream().anyMatch(StringUtils::isBlank)) {
+            throw new ValidationException(ErrorCode.PIPELINE_SIGNATURE_MISMATCH);
+        }
+        return signature;
+    }
+
+    private List<DatasetBinding> datasetSignature(ExperimentRun experimentRun) {
+        return orderedExecutionMode(experimentRun).stream()
+                .flatMap(step -> Optional.ofNullable(step.getInputs()).orElseGet(List::of).stream()
+                        .filter(input -> input.getInputType().equals("DATASET"))
+                        .map(input -> new DatasetBinding(step.getStepCount(), input.getPortName(), input.getFile())))
+                .sorted(Comparator.comparing(DatasetBinding::stepCount, Comparator.nullsFirst(Integer::compareTo))
+                        .thenComparing(DatasetBinding::portName, Comparator.nullsFirst(String::compareTo))
+                        .thenComparing(DatasetBinding::datasetVersionUuid, Comparator.nullsFirst(String::compareTo)))
+                .toList();
+    }
+
+    private List<ConfigBinding> configSignature(ExperimentRun experimentRun) {
+        return orderedExecutionMode(experimentRun).stream()
+                .map(step -> new ConfigBinding(step.getStepCount(), step.getExperimentConfigUuid()))
+                .toList();
+    }
+
+    private List<ExecutionMode> orderedExecutionMode(ExperimentRun experimentRun) {
+        return Optional.ofNullable(experimentRun.getExecutionMode()).orElseGet(List::of).stream()
+                .sorted(Comparator.comparing(ExecutionMode::getStepCount, Comparator.nullsFirst(Integer::compareTo)))
+                .toList();
+    }
+
+    private record DatasetBinding(Integer stepCount, String portName, String datasetVersionUuid) {
+    }
+
+    private record ConfigBinding(Integer stepCount, String experimentConfigUuid) {
     }
 
     private record OutputReference(Integer stepCount, String outputName) {

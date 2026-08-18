@@ -17,6 +17,7 @@ public final class PermissionConstants {
     private static final String EXPERIMENT = ":experiment";
     private static final String EXPERIMENT_CONFIG = ":experiment-config";
     private static final String EXPERIMENT_TYPE = ":experiment-type";
+    private static final String COMPARE = ":compare";
     public static final String ADD_USER = USER + ADD;
     public static final String GET_USER = USER + GET;
     public static final String ADD_WORKSPACE = WORKSPACE + ADD;
@@ -37,6 +38,8 @@ public final class PermissionConstants {
     public static final String EDIT_EXPERIMENT_TYPE = EXPERIMENT_TYPE + EDIT;
     public static final String GET_EXPERIMENT_TYPE = EXPERIMENT_TYPE + GET;
     public static final String GET_EXPERIMENT_RUNS = EXPERIMENT + RUN + GET;
+    public static final String COMPARE_EXPERIMENT_RUNS = COMPARE + EXPERIMENT + RUN;
+
 
 
 }

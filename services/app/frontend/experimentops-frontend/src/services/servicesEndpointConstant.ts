@@ -15,6 +15,7 @@ export const ServicesUrlEndpoints = {
   GET_EXPERIMENT_RUN_LOG_DOWNLOAD_URL:
     '/experiment-runs/:uuid/logs/download-url',
   GET_EXPERIMENT_RUN_STATUSES: '/experiment-runs/status',
+  COMPARE_EXPERIMENT_RUNS: '/experiment-run/compare',
   GET_RUN_ARTIFACTS: '/experiment-run/:experimentRunUuid/artifact',
   GET_RUN_ARTIFACT_DOWNLOAD_URL: '/run-artifact/:artifactUuid/download-url',
   VALIDATE_EXPERIMENT_RUN:

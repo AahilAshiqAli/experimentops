@@ -228,32 +228,84 @@ paths:
         200:
           description: Experiment run request is valid
 
-  /experiment/{experimentUuid}/experiment-run/compare:
+  /experiment-run/compare:
     post:
       summary: Compare Experiment Run
-      description: This API will validate experiment run execution mode format compatibility.
+      description: This API will compare experiment run execution mode format compatibility.
       tags:
         - Experiment run
-      operationId: validateExperimentRun
-      parameters:
-        - name: experimentUuid
-          in: path
-          description: Experiment uuid
-          required: true
-          schema:
-            type: string
+      operationId: compareExperimentRun
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ExperimentRunRequestModel'
+              $ref: '#/components/schemas/ExperimentRunCompareRequestModel'
       responses:
         200:
-          description: Experiment run request is valid
+          description: Compared the Experiment Runs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRunCompareResponseModel'
 
 components:
   schemas:
+    ExperimentRunCompareRequestModel:
+      type: object
+      required:
+        - experimentRunUuids
+        - comparisonAxis
+      properties:
+        experimentRunUuids:
+          type: array
+          minItems: 2
+          items:
+            type: string
+            minLength: 1
+        comparisonAxis:
+          type: string
+          enum:
+            - CONFIG
+            - DATASET
+          description: Defines which attribute we are going to compare
+
+    ExperimentRunCompareResponseModel:
+      type: object
+      required:
+        - comparisonAxis
+        - pipelineSignature
+        - runs
+      properties:
+        comparisonAxis:
+          type: string
+          enum:
+            - CONFIG
+            - DATASET
+          description: Defines which attribute we are going to compare
+        pipelineSignature:
+          type: array
+          items:
+            type: string
+            example: BINARY_CLASSIFICATION
+        runs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExperimentRunCompareReport'
+
+    ExperimentRunCompareReport:
+      type: object
+      required:
+        - experimentRunUuid
+        - evaluationReport
+      properties:
+        experimentRunUuid:
+          type: string
+        evaluationReport:
+          type: object
+          additionalProperties: true
+
+
     ExperimentRunListResponseModel:
       type: object
       properties:

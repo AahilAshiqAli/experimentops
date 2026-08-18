@@ -126,6 +126,24 @@ export type ExperimentRunCreationResponse = {
   status: ExperimentRunStatus
 }
 
+export type ExperimentRunComparisonAxis = 'CONFIG' | 'DATASET'
+
+export type ExperimentRunComparisonInput = {
+  comparisonAxis: ExperimentRunComparisonAxis
+  experimentRunUuids: string[]
+}
+
+export type ExperimentRunComparisonReport = {
+  evaluationReport: Record<string, unknown>
+  experimentRunUuid: string
+}
+
+export type ExperimentRunComparison = {
+  comparisonAxis: ExperimentRunComparisonAxis
+  pipelineSignature: string[]
+  runs: ExperimentRunComparisonReport[]
+}
+
 function isExperimentRunStatus(value: unknown): value is ExperimentRunStatus {
   return (
     typeof value === 'string' &&
@@ -169,6 +187,39 @@ function isExperimentRunStatusResponse(
     typeof (value as ExperimentRunStatusResponse).progress === 'number' &&
     isExperimentRunStatus((value as ExperimentRunStatusResponse).status) &&
     typeof (value as ExperimentRunStatusResponse).duration === 'string'
+  )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isExperimentRunComparisonAxis(
+  value: unknown,
+): value is ExperimentRunComparisonAxis {
+  return value === 'CONFIG' || value === 'DATASET'
+}
+
+function isExperimentRunComparisonReport(
+  value: unknown,
+): value is ExperimentRunComparisonReport {
+  return (
+    isRecord(value) &&
+    typeof value.experimentRunUuid === 'string' &&
+    isRecord(value.evaluationReport)
+  )
+}
+
+function isExperimentRunComparison(
+  value: unknown,
+): value is ExperimentRunComparison {
+  return (
+    isRecord(value) &&
+    isExperimentRunComparisonAxis(value.comparisonAxis) &&
+    Array.isArray(value.pipelineSignature) &&
+    value.pipelineSignature.every((step) => typeof step === 'string') &&
+    Array.isArray(value.runs) &&
+    value.runs.every(isExperimentRunComparisonReport)
   )
 }
 
@@ -393,4 +444,26 @@ export function validateExperimentRun(
       },
     },
   )
+}
+
+export async function compareExperimentRuns(
+  accessToken: string,
+  input: ExperimentRunComparisonInput,
+): Promise<ExperimentRunComparison> {
+  const payload = await ApiService.post<unknown, ExperimentRunComparisonInput>(
+    ServicesUrlEndpoints.COMPARE_EXPERIMENT_RUNS,
+    input,
+    {
+      headers: {
+        ...getAuthenticatedRequestHeaders(accessToken),
+        'Content-Type': 'application/json',
+      },
+    },
+  )
+
+  if (!isExperimentRunComparison(payload)) {
+    throw new Error(i18n.t('serviceErrors.runComparisonInvalid'))
+  }
+
+  return payload
 }

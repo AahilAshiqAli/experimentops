@@ -1,7 +1,9 @@
 package com.experimentops.platformapi.dal.repository;
 
+import com.experimentops.platformapi.model.entity.ArtifactType;
 import com.experimentops.platformapi.model.entity.DownStreamPolicyEnum;
 import com.experimentops.platformapi.model.entity.RunArtifact;
+import com.experimentops.platformapi.model.entity.RunArtifactStatusEnum;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -20,6 +22,13 @@ public interface RunArtifactRepository extends JpaRepository<RunArtifact, Long> 
     List<RunArtifact> findByExperimentRunUuidAndWorkspaceUuidAndEnabledOrderByStepCountAscPortNameAsc(
             String experimentRunUuid,
             String workspaceUuid,
+            boolean enabled);
+
+    List<RunArtifact> findByExperimentRunUuidAndWorkspaceUuidAndArtifactTypeAndStatusAndEnabled(
+            String experimentRunUuid,
+            String workspaceUuid,
+            ArtifactType artifactType,
+            RunArtifactStatusEnum status,
             boolean enabled);
 
     Optional<RunArtifact> findByUuidAndWorkspaceUuidAndEnabled(String uuid, String workspaceUuid, boolean enabled);

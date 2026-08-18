@@ -7,6 +7,7 @@ const PERMISSIONS_KEYS = {
     GET_EXPERIMENT: ':experiment:get',
   },
   EXPERIMENT_RUN: {
+    COMPARE_EXPERIMENT_RUNS: ':compare:experiment:run',
     GET_EXPERIMENT_RUNS: ':experiment:run:get',
   },
   EXPERIMENT_CONFIG: {

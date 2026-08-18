@@ -6,6 +6,7 @@ import com.experimentops.common.exceptions.runtime.ValidationException;
 import com.experimentops.common.kafka.KafkaProducer;
 import com.experimentops.experiment.run.event.*;
 import com.experimentops.experiment.run.model.v1.*;
+import com.experimentops.objectstorage.gateway.ObjectStorageGateway;
 import com.experimentops.platformapi.dal.repository.*;
 import com.experimentops.platformapi.model.ExperimentRunConfigContext;
 import com.experimentops.platformapi.model.ExperimentRunDetailConfigType;
@@ -20,6 +21,7 @@ import com.experimentops.platformapi.model.type.StatusEnum;
 import com.experimentops.platformapi.transformer.ExperimentRunTransformer;
 import com.experimentops.platformapi.validator.ExperimentRunValidator;
 import com.experimentops.utils.ExperimentOpsLogger;
+import com.experimentops.utils.JSONUtil;
 import com.experimentops.utils.dto.ExperimentOpsHeaders;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -31,10 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -54,6 +53,7 @@ public class ExperimentRunService {
     private final RunArtifactService runArtifactService;
     private final RunArtifactRepository runArtifactRepository;
     private final ExperimentRunLogRepository experimentRunLogRepository;
+    private final ObjectStorageGateway objectStorageGateway;
 
     @Value("${experiment.run.requested.topic}")
     private String experimentRunRequestTopic;
@@ -80,7 +80,7 @@ public class ExperimentRunService {
                 experimentConfigsByUuid,
                 datasetVersionsByUuid
         );
-        List<ExecutionMode> executionMode = experimentRunTransformer.transformExecutionMode(requestedExecutionMode);
+        List<ExecutionMode> executionMode = experimentRunTransformer.transformExecutionMode(requestedExecutionMode, experimentConfigsByUuid);
         List<ExperimentRunExecutionConfig> executionConfigs = experimentRunTransformer.transformExperimentRunExecutionConfigs(
                 requestedExecutionMode,
                 experimentConfigsByUuid
@@ -496,5 +496,51 @@ public class ExperimentRunService {
         return experimentRepository
                 .findByUuidAndWorkspaceUuidAndStatusAndEnabled(experimentUuid, headers.getWorkspaceUuid(), StatusEnum.ACTIVE, true)
                 .orElseThrow(() -> new EntityNotFoundException("experiment", experimentUuid));
+    }
+
+    @NonNull
+    public ExperimentRunCompareResponseModel compareExperiment(@NonNull ExperimentRunCompareRequestModel experimentRunCompareRequestModel, @NonNull ExperimentOpsHeaders headers) {
+        experimentRunValidator.validateExperimentRunCompareRequestModel(experimentRunCompareRequestModel);
+        List<String> requestedRunUuids = experimentRunCompareRequestModel.getExperimentRunUuids();
+        Map<String, ExperimentRun> experimentRunsByUuid = experimentRunRepository
+                .findAllByUuidInAndWorkspaceUuidAndEnabled(requestedRunUuids, headers.getWorkspaceUuid(), true)
+                .stream()
+                .collect(Collectors.toMap(ExperimentRun::getUuid, Function.identity()));
+        List<ExperimentRun> experimentRuns = requestedRunUuids.stream()
+                .map(uuid -> Optional.ofNullable(experimentRunsByUuid.get(uuid))
+                        .orElseThrow(() -> new EntityNotFoundException("experiment run", uuid)))
+                .toList();
+        experimentRunValidator.validateExperimentRunsToCompare(experimentRuns, experimentRunCompareRequestModel);
+        List<String> experimentPipeline = experimentRuns.getFirst().getExecutionMode().stream()
+                .sorted(Comparator.comparing(ExecutionMode::getStepCount))
+                .map(ExecutionMode::getExperimentType)
+                .toList();
+
+        List<ExperimentRunCompareReport> experimentRunCompareReports = new ArrayList<>();
+        for (ExperimentRun experimentRun : experimentRuns) {
+            List<RunArtifact> runArtifactList = runArtifactRepository
+                    .findByExperimentRunUuidAndWorkspaceUuidAndArtifactTypeAndStatusAndEnabled(
+                            experimentRun.getUuid(),
+                            headers.getWorkspaceUuid(),
+                            ArtifactType.REPORT,
+                            RunArtifactStatusEnum.PRIMARY,
+                            true
+                    );
+
+            if (runArtifactList.isEmpty()) {
+                throw new ValidationException(ErrorCode.EVALUATION_REPORT_NOT_FOUND, experimentRun.getUuid());
+            }
+            if (runArtifactList.size() > 1) {
+                throw new ValidationException(ErrorCode.MULTIPLE_EVALUATION_REPORTS_FOUND, experimentRun.getUuid());
+            }
+
+            byte[] content = objectStorageGateway.downloadObject(runArtifactList.getFirst().getStorageUri());
+            Map<String, Object> evaluationReport = JSONUtil.readTree(content);
+            experimentRunCompareReports.add(new ExperimentRunCompareReport()
+                    .experimentRunUuid(experimentRun.getUuid())
+                    .evaluationReport(evaluationReport));
+        }
+
+        return experimentRunTransformer.transformExperimentRunCompareResponseModel(experimentPipeline, experimentRunCompareReports, experimentRunCompareRequestModel.getComparisonAxis().toString());
     }
 }

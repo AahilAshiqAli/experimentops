@@ -6,6 +6,7 @@ import { DatasetDetails } from '../container/DatasetDetails/DatasetDetails'
 import {
   CreateExperimentRun,
   ExperimentConfigs,
+  ExperimentRunComparison,
   ExperimentRunDetails,
   ExperimentRuns,
 } from '../container/ExperimentResources/ExperimentResources'
@@ -37,6 +38,8 @@ export const authenticatedRoutesConstant = {
     '/projects/:projectUuid/experiments/:experimentUuid/experiment-runs',
   EXPERIMENT_RUN_CREATE:
     '/projects/:projectUuid/experiments/:experimentUuid/experiment-runs/new',
+  EXPERIMENT_RUN_COMPARE:
+    '/projects/:projectUuid/experiments/:experimentUuid/experiment-runs/compare',
   EXPERIMENT_RUN_DETAILS:
     '/projects/:projectUuid/experiments/:experimentUuid/experiment-runs/:experimentRunUuid',
 } as const
@@ -92,6 +95,10 @@ export const AUTHENTICATED_ROUTES: RouteObject[] = [
       {
         path: authenticatedRoutesConstant.EXPERIMENT_RUN_CREATE,
         element: <CreateExperimentRun />,
+      },
+      {
+        path: authenticatedRoutesConstant.EXPERIMENT_RUN_COMPARE,
+        element: <ExperimentRunComparison />,
       },
       {
         path: authenticatedRoutesConstant.EXPERIMENT_RUN_DETAILS,

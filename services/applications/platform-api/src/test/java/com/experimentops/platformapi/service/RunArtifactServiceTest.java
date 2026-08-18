@@ -9,6 +9,7 @@ import com.experimentops.objectstorage.gateway.ObjectStorageGateway;
 import com.experimentops.platformapi.dal.repository.RunArtifactRepository;
 import com.experimentops.platformapi.model.ExperimentRunResolvedPlan;
 import com.experimentops.platformapi.model.entity.DownStreamPolicyEnum;
+import com.experimentops.platformapi.model.entity.ArtifactType;
 import com.experimentops.platformapi.model.entity.RunArtifact;
 import com.experimentops.platformapi.model.entity.RunArtifactStatusEnum;
 import com.experimentops.platformapi.transformer.ExperimentRunTransformer;
@@ -93,7 +94,7 @@ class RunArtifactServiceTest {
         RunArtifact artifact = RunArtifact.builder()
                 .experimentRunUuid("run-1")
                 .workspaceUuid("workspace-1")
-                .artifactType("report")
+                .artifactType(ArtifactType.REPORT)
                 .storageUri("s3://bucket/report.json")
                 .format("JSON")
                 .size(100L)
@@ -115,7 +116,7 @@ class RunArtifactServiceTest {
 
         assertThat(response.getData()).hasSize(1);
         assertThat(responseArtifact.getUuid()).isEqualTo("artifact-1");
-        assertThat(responseArtifact.getArtifactType()).isEqualTo("report");
+        assertThat(responseArtifact.getArtifactType()).isEqualTo("REPORT");
         assertThat(responseArtifact.getFormat()).isEqualTo("JSON");
         assertThat(responseArtifact.getSize()).isEqualTo(100);
         assertThat(responseArtifact.getStepCount()).isEqualTo(2);
@@ -173,7 +174,7 @@ class RunArtifactServiceTest {
                                 List.of(
                                         new ExperimentRunCompletedArtifact(
                                                 "CSV",
-                                                "normalized",
+                                                "TABULAR_DATASET",
                                                 "s3://bucket/normalized.csv",
                                                 100L,
                                                 "CSV_PROFILE_ANALYSIS",
@@ -182,7 +183,7 @@ class RunArtifactServiceTest {
                                         ),
                                         new ExperimentRunCompletedArtifact(
                                                 "JSON",
-                                                "report",
+                                                "REPORT",
                                                 "s3://bucket/report.json",
                                                 100L,
                                                 "CSV_PROFILE_ANALYSIS",

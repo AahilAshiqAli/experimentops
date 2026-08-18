@@ -103,6 +103,7 @@
     "roleInvalid": "Der Rolledienst hat eine ungültige Antwort zurückgegeben.",
     "runArtifactInvalid": "Der Lauf-Artefakt-Dienst hat eine ungültige Antwort zurückgegeben.",
     "runDetailInvalid": "Der Experimentlauf-Detailsdienst hat eine ungültige Antwort zurückgegeben.",
+    "runComparisonInvalid": "Der Vergleichsdienst für Experimentläufe hat eine ungültige Antwort zurückgegeben.",
     "runInvalid": "Der ExperimentlaufsDienst hat eine ungültige Antwort zurückgegeben.",
     "runStatusInvalid": "Der Statusdienst für den Experimentlauf hat eine ungültige Antwort zurückgegeben.",
     "userInvalid": "Der Benutzer-Dienst hat eine ungültige Antwort zurückgegeben."
@@ -275,6 +276,59 @@
     "create": "Experimentlauf erstellen",
     "created": "Experimentlauf erfolgreich erstellt.",
     "creating": "Erstelle Lauf…",
+    "compare": {
+      "actual": "Tatsächlich {{value}}",
+      "axis": {
+        "config": "Konfigurationen",
+        "dataset": "Datensätze"
+      },
+      "axisDescription": "Die {{count}} ausgewählten Läufe dürfen sich in genau einer Dimension unterscheiden.",
+      "axisDescriptionText": {
+        "config": "Dieselben Datensatzbindungen verwenden und unterschiedliche Konfigurations-UUIDs vergleichen.",
+        "dataset": "Dieselben Konfigurationsbindungen verwenden und unterschiedliche Datensatz-UUIDs vergleichen."
+      },
+      "changeSelection": "Auswahl ändern",
+      "chooseAxis": "Vergleichsachse auswählen",
+      "closeDialog": "Vergleichsdialog schließen",
+      "compareRuns": "{{count}} Läufe vergleichen",
+      "comparing": "Vergleich läuft…",
+      "comparingAxis": {
+        "config": "Konfigurationen werden verglichen",
+        "dataset": "Datensätze werden verglichen"
+      },
+      "confusionMatrices": "Konfusionsmatrizen",
+      "context": {
+        "algorithm": "Algorithmus",
+        "decisionThreshold": "Entscheidungsschwellenwert",
+        "rowsEvaluated": "Ausgewertete Zeilen",
+        "targetColumn": "Zielspalte"
+      },
+      "error": "Die ausgewählten Experimentläufe konnten nicht verglichen werden.",
+      "errorTitle": "Experimentläufe konnten nicht verglichen werden",
+      "evaluationContext": "Auswertungskontext",
+      "evaluationMetrics": "Auswertungsmetriken",
+      "field": "Feld",
+      "invalidSelection": "Wählen Sie auf der Experimentlaufseite mindestens zwei Läufe und eine gültige Vergleichsachse aus.",
+      "invalidSelectionTitle": "Ungültige Vergleichsauswahl",
+      "metric": "Metrik",
+      "metrics": {
+        "accuracy": "Genauigkeit",
+        "f1": "F1-Wert",
+        "precision": "Präzision",
+        "recall": "Trefferquote",
+        "rocAuc": "ROC AUC"
+      },
+      "neutralDescription": "{{count}} erfolgreiche Läufe werden ohne Rangfolge verglichen.",
+      "otherDetails": "Weitere Details",
+      "permissionDenied": "Sie haben keine Berechtigung, Experimentläufe zu vergleichen.",
+      "predicted": "Vorhergesagt {{value}}",
+      "reportValues": "Werte des Auswertungsberichts",
+      "select": "Läufe zum Vergleich auswählen",
+      "selectRun": "{{name}} zum Vergleich auswählen",
+      "sharedPipeline": "Gemeinsame Pipeline",
+      "successfulOnly": "Nur erfolgreiche Experimentläufe können verglichen werden.",
+      "title": "Experimentläufe vergleichen"
+    },
     "dragDataset": "Ziehen Sie diesen Datensatz auf einen kompatiblen Eingangsanschluss",
     "dragHint": "Ziehen Sie einen Datensatz in ein Eingabefeld oder klicken Sie auf ein leeres Eingabefeld, um es zuzuweisen.",
     "empty": "Keine Experimentläufe entsprechen den aktuellen Filtern.",

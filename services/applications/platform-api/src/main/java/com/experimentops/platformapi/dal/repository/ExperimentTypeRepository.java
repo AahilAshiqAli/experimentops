@@ -15,11 +15,48 @@ import java.util.Optional;
 @Repository
 public interface ExperimentTypeRepository extends JpaRepository<ExperimentType, Long> {
 
-    Optional<ExperimentType> findByUuidAndWorkspaceUuidAndEnabled(String uuid, String workspaceUuid, boolean enabled);
+    @Query("""
+            SELECT e
+            FROM ExperimentType e
+            WHERE e.uuid = :uuid
+              AND (e.workspaceUuid = :workspaceUuid OR e.workspaceUuid IS NULL)
+              AND e.enabled = :enabled
+            """)
+    Optional<ExperimentType> findByUuidAndWorkspaceUuidAndEnabled(
+            @Param("uuid") String uuid,
+            @Param("workspaceUuid") String workspaceUuid,
+            @Param("enabled") boolean enabled
+    );
 
-    Optional<ExperimentType> findByUuidAndStatusAndWorkspaceUuidAndEnabled(String uuid, StatusEnum status, String workspaceUuid, boolean enabled);
+    @Query("""
+            SELECT e
+            FROM ExperimentType e
+            WHERE e.uuid = :uuid
+              AND e.status = :status
+              AND (e.workspaceUuid = :workspaceUuid OR e.workspaceUuid IS NULL)
+              AND e.enabled = :enabled
+            """)
+    Optional<ExperimentType> findByUuidAndStatusAndWorkspaceUuidAndEnabled(
+            @Param("uuid") String uuid,
+            @Param("status") StatusEnum status,
+            @Param("workspaceUuid") String workspaceUuid,
+            @Param("enabled") boolean enabled
+    );
 
-    Optional<ExperimentType> findByNameAndStatusAndWorkspaceUuidAndEnabled(String name, StatusEnum status, String workspaceUuid, boolean enabled);
+    @Query("""
+            SELECT e
+            FROM ExperimentType e
+            WHERE e.name = :name
+              AND e.status = :status
+              AND (e.workspaceUuid = :workspaceUuid OR e.workspaceUuid IS NULL)
+              AND e.enabled = :enabled
+            """)
+    Optional<ExperimentType> findByNameAndStatusAndWorkspaceUuidAndEnabled(
+            @Param("name") String name,
+            @Param("status") StatusEnum status,
+            @Param("workspaceUuid") String workspaceUuid,
+            @Param("enabled") boolean enabled
+    );
 
     @Query("""
     SELECT e

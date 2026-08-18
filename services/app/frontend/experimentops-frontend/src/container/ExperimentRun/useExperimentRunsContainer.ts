@@ -1,13 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { useLogin } from '../../context-api/logincontext'
 import { useDebouncedValue } from '../../hooks'
-import { useQueryExperimentRuns, useQueryProject } from '../../queries'
+import {
+  useMutationCompareExperimentRuns,
+  useQueryExperimentRuns,
+  useQueryProject,
+} from '../../queries'
 import {
   EXPERIMENT_RUN_STATUSES,
+  type ExperimentRun,
+  type ExperimentRunComparisonAxis,
   type ExperimentRunStatus,
 } from '../../services/experimentRun.service'
+import { Toaster } from '../../services/toaster.service'
 import { trackExperimentRun } from '../../services/experimentRunTracking.service'
 import { PERMISSIONS_KEYS } from '../../utils'
 
@@ -18,6 +26,7 @@ const ACTIVE_EXPERIMENT_RUN_STATUSES: ExperimentRunStatus[] = [
 ]
 
 export function useExperimentRunsContainer() {
+  const { t } = useTranslation()
   const { experimentUuid, projectUuid } = useParams<{
     experimentUuid: string
     projectUuid: string
@@ -25,11 +34,18 @@ export function useExperimentRunsContainer() {
   const navigate = useNavigate()
   const { hasPermission } = useLogin()
   const projectQuery = useQueryProject(projectUuid)
+  const compareExperimentRunsMutation = useMutationCompareExperimentRuns()
   const [page, setPage] = useState(1)
   const [name, setName] = useState('')
   const [selectedStatuses, setSelectedStatuses] = useState<
     ExperimentRunStatus[]
   >(ACTIVE_EXPERIMENT_RUN_STATUSES)
+  const [selectedRuns, setSelectedRuns] = useState<Map<string, string>>(
+    () => new Map(),
+  )
+  const [comparisonAxis, setComparisonAxis] =
+    useState<ExperimentRunComparisonAxis>('CONFIG')
+  const [isCompareDialogOpen, setIsCompareDialogOpen] = useState(false)
   const debouncedName = useDebouncedValue(name.trim())
   const experimentRunQueryParams = useMemo(
     () => ({
@@ -46,6 +62,9 @@ export function useExperimentRunsContainer() {
   )
   const canListExperimentRuns = hasPermission(
     PERMISSIONS_KEYS.EXPERIMENT_RUN.GET_EXPERIMENT_RUNS,
+  )
+  const canCompareExperimentRuns = hasPermission(
+    PERMISSIONS_KEYS.EXPERIMENT_RUN.COMPARE_EXPERIMENT_RUNS,
   )
   const totalRuns = experimentRunsQuery.data?.totalElements ?? 0
   const totalPages = Math.max(1, Math.ceil(totalRuns / RUNS_PER_PAGE))
@@ -88,20 +107,69 @@ export function useExperimentRunsContainer() {
     )
   }
 
+  const handleToggleRun = (run: ExperimentRun, selected: boolean) => {
+    if (run.status !== 'SUCCEEDED') return
+
+    setSelectedRuns((current) => {
+      const next = new Map(current)
+      if (selected) next.set(run.uuid, run.name)
+      else next.delete(run.uuid)
+      return next
+    })
+  }
+
+  const handleCompareRuns = () => {
+    const experimentRunUuids = [...selectedRuns.keys()]
+    if (experimentRunUuids.length < 2) return
+
+    compareExperimentRunsMutation.mutate(
+      { comparisonAxis, experimentRunUuids },
+      {
+        onError: (error) => {
+          Toaster.error(
+            error instanceof Error ? error.message : t('runs.compare.error'),
+          )
+        },
+        onSuccess: () => {
+          const searchParams = new URLSearchParams({ axis: comparisonAxis })
+          experimentRunUuids.forEach((uuid) => searchParams.append('run', uuid))
+          navigate(
+            `/projects/${projectUuid}/experiments/${experimentUuid}/experiment-runs/compare?${searchParams.toString()}`,
+            {
+              state: {
+                runNames: Object.fromEntries(selectedRuns),
+              },
+            },
+          )
+        },
+      },
+    )
+  }
+
   return {
     activePage,
+    canCompareExperimentRuns,
     canListExperimentRuns,
+    compareExperimentRunsMutation,
+    comparisonAxis,
     experimentRunQueryParams,
     experimentRunsQuery,
     experimentRunStatuses: EXPERIMENT_RUN_STATUSES,
     handleAddRun,
+    handleCompareRuns,
     handleNameChange,
     handleOpenRun,
     handleStatusChange,
+    handleToggleRun,
+    isCompareDialogOpen,
+    isRunSelected: (runUuid: string) => selectedRuns.has(runUuid),
     name,
     page,
     projectQuery,
     selectedStatuses,
+    selectedRunCount: selectedRuns.size,
+    setComparisonAxis,
+    setIsCompareDialogOpen,
     setPage,
     totalPages,
     totalRuns,
